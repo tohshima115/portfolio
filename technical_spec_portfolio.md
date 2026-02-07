@@ -143,7 +143,47 @@ src/
 │       └── stats.ts  # Analytics取得
 ├── assets/           # 画像など
 └── utils/            # ヘルパー関数
-wrangler.toml         \# Cloudflare Workers設定 (D1バインディング等を記述)
-keystatic.config.ts   \# Keystatic設定ファイル
-astro.config.mjs      \# Astro設定 (adapter: cloudflare)
+wrangler.toml         # Cloudflare Workers設定 (D1バインディング等を記述)
+keystatic.config.ts   # Keystatic設定ファイル
+astro.config.mjs      # Astro設定 (adapter: cloudflare)
+```
+
+## **7\. 実装・最適化ガイドライン (Implementation Guidelines)**
+
+### **7.1 画像最適化とコンポーネント合成 (Image Optimization & Composition)**
+
+Reactコンポーネント内でAstroの強力な画像最適化（`astro:assets`）の恩恵を受けるため、以下の設計ルールを徹底する。
+
+*   **基本ルール:** Reactコンポーネント (.tsx) 内で画像のパス解決や最適化を行わない。
+*   **Composition Pattern:**
+    *   Reactコンポーネントは「枠（Frame）」として実装し、画像は `children` または `props` (ReactNode) として受け取る。
+    *   画像の生成（`<Picture />` の使用）は、必ず親である `.astro` ファイル内で行う。
+*   **バケツリレーの回避:**
+    *   深い階層のReactコンポーネントに画像を渡す場合も、トップレベルの `index.astro` 等でコンポーネントを組み立て（ネスト）ることで、中間のコンポーネントが画像を知らなくて済むようにする。
+
+```astro
+// 例: index.astro
+// 画像の最適化はAstro側で行い、Reactには「完成した要素」として渡す
+<CardWrapper client:load>
+  <Picture slot="thumbnail" src={img} formats={['avif', 'webp']} alt="" />
+</CardWrapper>
+```
+
+### **7.2 スケルトンローディング (Skeleton Loading)**
+
+専用ライブラリ（react-loading-skeleton等）は使用せず、標準的なCSS (Tailwind) のみで解決し、バンドルサイズを削減する。
+
+*   **動的パーツのロード中:**
+    *   単純な `div` に `animate-pulse` `bg-gray-200` `dark:bg-gray-800` を適用したスケルトンコンポーネントを表示する。
+*   **画像のロード中 (Image Loading Strategy):**
+    *   画像を囲む親要素（ラッパー）の背景に `animate-pulse` を適用しておく。
+    *   画像がロードされ表示された時点で、物理的に背景が隠れる（Coverされる）挙動を利用する。
+    *   JSによるロード完了検知ロジック（`onLoad`イベントハンドリング等）を不要にし、実装コストを最小化する。
+
+```jsx
+// 画像スケルトンの実装イメージ (React/Astro共通の考え方)
+<div className="relative overflow-hidden bg-gray-200 animate-pulse dark:bg-gray-800">
+  {/* 画像がロードされると、このimgが前面に表示され、背景のpulseを覆い隠す */}
+  <img src={src} className="relative z-10 w-full h-full object-cover" alt="" />
+</div>
 ```

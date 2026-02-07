@@ -42,6 +42,8 @@
 ### Architecture
 *   **Cloudflare D1 (SQLite)**: 「いいね」数やログの保存。
 *   **Web Analytics**: Cloudflare Web Analyticsを利用したデータ可視化。
+*   **Image Optimization**: Astro (`<Picture />`) で画像を最適化し、Reactコンポーネントには `children` として渡すComposition Patternを採用。
+*   **Skeleton Loading**: ライブラリに依存せず、Tailwind CSS (`animate-pulse`) のみで実装し、画像のロード待機状態をCSSで制御してJS負荷を削減。
 
 ## 📂 ディレクトリ構造
 
