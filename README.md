@@ -16,12 +16,14 @@
 
 | レイヤー | 選定技術 | 役割 |
 | :--- | :--- | :--- |
-| **Framework** | **Astro** | Island Architectureによる高速表示 & SSRモードでの動的機能提供。 |
-| **UI Library** | **React** | コマンドパレットや「いいね」ボタンなどのリッチなインタラクションに使用。 |
-| **Styling** | **Tailwind CSS** | 効率的なスタイリングとモダンなUI構築。 |
-| **CMS** | **Keystatic** | Git-based CMS。リポジトリ内のMarkdown/MDXを直接管理。 |
-| **Hosting** | **Cloudflare Workers** | Astro SSRアダプターを利用し、Edge上でアプリ全体を動作させる。 |
-| **Package Mgr** | **pnpm** | 高速なパッケージ管理。 |
+| Framework | Astro | Island Architectureによる高速表示 & SSRモードでの動的機能提供。 |
+| UI Library | React | コマンドパレットや「いいね」ボタンなどのリッチなインタラクションに使用。 |
+| 3D / WebGL | R3F / Three.js | React Three Fiber (R3F) を使用した宣言的な3D表現の実装。 |
+| Animation | Motion | ページ遷移やマイクロインタラクションの実装。 |
+| Styling | Tailwind CSS | 効率的なスタイリングとモダンなUI構築。 |
+| CMS | Keystatic | Git-based CMS。リポジトリ内のMarkdown/MDXを直接管理。 |
+| Hosting | Cloudflare Workers | Astro SSRアダプターを利用し、Edge上でアプリ全体を動作させる。 |
+| Package Mgr | pnpm | 高速なパッケージ管理。 |
 
 ## ✨ 主な機能
 
@@ -31,6 +33,8 @@
 *   **動的OGP生成**: Satoriを使用し、Edge Function上でOGP画像をオンデマンド生成。
 
 ### Playful Features (インタラクション・動的機能)
+*   **3D演出 (R3F)**: WebGLを用いたインタラクティブな表現。
+*   **アニメーション (Motion)**: フェードイン/アウトやマイクロインタラクション。
 *   **サーバーレス「いいね」ボタン**: Cloudflare D1を使用し、ログイン不要で連打可能な「いいね」機能を実装。
 *   **コマンドパレット (Cmd+K)**: サイト内検索やページ移動を瞬時に行うインターフェース。
 *   **最新コミットログ表示**: フッターにGitHub API経由で最新の更新を表示。
@@ -44,11 +48,17 @@
 ```text
 src/
 ├── components/       # UIコンポーネント
-│   ├── Interactive/  # React コンポーネント (いいねボタン, CmdKなど)
-│   └── Static/       # Astro コンポーネント (Header, Footerなど)
+│   ├── common/       # サイト全体で使われる共通部分 (Header, Footer, Buttonなど)
+│   └── pages/        # ページごとのコンポーネント (Home, Blog, Projectsなど)
 ├── content/          # 記事データ (Keystatic管理)
 │   ├── blog/         # 開発ログ MDX
 │   └── projects/     # 実績 MDX
+├── data/             # 静的データ (TypeScript定数)
+│   ├── common/       # 共通データ (navigation.tsなど)
+│   └── pages/        # ページ固有データ (homeData.tsなど)
+├── types/            # TypeScript型定義
+│   ├── common.ts     # 共通の型
+│   └── data.ts       # データの型定義
 ├── layouts/          # 共通レイアウト
 ├── pages/            # ルーティング
 │   ├── index.astro
