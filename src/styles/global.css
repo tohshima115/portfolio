@@ -1,0 +1,159 @@
+/* =============================================================================
+   Global CSS - Tailwind CSS v4 + Custom Fonts
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Google Fonts Import
+   - Roboto Flex: Variable font for English text (weight: 100-1000)
+   - Noto Sans JP: Variable font for Japanese text (weight: 100-900)
+   ----------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap');
+
+/* -----------------------------------------------------------------------------
+   Tailwind CSS v4 Import
+   ----------------------------------------------------------------------------- */
+@import "tailwindcss";
+
+/* -----------------------------------------------------------------------------
+   Custom Theme Configuration (Tailwind CSS v4 style)
+   ----------------------------------------------------------------------------- */
+@theme {
+  /* Font Family */
+  --font-sans: "Roboto Flex", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Font Weight Variables (for variable font control) */
+  --font-weight-thin: 100;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+
+  /* Color Palette - Base (Dark Mode First) */
+  --color-background: oklch(0.145 0 0);
+  --color-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(0.269 0 0);
+  --color-muted-foreground: oklch(0.708 0 0);
+  --color-border: oklch(0.269 0 0);
+
+  /* Primary Colors */
+  --color-primary: oklch(0.922 0 0);
+  --color-primary-foreground: oklch(0.205 0 0);
+
+  /* Accent Colors */
+  --color-accent: oklch(0.269 0 0);
+  --color-accent-foreground: oklch(0.922 0 0);
+
+  /* Destructive Colors */
+  --color-destructive: oklch(0.704 0.191 22.216);
+  --color-destructive-foreground: oklch(0.985 0 0);
+
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+/* -----------------------------------------------------------------------------
+   Base Styles
+   ----------------------------------------------------------------------------- */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    font-feature-settings: "palt";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    line-height: 1.75;
+    font-weight: 400;
+  }
+
+  /* Headings - Using heavier weights for impact */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 5vw + 1rem, 4rem);
+  }
+
+  h2 {
+    font-size: clamp(2rem, 4vw + 0.5rem, 3rem);
+  }
+
+  h3 {
+    font-size: clamp(1.5rem, 3vw + 0.25rem, 2rem);
+  }
+
+  /* Links */
+  a {
+    color: inherit;
+    text-decoration: inherit;
+  }
+
+  /* Focus styles for accessibility */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+
+  /* Reduced motion preference */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Light Mode Overrides
+   ----------------------------------------------------------------------------- */
+@media (prefers-color-scheme: light) {
+  @theme {
+    --color-background: oklch(1 0 0);
+    --color-foreground: oklch(0.145 0 0);
+    --color-muted: oklch(0.961 0 0);
+    --color-muted-foreground: oklch(0.556 0 0);
+    --color-border: oklch(0.922 0 0);
+    --color-primary: oklch(0.205 0 0);
+    --color-primary-foreground: oklch(0.985 0 0);
+    --color-accent: oklch(0.961 0 0);
+    --color-accent-foreground: oklch(0.205 0 0);
+  }
+}
