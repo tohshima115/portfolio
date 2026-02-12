@@ -22,7 +22,7 @@
 | Animation | Motion | ページ遷移やマイクロインタラクションの実装。 |
 | Styling | Tailwind CSS | 効率的なスタイリングとモダンなUI構築。 |
 | CMS | Keystatic | Git-based CMS。リポジトリ内のMarkdown/MDXを直接管理。 |
-| Hosting | Cloudflare Workers | Astro SSRアダプターを利用し、Edge上でアプリ全体を動作させる。 |
+| Hosting | Cloudflare Pages | Astro 5 の静的・動的混合レンダリングを活用し、高速な配信を実現。 |
 | Package Mgr | pnpm | 高速なパッケージ管理。 |
 
 ## ✨ 主な機能
@@ -70,6 +70,20 @@ src/
 ├── assets/           # 画像アセット
 └── utils/            # ヘルパー関数
 ```
+
+## 🚀 レンダリング・デプロイ設定 (Astro 5)
+
+本プロジェクトは **Astro 5** の最新のレンダリング仕様を採用しています。
+
+### 基本方針
+- **デフォルトは静的生成 (SSG)**: `astro.config.mjs` で `output` を省略（デフォルトの `static`）に設定しています。これにより、ほとんどのページがビルド時に HTML として生成され、最高のパフォーマンスを発揮します。
+- **オンデマンドレンダリング (SSR)**: 特定の動的機能が必要なページのみ、個別に SSR を選択します。
+- **Cloudflare アダプター**: SSR や API ルートを実行するために `@astrojs/cloudflare` を導入しています。
+
+### 実装ルール
+- **静的ページ（推奨）**: 通常の `.astro` ファイル。ビルド時に静的化されます。
+- **動的ページ (SSR)**: ファイルの冒頭に `export const prerender = false` を記述します。
+- **CMS (Keystatic)**: Keystatic 関連のルート（`/keystatic` や `/api/keystatic`）は、統合設定により**自動的に SSR** として動作するように構成されています。
 
 ## 🧞 Commands
 
