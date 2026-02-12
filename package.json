@@ -9,8 +9,21 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/mdx": "^4.3.13",
+    "@astrojs/react": "^4.4.2",
+    "@keystatic/astro": "^5.0.6",
+    "@keystatic/core": "^0.5.48",
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.17.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.34.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3"
   }
 }

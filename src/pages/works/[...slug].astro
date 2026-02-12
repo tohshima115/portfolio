@@ -1,0 +1,130 @@
+---
+import { getCollection } from "astro:content";
+import ProjectLayout from "@/layouts/ProjectLayout.astro";
+import ProjectMetaPanel from "@/components/pages/works/ProjectDetail/MetaPanel";
+import TableOfContents from "@/components/pages/works/ProjectDetail/TableOfContents";
+import ProjectNavigation from "@/components/pages/works/ProjectDetail/ProjectNavigation";
+import Background from "@/components/pages/works/ProjectDetail/Background";
+
+export async function getStaticPaths() {
+    const projects = await getCollection("projects");
+    return projects.map((entry) => ({
+        params: { slug: entry.slug },
+        props: { entry, projects }, // Pass all projects as prop
+    }));
+}
+
+const { entry, projects } = Astro.props;
+const { Content, headings } = await entry.render();
+
+// Format projects for navigation
+const navProjects = projects.map((p: any) => ({
+    slug: p.slug,
+    title: p.data.title,
+    iconUrl: p.data.meta.icon?.src ?? p.data.meta.thumbnail?.src // Use icon if available, fallback to thumbnail
+}));
+---
+
+<ProjectLayout title={`${entry.data.title} | Portfolio`}>
+    <!-- Wrapper for full screen layout with background -->
+    <div class="h-screen w-full font-sans text-gray-900 selection:bg-yellow-400 selection:text-black overflow-hidden relative flex flex-col">
+        <Background client:load transition:persist="project-background" />
+        
+        <!-- Large Background Typography Watermark -->
+        <div class="fixed top-20 left-10 text-[20vw] font-black text-gray-400/10 pointer-events-none z-0 select-none leading-none opacity-50 mixing-blend-overlay">
+           {entry.data.title.substring(0, 2).toUpperCase()}
+        </div>
+
+        <!-- Project Navigation Bar (PRTS Style) -->
+        <div class="sticky top-0 z-50 w-full flex-shrink-0">
+            <ProjectNavigation 
+                projects={navProjects} 
+                currentSlug={entry.slug} 
+                client:load 
+                transition:persist="project-navigation"
+            />
+        </div>
+
+        <div class="flex flex-col lg:grid lg:grid-cols-12 relative z-10 w-full max-w-[1920px] mx-auto shadow-2xl lg:overflow-hidden h-[calc(100vh-80px)]">
+            
+            <!-- Left Column: Specs Panel -->
+            <aside class="lg:col-span-3 h-full p-8 lg:overflow-y-auto border-r border-gray-300 relative">
+                <ProjectMetaPanel
+                    title={entry.data.title}
+                    roles={entry.data.attributes.roles}
+                    duration={entry.data.meta.duration}
+                    stack={entry.data.attributes.stack}
+                    projects={projects}
+                    client:load
+                />
+            </aside>
+
+            <!-- Center Column: Primary Visual & Content -->
+            <main class="lg:col-span-7 h-full w-full relative lg:overflow-y-auto scrollbar-hide">
+                
+                <div class="p-8 lg:p-16 max-w-5xl mx-auto">
+                    <!-- Hero Section -->
+                    <div class="relative mb-16 group">
+                         {/* Diagonal decorative cuts */}
+                         <div class="absolute -top-4 -left-4 w-8 h-8 border-t-2 border-l-2 border-black z-20"></div>
+                         <div class="absolute -bottom-4 -right-4 w-8 h-8 border-b-2 border-r-2 border-black z-20"></div>
+
+                        {entry.data.meta.thumbnail && (
+                            <div class="relative overflow-hidden shadow-xl aspect-video bg-gray-100">
+                                <img
+                                    src={entry.data.meta.thumbnail.src}
+                                    alt={entry.data.title}
+                                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                />
+                                <!-- Image Overlay Gradient -->
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                                
+                                <!-- Floating Label on Image -->
+                                <div class="absolute bottom-4 left-4 bg-yellow-400 text-black px-3 py-1 font-mono text-xs font-bold tracking-widest uppercase">
+                                    Visual_Reference_01
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <!-- Content Body -->
+                    <div class="prose prose-lg prose-neutral max-w-none 
+                        prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight prose-headings:mb-6
+                        prose-h2:text-3xl prose-h2:border-l-4 prose-h2:border-yellow-400 prose-h2:pl-4 prose-h2:mt-16
+                        prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-6
+                        prose-strong:text-black prose-strong:font-bold prose-strong:bg-yellow-100 prose-strong:px-1
+                        prose-li:marker:text-yellow-500
+                    ">
+                        <Content />
+                    </div>
+
+                    <div class="h-32 flex items-end justify-center opacity-30 mt-16">
+                        <span class="font-mono text-xs uppercase tracking-[1em]">End of File</span>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Column: Navigation Control Panel -->
+            <nav class="hidden lg:block lg:col-span-2 h-full relative shadow-[-10px_0_20px_-5px_rgba(0,0,0,0.1)] z-20">
+                <TableOfContents 
+                    headings={headings} 
+                    projectLink={entry.data.meta.link}
+                    client:load 
+                    className="h-full"
+                />
+            </nav>
+
+        </div>
+    </div>
+</ProjectLayout>
+
+<style>
+/* Utilities for scrollbar hiding if needed */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>

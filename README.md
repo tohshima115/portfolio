@@ -83,6 +83,20 @@ All commands are run from the root of the project, from a terminal:
 | `pnpm preview` | Preview your build locally |
 | `pnpm astro ...` | Run CLI commands like `astro add`, `astro check` |
 
+## 📝 コンテンツ管理 (CMS)
+
+本プロジェクトは **Keystatic** を導入しており、ブラウザ上のGUIで記事や実績を管理できます。
+
+### 管理画面へのアクセス
+1.  開発サーバーを起動: `pnpm dev`
+2.  `http://localhost:4321/keystatic` にアクセス
+
+### 実績の追加手順
+1.  Keystatic管理画面の「実績 (Projects)」を選択
+2.  「Create」ボタンをクリック
+3.  タイトル、期間、役割、技術スタックを入力し、本文を書く
+4.  保存すると `src/content/projects/` に `.mdx` ファイルが自動生成されます
+
 ## 📝 License
 
 This project is open source.
