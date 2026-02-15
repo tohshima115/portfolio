@@ -1,0 +1,234 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="System Guide | Portfolio">
+    <div class="fixed inset-0 pointer-events-none z-0 bg-neutral-950">
+        <div
+            class="absolute inset-0 opacity-[0.03]"
+            style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"
+        >
+        </div>
+    </div>
+
+    <div
+        class="relative z-10 container mx-auto px-6 py-24 max-w-7xl min-h-screen"
+    >
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+            <aside class="md:col-span-3">
+                <nav
+                    class="sticky top-24 space-y-6 font-mono text-xs tracking-widest uppercase"
+                >
+                    <div class="mb-8">
+                        <span class="block w-4 h-4 bg-yellow-400 mb-2"></span>
+                        <span
+                            class="block text-white font-bold text-lg tracking-normal"
+                            >System_Guide</span
+                        >
+                        <span class="text-neutral-600">v4.0.0</span>
+                    </div>
+
+                    <a
+                        href="#philosophy"
+                        class="block text-neutral-400 hover:text-yellow-400 transition-colors border-l-2 border-transparent hover:border-yellow-400 pl-4 py-1"
+                        >00. Philosophy</a
+                    >
+                    <a
+                        href="#typography"
+                        class="block text-neutral-400 hover:text-yellow-400 transition-colors border-l-2 border-transparent hover:border-yellow-400 pl-4 py-1"
+                        >01. Typography</a
+                    >
+                    <a
+                        href="#colors"
+                        class="block text-neutral-400 hover:text-yellow-400 transition-colors border-l-2 border-transparent hover:border-yellow-400 pl-4 py-1"
+                        >02. Colors</a
+                    >
+                    <a
+                        href="#components"
+                        class="block text-neutral-400 hover:text-yellow-400 transition-colors border-l-2 border-transparent hover:border-yellow-400 pl-4 py-1"
+                        >03. UI_Components</a
+                    >
+                </nav>
+            </aside>
+
+            <main class="md:col-span-9 space-y-32 pb-32">
+                <section id="philosophy">
+                    <p
+                        class="font-mono text-yellow-400 text-xs tracking-widest mb-4"
+                    >
+                        00. PHILOSOPHY
+                    </p>
+                    <h1
+                        class="text-5xl md:text-7xl font-black mb-8 tracking-tighter leading-none"
+                    >
+                        Functionality<br />Over<br />Decoration.
+                    </h1>
+                    <div
+                        class="max-w-2xl text-lg md:text-xl text-neutral-400 leading-relaxed space-y-6"
+                    >
+                        <p>
+                            このポートフォリオは、私がデザインエンジニアとして大切にしている「機能美」の実験場です。
+                        </p>
+                        <p>
+                            装飾のための装飾を排し、情報の階層構造とインタラクションの意味を明確にすることで、
+                            ユーザーにとって直感的かつ心地よい体験を提供することを目的としています。
+                        </p>
+                    </div>
+                </section>
+
+                <section id="typography">
+                    <p
+                        class="font-mono text-yellow-400 text-xs tracking-widest mb-8 border-b border-neutral-800 pb-2"
+                    >
+                        01. TYPOGRAPHY
+                    </p>
+                    <div class="grid gap-12">
+                        <div
+                            class="border border-neutral-800 p-8 rounded bg-neutral-900/50"
+                        >
+                            <span
+                                class="block text-neutral-500 mb-4 font-mono text-xs"
+                                >Font Family</span
+                            >
+                            <div class="text-4xl font-sans font-bold">
+                                Roboto Flex / Noto Sans JP
+                            </div>
+                            <div
+                                class="text-xl font-mono mt-2 text-neutral-400"
+                            >
+                                JetBrains Mono / monospace
+                            </div>
+                        </div>
+
+                        <div class="space-y-8">
+                            <div>
+                                <span
+                                    class="block text-neutral-500 mb-2 font-mono text-xs"
+                                    >Display (H1)</span
+                                >
+                                <div
+                                    class="text-5xl md:text-7xl font-black tracking-tighter"
+                                >
+                                    The quick brown fox
+                                </div>
+                            </div>
+                            <div>
+                                <span
+                                    class="block text-neutral-500 mb-2 font-mono text-xs"
+                                    >Heading (H2)</span
+                                >
+                                <div
+                                    class="text-3xl md:text-5xl font-bold tracking-tight"
+                                >
+                                    Jumps over the lazy dog
+                                </div>
+                            </div>
+                            <div>
+                                <span
+                                    class="block text-neutral-500 mb-2 font-mono text-xs"
+                                    >Body</span
+                                >
+                                <div
+                                    class="text-base md:text-lg text-neutral-300 max-w-2xl leading-relaxed"
+                                >
+                                    Lorem ipsum dolor sit amet, consectetur
+                                    adipiscing elit. Sed do eiusmod tempor
+                                    incididunt ut labore et dolore magna aliqua.
+                                    Ut enim ad minim veniam, quis nostrud
+                                    exercitation ullamco laboris nisi ut aliquip
+                                    ex ea commodo consequat.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="colors">
+                    <p
+                        class="font-mono text-yellow-400 text-xs tracking-widest mb-8 border-b border-neutral-800 pb-2"
+                    >
+                        02. COLOR PALETTE
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div
+                            class="aspect-square bg-neutral-950 border border-neutral-800 flex flex-col justify-end p-4 group"
+                        >
+                            <span
+                                class="text-xs font-mono text-neutral-500 mb-1"
+                                >Background</span
+                            >
+                            <span class="font-mono font-bold text-white"
+                                >#0a0a0a</span
+                            >
+                            <span
+                                class="text-[10px] text-neutral-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >oklch(0.145 0 0)</span
+                            >
+                        </div>
+                        <div
+                            class="aspect-square bg-neutral-900 border border-neutral-800 flex flex-col justify-end p-4 group"
+                        >
+                            <span
+                                class="text-xs font-mono text-neutral-500 mb-1"
+                                >Surface</span
+                            >
+                            <span class="font-mono font-bold text-white"
+                                >#171717</span
+                            >
+                        </div>
+                        <div
+                            class="aspect-square bg-yellow-400 flex flex-col justify-end p-4 text-black group"
+                        >
+                            <span
+                                class="text-xs font-mono text-black/60 mb-1 font-bold"
+                                >Accent / Primary</span
+                            >
+                            <span class="font-mono font-bold">#FACC15</span>
+                        </div>
+                        <div
+                            class="aspect-square bg-white flex flex-col justify-end p-4 text-black group"
+                        >
+                            <span
+                                class="text-xs font-mono text-black/60 mb-1 font-bold"
+                                >Text</span
+                            >
+                            <span class="font-mono font-bold">#FFFFFF</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="components">
+                    <p
+                        class="font-mono text-yellow-400 text-xs tracking-widest mb-8 border-b border-neutral-800 pb-2"
+                    >
+                        03. COMPONENTS
+                    </p>
+                    <div class="grid gap-8">
+                        <div>
+                            <span
+                                class="block text-neutral-500 mb-4 font-mono text-xs"
+                                >Primary Button</span
+                            >
+                            <button
+                                class="px-8 py-3 bg-yellow-400 text-black font-bold uppercase tracking-widest text-sm hover:bg-yellow-300 transition-colors"
+                            >
+                                ACTION
+                            </button>
+                        </div>
+                        <div>
+                            <span
+                                class="block text-neutral-500 mb-4 font-mono text-xs"
+                                >Secondary Button</span
+                            >
+                            <button
+                                class="px-8 py-3 bg-transparent border border-neutral-700 text-white hover:border-white transition-colors uppercase tracking-widest text-sm"
+                            >
+                                CANCEL
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+</BaseLayout>

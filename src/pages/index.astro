@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { PrtsInterface } from "../components/pages/home/PrtsInterface";
 ---
 
 <html lang="ja">
@@ -10,19 +11,12 @@ import "../styles/global.css";
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Shogo Toyoshima Portfolio</title>
-		<meta name="description" content="Design Engineer / UX Researcher ポートフォリオサイト" />
+		<meta
+			name="description"
+			content="Design Engineer / UX Researcher ポートフォリオサイト"
+		/>
 	</head>
 	<body class="min-h-screen">
-		<main class="container mx-auto px-4 py-16">
-			<h1 class="text-4xl font-bold mb-4">
-				Shogo Toyoshima
-			</h1>
-			<p class="text-muted-foreground text-lg mb-8">
-				Design Engineer / UX Researcher
-			</p>
-			<p class="max-w-2xl">
-				ポートフォリオサイトは現在開発中です。Tailwind CSS v4とバリアブルフォント（Roboto Flex / Noto Sans JP）を使用しています。
-			</p>
-		</main>
+		<PrtsInterface client:load />
 	</body>
 </html>

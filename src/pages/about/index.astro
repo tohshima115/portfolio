@@ -1,0 +1,104 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+    title="Profile | Shogo Toyoshima"
+    description="About me, skills, and career."
+>
+    <div class="container mx-auto px-6 py-24 max-w-4xl">
+        <header class="mb-16">
+            <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tighter">
+                PROFILE
+            </h1>
+            <p class="font-mono text-sm text-yellow-400 tracking-widest">
+                USER_DATA_ARCHIVE
+            </p>
+        </header>
+
+        <section class="mb-20">
+            <h2
+                class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-4"
+            >
+                About Me
+            </h2>
+            <div
+                class="prose prose-invert max-w-none text-lg text-neutral-300 leading-relaxed space-y-4"
+            >
+                <p>Design Engineer / UX Researcher based in Japan.</p>
+                <p>
+                    デザインとエンジニアリングの境界を越え、ユーザーにとって最適な体験を構築することを専門としています。
+                    単に美しいだけでなく、機能的で、かつ感情に訴えかけるようなインタラクションデザインを追求しています。
+                </p>
+            </div>
+        </section>
+
+        <section class="mb-20">
+            <h2
+                class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-4"
+            >
+                Skills
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {
+                    [
+                        "UX Research",
+                        "UI Design",
+                        "Frontend Dev",
+                        "Prototyping",
+                        "Astro",
+                        "React",
+                        "TypeScript",
+                        "Tailwind CSS",
+                        "Figma",
+                        "Design Systems",
+                    ].map((skill) => (
+                        <div class="p-4 bg-neutral-900 border border-neutral-800 rounded hover:border-yellow-400/50 transition-colors">
+                            <span class="font-mono text-sm text-neutral-400">
+                                {skill}
+                            </span>
+                        </div>
+                    ))
+                }
+            </div>
+        </section>
+
+        <section>
+            <h2
+                class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-4"
+            >
+                History
+            </h2>
+            <div
+                class="relative border-l border-neutral-800 ml-4 pl-8 py-4 space-y-12"
+            >
+                <div class="relative">
+                    <span
+                        class="absolute -left-[37px] top-1.5 w-4 h-4 rounded-full bg-yellow-400 border-4 border-neutral-950"
+                    ></span>
+                    <span class="font-mono text-sm text-yellow-400 block mb-1"
+                        >202X - Present</span
+                    >
+                    <h3 class="text-xl font-bold">Freelance Design Engineer</h3>
+                    <p class="text-neutral-400 mt-2">
+                        Working on various web applications and design systems.
+                    </p>
+                </div>
+                <div class="relative">
+                    <span
+                        class="absolute -left-[37px] top-1.5 w-4 h-4 rounded-full bg-neutral-700 border-4 border-neutral-950"
+                    ></span>
+                    <span class="font-mono text-sm text-neutral-500 block mb-1"
+                        >20XX - 202X</span
+                    >
+                    <h3 class="text-xl font-bold text-neutral-500">
+                        Previous Role
+                    </h3>
+                    <p class="text-neutral-600 mt-2">
+                        Description of previous experience.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+</BaseLayout>

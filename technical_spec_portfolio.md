@@ -112,41 +112,89 @@
 *   **ナビゲーション:**  
     *   実験的なUIを試しても良いが、グローバルナビゲーションだけは標準的で迷わないものにする。
 
-## **6\. ディレクトリ構造案 (Astro)**
+## **6\. サイトマップ & ディレクトリ構造 (Sitemap & Structure)**
 
-Next.jsなどの大規模開発に近い構成を採用し、共通部分とページ固有部分を明確に分離する。
+### **6.1 サイトマップ (Sitemap)**
+
+```text
+root/
+├── / (TOP)                 # [Dashboard] メインコンソール
+│
+├── /works (一覧)           # [Archives] 実績リスト
+│   └── /[slug] (詳細)      # [File] 詳細ページ
+│
+├── /blog (一覧)            # [Logs] 開発ログ & 思考ログ
+│   └── /[slug] (詳細)      # [Record] 記事ページ
+│
+├── /about                  # [Profile] プロフィール & 経歴
+│   └── /uses               # [Equipment] 使用機材・ツール一覧
+│
+├── /contact                # [Comm] お問い合わせ
+│                           # ★「遅延実行(Delayed Action)」UIの実装場所
+│
+├── /system                 # [Design System] UIガイドライン
+│                           # ★「デザインエンジニア」としての設計思想を展示
+│
+├── /rss.xml                # [Signal] 自動生成される更新通知データ
+│
+└── /404                    # [Lost] 信号途絶画面 (グリッチ演出)
+```
+
+### **6.2 ディレクトリ構造 (Directory Structure)**
 
 ```text
 src/
 ├── components/       # UIコンポーネント
 │   ├── common/       # サイト全体で使われる共通コンポーネント (Header, Footer, Buttonなど)
 │   └── pages/        # ページごとのコンポーネント
-│       ├── home/     # トップページ用 (Hero, About, Worksなどセクションごと)
-│       ├── blog/     # ブログページ用
-│       └── projects/ # 実績詳細ページ用
+│       ├── home/     # トップページ用 (PrtsInterfaceなど)
+│       ├── system/   # デザインシステム用
+│       └── ...
 ├── content/          # 記事データ (Keystatic管理)
 │   ├── blog/         # 開発ログ MDX
 │   └── projects/     # 実績 MDX
-├── data/             # 静的データ (TypeScript定数)
-│   ├── common/       # 共通データ (navigation.ts, socialLinks.ts)
-│   └── pages/        # ページ固有データ (homeData.tsなど)
-├── types/            # TypeScript型定義
-│   ├── common.ts     # 共通の型
-│   └── data.ts       # データの型定義
 ├── layouts/          # 共通レイアウト
-├── pages/            # ルーティング (Astroファイル)
+│   ├── BaseLayout.astro    # 基本レイアウト (SEO, Meta, Theme)
+│   └── ProjectLayout.astro # プロジェクト詳細用
+├── pages/            # ルーティング
 │   ├── index.astro
-│   ├── blog/[...slug].astro
-│   ├── og/[...slug].png.ts  # SatoriによるOGP生成エンドポイント
-│   └── api/          # 内部API (Astro Endpointsとして実装)
-│       ├── like.ts   # いいね機能
-│       └── stats.ts  # Analytics取得
-├── assets/           # 画像など
-└── utils/            # ヘルパー関数
-wrangler.toml         # Cloudflare Workers設定 (D1バインディング等を記述)
-keystatic.config.ts   # Keystatic設定ファイル
-astro.config.mjs      # Astro設定 (adapter: cloudflare)
+│   ├── works/
+│   │   ├── index.astro
+│   │   └── [...slug].astro
+│   ├── blog/
+│   │   ├── index.astro
+│   │   └── [...slug].astro
+│   ├── about/
+│   │   ├── index.astro
+│   │   └── uses.astro
+│   ├── contact.astro
+│   ├── system.astro  # デザインシステム
+│   └── rss.xml.ts    # RSSフィード生成
+└── ...
 ```
+
+## **7\. 実装詳細 (Implementation Details)**
+
+### **7.1 RSSフィード (Signal Feed)**
+*   **目的**: エンジニア・技術者向けへの更新通知。PRTS端末の世界観（外部への信号発信）との整合性。
+*   **実装**: `@astrojs/rss` を使用。
+*   **対象**: `/blog` および `/works` の更新情報。
+
+### **7.2 デザインシステム (System Guide)**
+*   **目的**: デザインエンジニアとしての「設計思想」を展示する。単なるコンポーネントカタログではなく、哲学（Why）を伝える場所とする。
+*   **配置**: `/system` に独立ページとして実装。フッターやシステムメニューから導線を張る。
+
+### **7.3 TOPページ (Main Console)**
+*   **メインナビゲーション**:
+    *   `[ ARCHIVES ]` -> `/works`
+    *   `[ LOGS ]` -> `/blog`
+    *   `[ PROFILE ]` -> `/about`
+    *   `[ COMM ]` -> `/contact`
+*   **サブナビゲーション**:
+    *   `[ SYSTEM_GUIDE ]` -> `/system`
+    *   `[ SIGNAL_FEED ]` -> `/rss.xml`
+*   **最新アクティビティ**:
+    *   `[ LATEST_ACTIVITY ]`: Works/Blogの最新3件へのダイレクトリンク。
 
 ## **7\. 実装・最適化ガイドライン (Implementation Guidelines)**
 
