@@ -1,0 +1,51 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+// const posts = (await getCollection('blog')).sort(
+// 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+// );
+const posts: any[] = []; // Placeholder until blog content is defined
+---
+
+<BaseLayout
+    title="Logs | Portfolio"
+    description="Development logs and thoughts."
+>
+    <div class="container mx-auto px-6 py-24 max-w-4xl min-h-screen">
+        <header class="mb-16">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="h-px flex-1 bg-neutral-800"></div>
+                <span
+                    class="font-mono text-xs text-neutral-500 uppercase tracking-widest"
+                    >System Logs</span
+                >
+                <div class="h-px flex-1 bg-neutral-800"></div>
+            </div>
+            <h1
+                class="text-4xl md:text-6xl font-black mb-4 tracking-tighter text-neutral-100 uppercase"
+            >
+                Thoughts &<br />Engineering
+            </h1>
+        </header>
+
+        <div class="space-y-8">
+            {
+                posts.length > 0 ? (
+                    posts.map((post) => (
+                        <article>{/* Post Component */}</article>
+                    ))
+                ) : (
+                    <div class="p-12 border border-dashed border-neutral-800 rounded text-center bg-neutral-900/50">
+                        <p class="text-neutral-500 font-mono mb-2 text-lg">
+                            NO RECORDS FOUND.
+                        </p>
+                        <p class="text-neutral-600 text-sm font-mono">
+                            Initialize writing protocol...
+                        </p>
+                        <div class="mt-8 inline-block animate-pulse w-2 h-4 bg-yellow-400" />
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</BaseLayout>

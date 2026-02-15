@@ -1,6 +1,6 @@
 ---
 import { getCollection } from "astro:content";
-import ProjectLayout from "@/layouts/ProjectLayout.astro";
+import BaseLayout from "@/layouts/BaseLayout.astro";
 import { ROLES } from "@/consts";
 
 const projects = await getCollection("projects");
@@ -19,7 +19,7 @@ function getRoleLabel(value: string): string {
 }
 ---
 
-<ProjectLayout title="Works | Portfolio">
+<BaseLayout title="Works | Portfolio">
     <div class="min-h-screen bg-neutral-950 text-white relative overflow-hidden">
 
         <!-- Background Grid Pattern -->
@@ -140,4 +140,4 @@ function getRoleLabel(value: string): string {
             </div>
         </main>
     </div>
-</ProjectLayout>
+</BaseLayout>

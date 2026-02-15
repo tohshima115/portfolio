@@ -12,13 +12,10 @@ export const PrtsInterface = () => {
     const springConfig = { damping: 20, stiffness: 100, mass: 1 };
 
     // Rotation Logic:
-    // rotateX: 60 degrees base tilt (looking down), +/- 10 degrees based on mouse Y
-    // rotateZ: 30 degrees base rotation, +/- 10 degrees based on mouse X (adds dynamic diagonal feel)
     const rotateX = useSpring(useTransform(mouseY, [0, 1], [20, 40]), springConfig);
     const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
 
-    // Parallax movements for floating elements
-    // As mouse moves, elements shift slightly to enhance depth
+    // Parallax movements
     const contentX = useSpring(useTransform(mouseX, [0, 1], [-20, 20]), springConfig);
     const contentY = useSpring(useTransform(mouseY, [0, 1], [-20, 20]), springConfig);
 
@@ -42,14 +39,14 @@ export const PrtsInterface = () => {
         <div
             ref={containerRef}
             className="w-full h-screen bg-neutral-950 overflow-hidden flex items-center justify-center relative"
-            style={{ perspective: "1000px" }} // Stronger perspective for depth
+            style={{ perspective: "1000px" }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Background Gradient (Fixed) */}
+            {/* Background Gradient */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_#1f1f1f_0%,_#0a0a0a_100%)] pointer-events-none z-0" />
 
-            {/* 3D Scene Container - Tilted World */}
+            {/* 3D Scene Container */}
             <motion.div
                 style={{
                     rotateX,
@@ -59,62 +56,43 @@ export const PrtsInterface = () => {
                 className="relative w-[150vw] h-[150vh] flex items-center justify-center origin-center"
             >
                 {/* === FLOOR PLANE (Base Z=0) === */}
-                <div
-                    className="absolute inset-0"
-                    style={{ transform: "translateZ(0px)" }}
-                >
+                <div className="absolute inset-0" style={{ transform: "translateZ(0px)" }}>
                     {/* Infinite Grid */}
                     <div
                         className="absolute inset-0 opacity-[0.2]"
                         style={{
-                            backgroundImage: `
-                                linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), 
-                                linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)
-                            `,
+                            backgroundImage: `linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)`,
                             backgroundSize: '80px 80px',
                             maskImage: 'radial-gradient(circle at center, black 40%, transparent 80%)'
                         }}
                     />
-
-                    {/* Large Circle Decoration on Floor */}
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/5 rounded-full" />
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border border-white/5 rounded-full border-dashed" />
                 </div>
 
-
-                {/* === SHADOW LAYER (Projected Shadows on Floor) === */}
-                {/* These are blurred dark shapes placed at Z=0 to represent shadows of floating objects */}
-
-                {/* Title Shadow */}
+                {/* === SHADOW LAYER === */}
                 <motion.div
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] bg-black/60 blur-[40px] rounded-full pointer-events-none"
                     style={{
-                        transform: "translateZ(2px) rotateZ(-30deg)", // Counter-rotate shadow slightly if needed, or just blur it
-                        x: contentX, y: contentY // Move shadow slightly for parallax
+                        transform: "translateZ(2px) rotateZ(-30deg)",
+                        x: contentX, y: contentY
                     }}
                 />
 
-
-                {/* === FLOATING CONTENT LAYER (Z=100px) === */}
+                {/* === MAIN TITLE (Z=80px) === */}
                 <motion.div
-                    className="absolute flex flex-col items-center justify-center text-center preserve-3d"
+                    className="absolute flex flex-col items-center justify-center text-center preserve-3d pointer-events-none"
                     style={{
-                        transform: "translateZ(100px)",
-                        // Counter-rotate logic could be added here if we wanted elements to face camera, 
-                        // but "bird's eye view" implies looking down at them lying flat.
-                        // We keep them flat (parallel to floor) but floating.
+                        transform: "translateZ(80px)",
+                        marginTop: "-150px" // Shift up to separate from nav
                     }}
                 >
-                    {/* Main Title Group */}
                     <div className="relative isolate">
-                        {/* Decorative geometric shape behind title */}
-                        <div className="absolute -inset-10 bg-gradient-to-tr from-yellow-400/10 to-transparent blur-2xl rounded-full opacity-30 pointer-events-none" />
+                        <div className="absolute -inset-10 bg-gradient-to-tr from-yellow-400/10 to-transparent blur-2xl rounded-full opacity-30" />
 
                         <h1
                             className="text-[8vw] md:text-[6rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 leading-[0.85] select-none"
-                            style={{
-                                textShadow: '0 0 1px rgba(255,255,255,0.5)' // Crisp edges
-                            }}
+                            style={{ textShadow: '0 0 1px rgba(255,255,255,0.5)' }}
                         >
                             SHOGO<br />TOYOSHIMA
                         </h1>
@@ -127,39 +105,69 @@ export const PrtsInterface = () => {
                             <div className="h-[2px] w-12 bg-yellow-400"></div>
                         </div>
                     </div>
-
-                    {/* Interactive Elements Group - Floating even higher (Z=150) relative to this layer? 
-                        No, let's just margin them out. 
-                        Actually, let's give them their own Z for more depth.
-                    */}
                 </motion.div>
 
-
-                {/* === HIGHER FLOATING UI LAYER (Z=180px) === */}
+                {/* === INTERACTIVE UI LAYER (Z=160px) === */}
                 <motion.div
-                    className="absolute flex gap-8 pointer-events-auto"
-                    style={{
-                        transform: "translateZ(180px)",
-                        marginTop: "300px" // Offset from center roughly
-                    }}
+                    className="absolute inset-0 flex flex-col items-center justify-center pointer-events-auto"
+                    style={{ transform: "translateZ(160px)" }}
                 >
-                    <a href="/works" className="group">
-                        {/* Button Shadow (Local) */}
-                        <div className="absolute top-10 left-0 w-full h-full bg-black/50 blur-xl transition-all duration-300 group-hover:blur-2xl group-hover:scale-110" />
+                    {/* HUD Elements Container - Using absolute positioning relative to content center roughly */}
+                    <div className="relative w-[90vw] max-w-7xl h-[80vh] flex flex-col justify-between">
 
-                        <div className="relative px-10 py-4 bg-neutral-900 border border-white/20 hover:border-yellow-400 text-white hover:text-yellow-400 transition-all duration-300 rounded-[2px] font-mono text-sm tracking-widest uppercase flex items-center gap-3 group-hover:-translate-y-2">
-                            <span className="w-2 h-2 bg-yellow-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                            View Works
+                        {/* Top Right: Status & Feed */}
+                        <div className="self-end flex flex-col sm:flex-row gap-4 items-end sm:items-center mt-20 mr-10 opacity-80 hover:opacity-100 transition-opacity">
+                            <a href="/rss.xml" className="group px-4 py-2 bg-black/40 border border-white/10 rounded-full backdrop-blur-md shadow-lg hover:border-yellow-400 transition-colors flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-orange-500 rounded-full group-hover:animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                                <span className="font-mono text-[10px] text-neutral-400 group-hover:text-yellow-400 tracking-widest">SIGNAL_FEED</span>
+                            </a>
+                            <div className="px-4 py-2 bg-black/40 border border-white/10 rounded-full backdrop-blur-md shadow-lg flex items-center gap-3">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
+                                </span>
+                                <span className="font-mono text-[10px] text-neutral-400 tracking-widest">SYSTEM ONLINE</span>
+                            </div>
                         </div>
-                    </a>
 
-                    <a href="/about" className="group">
-                        <div className="absolute top-10 left-0 w-full h-full bg-black/50 blur-xl transition-all duration-300 group-hover:blur-2xl group-hover:scale-110" />
-
-                        <div className="relative px-10 py-4 bg-neutral-900 border border-white/20 hover:border-white text-neutral-400 hover:text-white transition-all duration-300 rounded-[2px] font-mono text-sm tracking-widest uppercase flex items-center gap-3 group-hover:-translate-y-2">
-                            About Me
+                        {/* Bottom Left: System Guide */}
+                        <div className="absolute bottom-20 left-10 hidden lg:block">
+                            <a href="/system" className="font-mono text-[10px] text-neutral-500 hover:text-yellow-400 tracking-[0.2em] transition-colors border-b border-transparent hover:border-yellow-400 pb-1 flex items-center gap-2 group">
+                                <span className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0">{">>"}</span>
+                                SYSTEM_GUIDE
+                            </a>
                         </div>
-                    </a>
+
+                        {/* Bottom Center: Main Navigation */}
+                        <div className="mt-auto mb-20 self-center w-full max-w-4xl px-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {[
+                                    { label: "ARCHIVES", href: "/works", sub: "Projects" },
+                                    { label: "LOGS", href: "/blog", sub: "Dev & Thoughts" },
+                                    { label: "PROFILE", href: "/about", sub: "Who I Am" },
+                                    { label: "COMM", href: "/contact", sub: "Contact" },
+                                ].map((item) => (
+                                    <a key={item.label} href={item.href} className="group relative w-full aspect-[2/1] perspective-500">
+                                        {/* Shadow on floor from button */}
+                                        <div className="absolute top-20 left-4 right-4 h-4 bg-black/60 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+                                        {/* Button Body */}
+                                        <div className="absolute inset-0 bg-neutral-900/90 border border-white/10 group-hover:border-yellow-400/60 transition-all duration-300 flex flex-col items-center justify-center gap-1 shadow-2xl group-hover:shadow-[0_0_30px_rgba(250,204,21,0.15)] group-hover:-translate-y-2 group-hover:scale-105 backdrop-blur-sm overflow-hidden">
+                                            {/* Scanline background */}
+                                            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "linear-gradient(transparent 50%, rgba(0,0,0,0.5) 50%)", backgroundSize: "100% 4px" }} />
+
+                                            <span className="font-mono text-sm md:text-base tracking-widest text-neutral-300 group-hover:text-yellow-400 transition-colors z-10 font-bold">{item.label}</span>
+                                            <span className="text-[10px] text-neutral-500 uppercase tracking-wide group-hover:text-neutral-400 transition-colors z-10">{item.sub}</span>
+                                        </div>
+
+                                        {/* Corner Accents */}
+                                        <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-white/20 group-hover:border-yellow-400 transition-colors duration-300" />
+                                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-white/20 group-hover:border-yellow-400 transition-colors duration-300" />
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </motion.div>
 
                 {/* === FLOATING DECORATIONS (Z=50px) === */}
@@ -167,17 +175,11 @@ export const PrtsInterface = () => {
                     className="absolute pointer-events-none"
                     style={{ transform: "translateZ(50px)" }}
                 >
-                    {/* Floating Code Snippet or Abstract Tech Text */}
                     <div className="absolute -top-[300px] -right-[400px] text-right opacity-30 font-mono text-xs leading-relaxed text-yellow-400/80">
                         <p>SYSTEM_READY</p>
-                        <p>INITIALIZING_RENDER_2.0</p>
+                        <p>INITIALIZING_RENDER_3.0</p>
                         <p>LOADING_MODULES...</p>
                         <p>ACCESS_GRANTED</p>
-                    </div>
-
-                    <div className="absolute -bottom-[300px] -left-[400px] text-left opacity-30 font-mono text-xs leading-relaxed text-white/50">
-                        <p>COORDINATES: {Math.round(mouseX.get() * 100)}, {Math.round(mouseY.get() * 100)}</p>
-                        <p>DEPTH_BUFFER: ENABLED</p>
                     </div>
                 </div>
 
