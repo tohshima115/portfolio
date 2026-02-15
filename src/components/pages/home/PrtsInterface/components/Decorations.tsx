@@ -32,13 +32,13 @@ export const Decorations = ({ mouseX, mouseY }: DecorationsProps) => {
             className="absolute pointer-events-none"
             style={{ transform: "translateZ(50px)" }}
         >
-            <div className="absolute -top-[300px] -right-[400px] text-right opacity-30 font-mono text-xs leading-relaxed text-yellow-400/80">
+            <div className="absolute -top-[300px] -right-[400px] text-right opacity-30 font-mono text-xs leading-relaxed text-accent/80">
                 <p>SYSTEM_READY</p>
                 <p>INITIALIZING_RENDER_3.0</p>
                 <p>LOADING_MODULES...</p>
                 <p>ACCESS_GRANTED</p>
             </div>
-            <div className="absolute -bottom-[300px] -left-[400px] text-left opacity-30 font-mono text-xs leading-relaxed text-white/50">
+            <div className="absolute -bottom-[300px] -left-[400px] text-left opacity-30 font-mono text-xs leading-relaxed text-muted-foreground">
                 <p ref={coordRef}>COORDINATES: 50, 50</p>
                 <p>DEPTH_BUFFER: ENABLED</p>
             </div>

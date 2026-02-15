@@ -43,13 +43,13 @@ export const PrtsInterface = () => {
     return (
         <div
             ref={containerRef}
-            className="w-full h-screen bg-neutral-950 overflow-hidden flex items-center justify-center relative"
+            className="w-full h-screen bg-background overflow-hidden flex items-center justify-center relative"
             style={{ perspective: "1000px" }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
             {/* Background Gradient */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_#1f1f1f_0%,_#0a0a0a_100%)] pointer-events-none z-0" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--color-background)_0%,var(--color-muted)_100%)] pointer-events-none z-0" />
 
             {/* 3D Scene Container */}
             <motion.div
