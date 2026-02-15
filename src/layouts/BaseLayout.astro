@@ -16,7 +16,7 @@ const {
 ---
 
 <!DOCTYPE html>
-<html lang="ja" class="scroll-smooth bg-neutral-950 text-white">
+<html lang="ja" class="scroll-smooth bg-background text-foreground">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
@@ -49,19 +49,19 @@ const {
                 height: 8px;
             }
             ::-webkit-scrollbar-track {
-                background: #0a0a0a;
+                background: var(--color-background);
             }
             ::-webkit-scrollbar-thumb {
-                background: #333;
+                background: var(--color-muted-foreground);
                 border-radius: 4px;
             }
             ::-webkit-scrollbar-thumb:hover {
-                background: #555;
+                background: var(--color-accent);
             }
         </style>
     </head>
     <body
-        class="min-h-screen relative overflow-x-hidden selection:bg-yellow-400 selection:text-black font-sans antialiased"
+        class="min-h-screen relative overflow-x-hidden selection:bg-accent selection:text-accent-foreground font-sans antialiased"
     >
         <slot />
     </body>
