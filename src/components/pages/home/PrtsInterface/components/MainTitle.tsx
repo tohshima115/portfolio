@@ -109,9 +109,9 @@ export const MainTitle = () => {
                 }}
             >
                 {/* テキスト見切れ対策: pr-8 (padding right) を追加 */}
-                <div className="overflow-hidden pl-2 pr-8">
+                <div className="overflow-hidden pl-2 pr-8" style={{ contain: "paint" }}>
                     <motion.div
-                        initial={{ x: "-100%", opacity: 0 }}
+                        initial={{ x: "-100%", opacity: 0.01 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{
                             delay: TIMING.textAppearStart,

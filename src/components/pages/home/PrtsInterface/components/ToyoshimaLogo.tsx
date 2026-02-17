@@ -82,21 +82,6 @@ export const ToyoshimaLogo = ({
         };
     }, [initialDelay, phase3Delay]);
 
-    // コンテナ：マスクアニメーション
-    const containerVariants: Variants = {
-        hidden: {
-            clipPath: "inset(25% 25% 25% 25%)",
-        },
-        visible: {
-            clipPath: "inset(-3% -3% -3% -3%)",
-            transition: {
-                delay: timing.expand, // 計算された絶対時間
-                duration: ANIMATION_CONFIG.expandDuration,
-                ease: EASING.drop as any // ユーザー指定のベジェを使用
-            }
-        }
-    };
-
     // 中央セル (Index 4): 明滅
     const centerBlinkVariants: Variants = {
         hidden: { opacity: 0 },
@@ -155,8 +140,14 @@ export const ToyoshimaLogo = ({
     return (
         <motion.div
             className={`relative grid grid-cols-3 ${className}`}
-            style={{ gap: GAP, willChange: "clip-path" }}
-            variants={containerVariants}
+            style={{
+                gap: GAP,
+                willChange: "clip-path",
+                // clipPath アニメーションを CSS に委譲し、メインスレッドの JS 負荷を削減。
+                // framer-motion の JS 駆動だと毎フレーム repaint + JS 実行が必要だが、
+                // CSS animation はブラウザのネイティブスケジューラで最適化される。
+                animation: `logo-clip-reveal ${ANIMATION_CONFIG.expandDuration}s cubic-bezier(0.22, 1, 0.36, 1) ${timing.expand}s both`,
+            }}
             initial="hidden"
             animate="visible"
         >
