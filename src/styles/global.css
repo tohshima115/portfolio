@@ -47,6 +47,9 @@
   --color-primary: oklch(0.20 0.02 100);
   --color-primary-foreground: oklch(0.98 0.00 0);
 
+  /* Logo Color (#32CD32 equivalent) */
+  --color-logo: oklch(0.75 0.20 135);
+
   /* Accent Colors (Yellow override) */
   --color-accent: oklch(0.82 0.18 85);
   --color-accent-foreground: oklch(0.20 0.02 100);
