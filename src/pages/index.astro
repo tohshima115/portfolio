@@ -1,6 +1,35 @@
 ---
+import { getCollection } from "astro:content";
 import "../styles/global.css";
 import { PrtsInterface } from "../components/pages/home/PrtsInterface";
+
+const projects = await getCollection("projects");
+const blogPosts = await getCollection("blog");
+
+// Merge and sort updates
+const allUpdates = [
+	...projects.map((p) => ({
+		title: p.data.title,
+		date: p.data.meta.updatedDate
+			? new Date(p.data.meta.updatedDate)
+			: new Date(p.data.meta.date),
+		url: `/works/${p.slug}`,
+		type: "works" as const,
+	})),
+	...blogPosts.map((b) => ({
+		title: b.data.title,
+		date: b.data.updatedDate
+			? new Date(b.data.updatedDate)
+			: new Date(b.data.pubDate),
+		url: `/blog/${b.slug}`,
+		type: "blog" as const,
+	})),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+
+const latestUpdates = allUpdates.slice(0, 3).map((u) => ({
+	...u,
+	date: u.date.toISOString(), // passed via props, keep as string
+}));
 ---
 
 <html lang="ja">
@@ -17,6 +46,6 @@ import { PrtsInterface } from "../components/pages/home/PrtsInterface";
 		/>
 	</head>
 	<body class="min-h-screen">
-		<PrtsInterface client:load />
+		<PrtsInterface client:load updates={latestUpdates} />
 	</body>
 </html>

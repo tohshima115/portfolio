@@ -1,13 +1,22 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { FloorPlane } from './components/FloorPlane';
 import { ShadowLayer } from './components/ShadowLayer';
 import { MainTitle } from './components/MainTitle';
 import { NavigationLayer } from './components/NavigationLayer';
 import { Decorations } from './components/Decorations';
+import { HoverBackground } from './components/HoverBackground';
 
-export const PrtsInterface = () => {
+export interface UpdateItem {
+    title: string;
+    date: string; // ISO string to accommodate SSR serialization
+    url: string;
+    type: 'works' | 'blog';
+}
+
+export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     // Mouse position
     const mouseX = useMotionValue(0.5);
@@ -16,13 +25,13 @@ export const PrtsInterface = () => {
     // Spring config for smooth movement
     const springConfig = { damping: 20, stiffness: 100, mass: 1 };
 
-    // Rotation Logic:
-    const rotateX = useSpring(useTransform(mouseY, [0, 1], [20, 40]), springConfig);
-    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
+    // Rotation Logic (Weakened):
+    const rotateX = useSpring(useTransform(mouseY, [0, 1], [18, 22]), springConfig);
+    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-2, 2]), springConfig);
 
-    // Parallax movements
-    const contentX = useSpring(useTransform(mouseX, [0, 1], [-20, 20]), springConfig);
-    const contentY = useSpring(useTransform(mouseY, [0, 1], [-20, 20]), springConfig);
+    // Parallax movements (Weakened):
+    const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
+    const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
 
     const handleMouseMove = (e: React.MouseEvent) => {
         if (!containerRef.current) return;
@@ -48,8 +57,7 @@ export const PrtsInterface = () => {
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* Background Gradient */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,var(--color-background)_0%,var(--color-muted)_100%)] pointer-events-none z-0" />
+            <HoverBackground hoveredItem={hoveredItem} />
 
             {/* 3D Scene Container */}
             <motion.div
@@ -63,7 +71,7 @@ export const PrtsInterface = () => {
                 <FloorPlane />
                 <ShadowLayer contentX={contentX} contentY={contentY} />
                 <MainTitle />
-                <NavigationLayer />
+                <NavigationLayer updates={updates} onHoverItem={setHoveredItem} />
                 <Decorations mouseX={mouseX} mouseY={mouseY} />
             </motion.div>
         </div>

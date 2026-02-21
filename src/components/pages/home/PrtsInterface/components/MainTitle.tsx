@@ -4,8 +4,6 @@ import { ToyoshimaLogo } from './ToyoshimaLogo';
 import { MAIN_TITLE_TIMING_MS, msToS, DESKTOP_LOGO_TIMING, MOBILE_LOGO_TIMING } from '../config/animationTiming';
 
 export const MainTitle = () => {
-    // カスタムベジェ (だんだん早くなってだんだんゆっくりになる = Sigmoid-like)
-    const moveEase = [0.65, 0, 0.35, 1] as const;
 
     // レイアウト定数 (Desktop)
     // Logoの正確なサイズ計算
@@ -81,7 +79,7 @@ export const MainTitle = () => {
                 transition={{
                     delay: msToS(MAIN_TITLE_TIMING_MS.desktop.logoMoveStart),
                     duration: msToS(MAIN_TITLE_TIMING_MS.desktop.logoMoveDuration),
-                    ease: moveEase
+                    ease: [0.83, 0, 0.17, 1]  // var(--ease-in-out-quint) 同等
                 }}
             >
                 <div
@@ -109,7 +107,7 @@ export const MainTitle = () => {
                         transition={{
                             delay: msToS(MAIN_TITLE_TIMING_MS.desktop.textAppearStart),
                             duration: msToS(MAIN_TITLE_TIMING_MS.desktop.textAppearDuration),
-                            ease: "easeOut"
+                            ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint) 同等
                         }}
                         style={{ willChange: "transform, opacity" }} // パフォーマンス最適化
                     >
@@ -151,7 +149,8 @@ export const MainTitle = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
                         delay: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearStart),
-                        duration: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearDuration)
+                        duration: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearDuration),
+                        ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint) 同等
                     }}
                 >
                     <h1 className="text-[12vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85]">

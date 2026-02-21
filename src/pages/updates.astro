@@ -1,0 +1,82 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getCollection } from "astro:content";
+
+const projects = await getCollection("projects");
+const blogPosts = await getCollection("blog");
+
+const allUpdates = [
+    ...projects.map((p) => ({
+        title: p.data.title,
+        date: p.data.meta.updatedDate
+            ? new Date(p.data.meta.updatedDate)
+            : new Date(p.data.meta.date),
+        url: `/works/${p.slug}`,
+        type: "works" as const,
+    })),
+    ...blogPosts.map((b) => ({
+        title: b.data.title,
+        date: b.data.updatedDate
+            ? new Date(b.data.updatedDate)
+            : new Date(b.data.pubDate),
+        url: `/blog/${b.slug}`,
+        type: "blog" as const,
+    })),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+---
+
+<BaseLayout
+    title="System Updates | Shogo Toyoshima"
+    description="最新の更新情報一覧"
+>
+    <main class="max-w-3xl mx-auto px-6 py-24 min-h-screen">
+        <a
+            href="/"
+            class="inline-block text-muted-foreground hover:text-foreground mb-12 font-mono text-sm transition-colors border border-border/50 px-4 py-2 rounded-full hover:bg-muted/30"
+        >
+            ← RETURN TO DASHBOARD
+        </a>
+
+        <h1
+            class="text-4xl font-bold mb-12 font-mono tracking-tight text-foreground/90"
+        >
+            SYSTEM UPDATES
+        </h1>
+
+        <div class="space-y-4">
+            {
+                allUpdates.map((update) => (
+                    <a
+                        href={update.url}
+                        class="block p-6 rounded-2xl border border-border bg-card/50 backdrop-blur-sm hover:bg-muted/30 transition-all duration-300 group hover:border-accent shadow-sm"
+                    >
+                        <div class="flex items-center gap-4 mb-2">
+                            <span
+                                class={`px-2 py-0.5 rounded text-xs font-mono border shadow-[inset_0_0_8px_rgba(0,0,0,0.1)] ${
+                                    update.type === "blog"
+                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                                        : "bg-green-500/10 text-green-400 border-green-500/30"
+                                }`}
+                            >
+                                {update.type.toUpperCase()}
+                            </span>
+                            <time class="text-sm text-muted-foreground font-mono group-hover:text-foreground/80 transition-colors">
+                                {update.date.toISOString().split("T")[0]}
+                            </time>
+                        </div>
+                        <h2 class="text-xl font-medium text-foreground group-hover:text-accent transition-colors">
+                            {update.title}
+                        </h2>
+                    </a>
+                ))
+            }
+            {
+                allUpdates.length === 0 && (
+                    <p class="text-muted-foreground font-mono">
+                        NO RECORDS FOUND
+                    </p>
+                )
+            }
+        </div>
+    </main>
+</BaseLayout>

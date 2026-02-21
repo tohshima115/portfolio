@@ -5,7 +5,7 @@ import { msToS, type LogoTimingProfile } from '../config/animationTiming';
 // イージング設定 (Easing Functions)
 const EASING = {
     fill: "circOut",
-    drop: [0.22, 1, 0.36, 1], // カスタムベジェ曲線 (expandにも使用)
+    drop: [0.83, 0, 0.17, 1], // カスタムベジェ曲線 (var(--ease-in-out-quint) 同等)
 } as const;
 
 interface ToyoshimaLogoProps {
@@ -84,7 +84,7 @@ export const ToyoshimaLogo = ({
                 // clipPath アニメーションを CSS に委譲し、メインスレッドの JS 負荷を削減。
                 // framer-motion の JS 駆動だと毎フレーム repaint + JS 実行が必要だが、
                 // CSS animation はブラウザのネイティブスケジューラで最適化される。
-                animation: `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s cubic-bezier(0.22, 1, 0.36, 1) ${msToS(timingProfile.expand.start)}s both`,
+                animation: `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s var(--ease-in-out-quint) ${msToS(timingProfile.expand.start)}s both`,
             }}
             initial="hidden"
             animate="visible"

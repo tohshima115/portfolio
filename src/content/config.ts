@@ -10,6 +10,7 @@ const projects = defineCollection({
             thumbnail: image().optional(), // Allow optional for initial creation or missing image
             icon: image().optional(), // Optional icon for navigation
             date: z.string().or(z.date()), // Keystatic might save as string
+            updatedDate: z.coerce.date().optional(), // Added for tracking updates
             duration: z.string(),
             link: z.string().url().optional(),
         }),
@@ -20,6 +21,17 @@ const projects = defineCollection({
     }),
 });
 
+const blog = defineCollection({
+    type: 'content',
+    schema: z.object({
+        title: z.string(),
+        description: z.string(),
+        pubDate: z.coerce.date(),
+        updatedDate: z.coerce.date().optional(),
+    }),
+});
+
 export const collections = {
     projects,
+    blog,
 };

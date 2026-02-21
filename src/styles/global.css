@@ -61,6 +61,8 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
   --radius-full: 9999px;
+  /* Transitions / Easings */
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
 }
 
 /* -----------------------------------------------------------------------------
@@ -154,6 +156,11 @@
    CSS-driven for compositor-thread optimization (avoids main-thread JS per frame)
    ----------------------------------------------------------------------------- */
 @keyframes logo-clip-reveal {
-    from { clip-path: inset(25% 25% 25% 25%); }
-    to { clip-path: inset(-3% -3% -3% -3%); }
+  from {
+    clip-path: inset(25% 25% 25% 25%);
+  }
+
+  to {
+    clip-path: inset(-3% -3% -3% -3%);
+  }
 }

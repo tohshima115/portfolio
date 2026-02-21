@@ -1,10 +1,11 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 
-// const posts = (await getCollection('blog')).sort(
-// 	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-// );
-const posts: any[] = []; // Placeholder until blog content is defined
+import { getCollection } from "astro:content";
+
+const posts = (await getCollection("blog")).sort(
+    (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
 ---
 
 <BaseLayout
@@ -32,7 +33,21 @@ const posts: any[] = []; // Placeholder until blog content is defined
             {
                 posts.length > 0 ? (
                     posts.map((post) => (
-                        <article>{/* Post Component */}</article>
+                        <article class="border border-neutral-800 p-6 rounded hover:bg-neutral-900/50 transition-colors">
+                            <a href={`/blog/${post.slug}`} class="block">
+                                <h2 class="text-2xl font-bold text-neutral-200 mb-2">
+                                    {post.data.title}
+                                </h2>
+                                <p class="text-neutral-500 text-sm mb-4">
+                                    {new Date(
+                                        post.data.pubDate
+                                    ).toLocaleDateString("ja-JP")}
+                                </p>
+                                <p class="text-neutral-400">
+                                    {post.data.description}
+                                </p>
+                            </a>
+                        </article>
                     ))
                 ) : (
                     <div class="p-12 border border-dashed border-neutral-800 rounded text-center bg-neutral-900/50">

@@ -27,8 +27,8 @@ export const MAIN_TITLE_TIMING_MS = {
         logoMoveDuration: 800,
 
         // 肩書きテキスト群の出現
-        textAppearStart: 3600,
-        textAppearDuration: 600,
+        textAppearStart: 3400,
+        textAppearDuration: 800,
 
         // ロゴ後半: 上部両サイドの塗りつぶし
         logoFillSideStart: 2400,
