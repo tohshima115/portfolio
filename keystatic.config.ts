@@ -27,6 +27,7 @@ export default config({
                         publicPath: '../../assets/projects/',
                     }),
                     date: fields.date({ label: 'プロジェクト完了年月' }),
+                    updatedDate: fields.date({ label: '最終更新日', description: '更新一覧に表示される日時' }),
                     duration: fields.text({ label: '制作期間 (例: 3ヶ月)' }),
                     link: fields.url({ label: 'プロジェクトURL (任意)' }),
                 }, { label: '基本情報' }),

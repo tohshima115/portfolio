@@ -1,7 +1,11 @@
 import React from 'react';
 import { NavButton } from './NavButton';
 
-export const NavigationGrid = () => {
+interface NavigationGridProps {
+    onHoverItem?: (label: string | null) => void;
+}
+
+export const NavigationGrid = ({ onHoverItem }: NavigationGridProps) => {
     const navItems = [
         { label: "ARCHIVES", href: "/works", sub: "Projects" },
         { label: "LOGS", href: "/blog", sub: "Dev & Thoughts" },
@@ -11,9 +15,9 @@ export const NavigationGrid = () => {
 
     return (
         <div className="mt-auto mb-20 self-center w-full max-w-3xl px-6 pointer-events-auto">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-4 w-full">
                 {navItems.map((item) => (
-                    <NavButton key={item.label} {...item} />
+                    <NavButton key={item.label} {...item} onHover={onHoverItem} />
                 ))}
             </div>
         </div>

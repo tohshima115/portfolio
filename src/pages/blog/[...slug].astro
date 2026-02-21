@@ -1,0 +1,48 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "@/layouts/BaseLayout.astro";
+
+export async function getStaticPaths() {
+    const posts = await getCollection("blog");
+    return posts.map((post) => ({
+        params: { slug: post.slug },
+        props: post,
+    }));
+}
+
+const post = Astro.props;
+const { Content } = await post.render();
+---
+
+<BaseLayout
+    title={`${post.data.title} | Portfolio`}
+    description={post.data.description}
+>
+    <div class="container mx-auto px-6 py-24 max-w-3xl min-h-screen">
+        <header class="mb-12 border-b border-neutral-800 pb-8">
+            <a
+                href="/blog"
+                class="text-neutral-500 hover:text-neutral-300 font-mono text-sm mb-8 inline-block transition-colors"
+            >
+                ← BACK TO LOGS
+            </a>
+            <h1
+                class="text-3xl md:text-5xl font-bold mb-4 text-neutral-100 leading-tight"
+            >
+                {post.data.title}
+            </h1>
+            <div
+                class="flex items-center gap-4 text-neutral-500 font-mono text-sm"
+            >
+                <time datetime={post.data.pubDate.toISOString()}>
+                    {new Date(post.data.pubDate).toLocaleDateString("ja-JP")}
+                </time>
+            </div>
+        </header>
+        <article
+            class="[&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mt-8 [&>h1]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-6 [&>h2]:mb-3 [&>p]:mb-4 [&>p]:leading-relaxed [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4"
+        >
+            <Content />
+        </article>
+    </div>
+</BaseLayout>
