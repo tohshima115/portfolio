@@ -1,16 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ToyoshimaLogo } from './ToyoshimaLogo';
+import { MAIN_TITLE_TIMING_MS, msToS, DESKTOP_LOGO_TIMING, MOBILE_LOGO_TIMING } from '../config/animationTiming';
 
 export const MainTitle = () => {
-    // タイミング調整
-    const TIMING = {
-        logoMoveStart: 1.4,
-        logoMoveDuration: 0.8,
-        textAppearStart: 1.6,
-        textAppearDuration: 0.8,
-    };
-
     // カスタムベジェ (だんだん早くなってだんだんゆっくりになる = Sigmoid-like)
     const moveEase = [0.65, 0, 0.35, 1] as const;
 
@@ -86,8 +79,8 @@ export const MainTitle = () => {
                     x: `calc(-50% + ${isReady ? logoFinalX : 0}px)`
                 }}
                 transition={{
-                    delay: TIMING.logoMoveStart,
-                    duration: TIMING.logoMoveDuration,
+                    delay: msToS(MAIN_TITLE_TIMING_MS.desktop.logoMoveStart),
+                    duration: msToS(MAIN_TITLE_TIMING_MS.desktop.logoMoveDuration),
                     ease: moveEase
                 }}
             >
@@ -95,7 +88,7 @@ export const MainTitle = () => {
                     className="absolute inset-0 bg-accent/20 blur-3xl rounded-full"
                     style={{ transform: "translateZ(0)" }} // GPUレイヤー化
                 />
-                <ToyoshimaLogo unit={UNIT} initialDelay={0} phase3Delay={-0.1} />
+                <ToyoshimaLogo unit={UNIT} timingProfile={DESKTOP_LOGO_TIMING} />
             </motion.div>
 
             {/* Title Section */}
@@ -114,8 +107,8 @@ export const MainTitle = () => {
                         initial={{ x: "-100%", opacity: 0.01 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{
-                            delay: TIMING.textAppearStart,
-                            duration: TIMING.textAppearDuration,
+                            delay: msToS(MAIN_TITLE_TIMING_MS.desktop.textAppearStart),
+                            duration: msToS(MAIN_TITLE_TIMING_MS.desktop.textAppearDuration),
                             ease: "easeOut"
                         }}
                         style={{ willChange: "transform, opacity" }} // パフォーマンス最適化
@@ -149,14 +142,17 @@ export const MainTitle = () => {
             >
                 <div className="relative z-20 mb-8">
                     <div className="absolute inset-0 bg-accent/20 blur-3xl rounded-full" />
-                    <ToyoshimaLogo unit={6} initialDelay={0} phase3Delay={0.5} />
+                    <ToyoshimaLogo unit={6} timingProfile={MOBILE_LOGO_TIMING} />
                 </div>
 
                 <motion.div
                     className="flex flex-col items-center text-center z-10"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 3.5, duration: 0.8 }}
+                    transition={{
+                        delay: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearStart),
+                        duration: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearDuration)
+                    }}
                 >
                     <h1 className="text-[12vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85]">
                         SHOGO<br />TOYOSHIMA
