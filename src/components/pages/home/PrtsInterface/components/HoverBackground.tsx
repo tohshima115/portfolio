@@ -6,12 +6,11 @@ interface HoverBackgroundProps {
 }
 
 export const HoverBackground: React.FC<HoverBackgroundProps> = ({ hoveredItem }) => {
-    // 将来的にここを画像やvideo要素に置き換えることを想定したマッピング
     const backgrounds: Record<string, string> = {
-        "ARCHIVES": "bg-blue-900/60",
-        "LOGS": "bg-emerald-900/60",
-        "PROFILE": "bg-purple-900/60",
-        "COMM": "bg-rose-900/60",
+        "PROJECTS": "bg-blue-900/60",
+        "BLOG": "bg-emerald-900/60",
+        "ABOUT": "bg-purple-900/60",
+        "CONTACT": "bg-rose-900/60",
     };
 
     return (
