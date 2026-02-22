@@ -26,8 +26,7 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const springConfig = { damping: 20, stiffness: 100, mass: 1 };
 
     // Rotation Logic (Weakened):
-    const rotateX = useSpring(useTransform(mouseY, [0, 1], [18, 22]), springConfig);
-    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-2, 2]), springConfig);
+    const rotateX = useSpring(useTransform(mouseY, [0, 1], [16, 24]), springConfig);
 
     // Parallax movements (Weakened):
     const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
@@ -63,7 +62,7 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             <motion.div
                 style={{
                     rotateX,
-                    rotateZ,
+                    rotateZ: 0,
                     transformStyle: "preserve-3d",
                 }}
                 className="relative w-[150vw] h-[150vh] flex items-center justify-center origin-center"

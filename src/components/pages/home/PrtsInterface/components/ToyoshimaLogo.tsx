@@ -84,7 +84,8 @@ export const ToyoshimaLogo = ({
                 // clipPath アニメーションを CSS に委譲し、メインスレッドの JS 負荷を削減。
                 // framer-motion の JS 駆動だと毎フレーム repaint + JS 実行が必要だが、
                 // CSS animation はブラウザのネイティブスケジューラで最適化される。
-                animation: `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s var(--ease-in-out-quint) ${msToS(timingProfile.expand.start)}s both`,
+                // * 要素の配置上、空白期間をスキップして後半に近い挙動にするため、イージングをease-out相当に調整
+                animation: `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s cubic-bezier(0.83, 0, 0.17, 1) ${msToS(timingProfile.expand.start)}s both`,
             }}
             initial="hidden"
             animate="visible"

@@ -56,6 +56,15 @@ export const MAIN_TITLE_TIMING_MS = {
         // ロゴ後半: 中央列のドロップダウン
         logoDropCenterStart: 4200,
         logoDropCenterDuration: 800,
+    },
+
+    // ==========================================
+    // 4. Navigation
+    // ==========================================
+    navigation: {
+        appearStart: 4800,
+        appearDuration: 800,
+        stagger: 200,
     }
 } as const;
 

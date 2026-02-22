@@ -53,7 +53,6 @@ export const MainTitle = () => {
             className="absolute left-1/2 top-1/2 pointer-events-none"
             style={{
                 transform: "translate(-50%, -50%) translateZ(80px)",
-                marginTop: "-150px",
                 width: 0, height: 0,
                 display: "flex",
                 alignItems: "center",
@@ -136,7 +135,6 @@ export const MainTitle = () => {
             {/* ---------------- Mobile Layout ---------------- */}
             <motion.div
                 className="md:hidden flex flex-col items-center justify-center p-4 relative"
-                style={{ marginTop: "-200px" }}
             >
                 <div className="relative z-20 mb-8">
                     <div className="absolute inset-0 bg-accent/20 blur-3xl rounded-full" />
