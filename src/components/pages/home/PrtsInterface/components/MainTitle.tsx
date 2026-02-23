@@ -53,6 +53,7 @@ export const MainTitle = () => {
             className="absolute left-1/2 top-1/2 pointer-events-none"
             style={{
                 transform: "translate(-50%, -50%) translateZ(80px)",
+                marginTop: "-40px", // 3Dパースによる視覚的なズレ（若干下に見える現象）を補正
                 width: 0, height: 0,
                 display: "flex",
                 alignItems: "center",
@@ -117,7 +118,7 @@ export const MainTitle = () => {
 
                         <h1
                             className="text-[6rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85] select-none"
-                            style={{ textShadow: '0 0 1px rgba(0,0,0,0.1)' }}
+                            style={{ textShadow: '0 0 1px rgba(0,0,0,0.1)', fontWeight: 900 }}
                         >
                             TOYO<br />SHIMA
                         </h1>
@@ -151,7 +152,10 @@ export const MainTitle = () => {
                         ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint) 同等
                     }}
                 >
-                    <h1 className="text-[12vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85]">
+                    <h1
+                        className="text-[12vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85]"
+                        style={{ fontWeight: 900 }}
+                    >
                         SHOGO<br />TOYOSHIMA
                     </h1>
                     <div className="mt-4 flex items-center gap-4 justify-center">

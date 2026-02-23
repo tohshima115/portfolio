@@ -18,6 +18,10 @@ export const MAIN_TITLE_TIMING_MS = {
     logoExpandStart: 1000,
     logoExpandDuration: 1000,
 
+    // カメラのズームアウト (タイトル表示と同時期)
+    cameraZoomOutStart: 3400,
+    cameraZoomOutDuration: 1200,
+
     // ==========================================
     // 2. Desktop (md以上)
     // ==========================================

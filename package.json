@@ -18,6 +18,10 @@
     "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.17.1",
     "clsx": "^2.1.1",
+    "d3-drag": "^3.0.0",
+    "d3-force": "^3.0.0",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
     "framer-motion": "^12.34.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -25,6 +29,10 @@
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
+    "@types/d3-drag": "^3.0.7",
+    "@types/d3-force": "^3.0.10",
+    "@types/d3-selection": "^3.0.11",
+    "@types/d3-zoom": "^3.0.8",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "wrangler": "^4.65.0"

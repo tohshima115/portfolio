@@ -165,3 +165,31 @@
     clip-path: inset(-1%);
   }
 }
+
+/* -----------------------------------------------------------------------------
+   View Transitions API: Override default fade duration
+   ----------------------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.8s !important;
+  animation-timing-function: var(--ease-in-out-quint) !important;
+}
+
+/* Custom Zoom-Out effect specifically when leaving the TOP page */
+html.exiting-from-top::view-transition-old(root) {
+  animation-name: top-page-exit !important;
+  animation-duration: 0.8s !important;
+  animation-timing-function: var(--ease-in-out-quint) !important;
+}
+
+@keyframes top-page-exit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}

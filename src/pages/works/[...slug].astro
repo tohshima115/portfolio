@@ -5,6 +5,7 @@ import ProjectMetaPanel from "@/components/pages/works/ProjectDetail/MetaPanel";
 import TableOfContents from "@/components/pages/works/ProjectDetail/TableOfContents";
 import ProjectNavigation from "@/components/pages/works/ProjectDetail/ProjectNavigation";
 import Background from "@/components/pages/works/ProjectDetail/Background";
+import { SystemGraph } from "@/components/common/SystemGraph";
 
 export async function getStaticPaths() {
     const projects = await getCollection("projects");
@@ -23,6 +24,55 @@ const navProjects = projects.map((p: any) => ({
     title: p.data.title,
     iconUrl: p.data.meta.icon?.src ?? p.data.meta.thumbnail?.src // Use icon if available, fallback to thumbnail
 }));
+
+// Generate relation graph based ONLY on tags associated with this project
+const graphNodes: any[] = [];
+const graphLinks: any[] = [];
+const nodeSet = new Set<string>();
+
+const currentProjectId = `works-${entry.slug}`;
+nodeSet.add(currentProjectId);
+graphNodes.push({
+    id: currentProjectId,
+    name: entry.data.title,
+    type: 'works'
+}); // Current node has no URL since we are already on it
+
+const currentTags = entry.data.attributes?.stack || [];
+currentTags.forEach((tech: string) => {
+    // 1. Add Tag nodes
+    const tagId = `tag-${tech}`;
+    if (!nodeSet.has(tagId)) {
+        nodeSet.add(tagId);
+        graphNodes.push({ id: tagId, name: tech, type: 'tag' });
+    }
+    graphLinks.push({ source: currentProjectId, target: tagId });
+
+    // 2. Add other projects with this tag
+    projects.forEach((p: any) => {
+        if (p.slug === entry.slug) return;
+        
+        const pTags = p.data.attributes?.stack || [];
+        if (pTags.includes(tech)) {
+            const pId = `works-${p.slug}`;
+            
+            if (!nodeSet.has(pId)) {
+                nodeSet.add(pId);
+                graphNodes.push({
+                    id: pId,
+                    name: p.data.title,
+                    type: 'works',
+                    url: `/works/${p.slug}`
+                });
+            }
+            
+            // Ensure no duplicate links
+            if (!graphLinks.some(l => l.source === pId && l.target === tagId)) {
+                graphLinks.push({ source: pId, target: tagId });
+            }
+        }
+    });
+});
 ---
 
 <ProjectLayout title={`${entry.data.title} | Portfolio`}>
@@ -48,15 +98,29 @@ const navProjects = projects.map((p: any) => ({
         <div class="flex flex-col lg:grid lg:grid-cols-12 relative z-10 w-full max-w-[1920px] mx-auto shadow-2xl lg:overflow-hidden h-[calc(100vh-80px)]">
             
             <!-- Left Column: Specs Panel -->
-            <aside class="lg:col-span-3 h-full p-8 lg:overflow-y-auto border-r border-gray-300 relative">
-                <ProjectMetaPanel
-                    title={entry.data.title}
-                    roles={entry.data.attributes.roles}
-                    duration={entry.data.meta.duration}
-                    stack={entry.data.attributes.stack}
-                    projects={projects}
-                    client:load
-                />
+            <aside class="lg:col-span-3 h-full lg:overflow-y-auto border-r border-gray-300 relative flex flex-col">
+                <div class="p-8 pb-4 shrink-0">
+                    <ProjectMetaPanel
+                        title={entry.data.title}
+                        roles={entry.data.attributes.roles}
+                        duration={entry.data.meta.duration}
+                        stack={entry.data.attributes.stack}
+                        projects={projects}
+                        client:load
+                    />
+                </div>
+                
+                <!-- System Graph for current project relations -->
+                <div class="flex-grow min-h-[300px] border-t border-gray-300 bg-gray-50 flex flex-col relative w-full h-full p-4 pb-8">
+                     <span class="font-mono text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-4 font-bold">Context_Graph</span>
+                     <SystemGraph 
+                         client:only="react" 
+                         nodes={graphNodes} 
+                         links={graphLinks} 
+                         activeNodeId={`works-${entry.slug}`}
+                         className="flex-grow w-full h-full rounded-md shadow-sm !bg-white/50"
+                     />
+                </div>
             </aside>
 
             <!-- Center Column: Primary Visual & Content -->
