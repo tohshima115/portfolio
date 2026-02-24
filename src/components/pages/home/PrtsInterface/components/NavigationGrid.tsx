@@ -2,6 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { NavButton } from './NavButton';
 import { MAIN_TITLE_TIMING_MS, msToS } from '../config/animationTiming';
+import { FolderGit2Icon } from '@/components/ui/FolderGit2Icon';
+import { FileTextIcon } from '@/components/ui/FileTextIcon';
+import { IdCardIcon } from '@/components/ui/IdCardIcon';
+import { ConnectIcon } from '@/components/ui/ConnectIcon';
 
 interface NavigationGridProps {
     onHoverItem?: (label: string | null) => void;
@@ -9,10 +13,10 @@ interface NavigationGridProps {
 
 export const NavigationGrid = ({ onHoverItem }: NavigationGridProps) => {
     const navItems = [
-        { label: "PROJECTS", href: "/works" },
-        { label: "BLOG", href: "/blog" },
-        { label: "ABOUT", href: "/about" },
-        { label: "CONTACT", href: "/contact" },
+        { label: "PROJECTS", href: "/works", customIcon: (ref: any) => <FolderGit2Icon ref={ref} size={20} className="mb-0.5" /> },
+        { label: "BLOG", href: "/blog", customIcon: (ref: any) => <FileTextIcon ref={ref} size={20} className="mb-0.5" /> },
+        { label: "ABOUT", href: "/about", customIcon: (ref: any) => <IdCardIcon ref={ref} size={20} className="mb-0.5" /> },
+        { label: "CONTACT", href: "/contact", customIcon: (ref: any) => <ConnectIcon ref={ref} size={20} className="mb-0.5" /> },
     ];
 
     return (

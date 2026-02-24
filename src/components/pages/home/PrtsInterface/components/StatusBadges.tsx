@@ -1,12 +1,16 @@
 import React from 'react';
 import type { UpdateItem } from '../index';
+import { Rss, Activity, Clock } from 'lucide-react';
 
 export const StatusBadges = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     return (
         <div className="self-end flex flex-col sm:flex-row gap-3 items-end sm:items-center mt-20 mr-10 opacity-80 hover:opacity-100 transition-opacity pointer-events-auto">
             <a href="/rss.xml" className="group px-3 py-1.5 bg-background/50 border border-foreground/10 rounded-full backdrop-blur-md shadow-sm hover:border-accent transition-colors flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-orange-500 rounded-full group-hover:animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                <span className="font-mono text-[9px] text-muted-foreground group-hover:text-accent tracking-widest">SIGNAL_FEED</span>
+                <span className="flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground group-hover:text-accent tracking-widest">
+                    <Rss className="w-3 h-3" />
+                    SIGNAL_FEED
+                </span>
             </a>
 
             {/* Updates Dropdown */}
@@ -16,13 +20,19 @@ export const StatusBadges = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
                     </span>
-                    <span className="font-mono text-[9px] text-muted-foreground group-hover:text-accent tracking-widest transition-colors">SYSTEM ONLINE</span>
+                    <span className="flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground group-hover:text-accent tracking-widest transition-colors">
+                        <Activity className="w-3 h-3" />
+                        SYSTEM ONLINE
+                    </span>
                 </a>
 
                 {/* Dropdown Content */}
                 <div className="absolute right-0 mt-2 w-64 bg-background/80 backdrop-blur-md border border-foreground/10 shadow-lg rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right group-hover:translate-y-0 translate-y-2 pointer-events-none group-hover:pointer-events-auto">
                     <div className="px-4 py-2 border-b border-foreground/10 bg-muted/30">
-                        <h3 className="font-mono text-[10px] text-foreground/80 tracking-widest">LATEST UPDATES</h3>
+                        <h3 className="font-mono text-[10px] text-foreground/80 tracking-widest flex items-center gap-1.5">
+                            <Clock className="w-3 h-3" />
+                            LATEST UPDATES
+                        </h3>
                     </div>
                     <ul className="flex flex-col py-1">
                         {updates.map((update, idx) => (
