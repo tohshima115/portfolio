@@ -1,48 +1,242 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { SystemGraph } from "@/components/common/SystemGraph";
 
 export async function getStaticPaths() {
     const posts = await getCollection("blog");
     return posts.map((post) => ({
         params: { slug: post.slug },
-        props: post,
+        props: { post, posts },
     }));
 }
 
-const post = Astro.props;
-const { Content } = await post.render();
+const { post, posts } = Astro.props;
+const { Content, headings } = await post.render();
+
+// Generate relation graph based ONLY on tags associated with this blog post
+const graphNodes: any[] = [];
+const graphLinks: any[] = [];
+const nodeSet = new Set<string>();
+
+const currentPostId = `blog-${post.slug}`;
+nodeSet.add(currentPostId);
+graphNodes.push({
+    id: currentPostId,
+    name: post.data.title,
+    type: "blog",
+}); // Current node has no URL since we are already on it
+
+const currentTags = post.data.tags || [];
+currentTags.forEach((tech: string) => {
+    // 1. Add Tag nodes
+    const tagId = `tag-${tech}`;
+    if (!nodeSet.has(tagId)) {
+        nodeSet.add(tagId);
+        graphNodes.push({ id: tagId, name: tech, type: "tag" });
+    }
+    graphLinks.push({ source: currentPostId, target: tagId });
+
+    // 2. Add other logs with this tag
+    posts.forEach((p: any) => {
+        if (p.slug === post.slug) return;
+
+        const pTags = p.data.tags || [];
+        if (pTags.includes(tech)) {
+            const pId = `blog-${p.slug}`;
+
+            if (!nodeSet.has(pId)) {
+                nodeSet.add(pId);
+                graphNodes.push({
+                    id: pId,
+                    name: p.data.title,
+                    type: "blog",
+                    url: `/blog/${p.slug}`,
+                });
+            }
+
+            // Ensure no duplicate links
+            if (
+                !graphLinks.some((l) => l.source === pId && l.target === tagId)
+            ) {
+                graphLinks.push({ source: pId, target: tagId });
+            }
+        }
+    });
+});
 ---
 
 <BaseLayout
     title={`${post.data.title} | Portfolio`}
     description={post.data.description}
 >
-    <div class="container mx-auto px-6 py-24 max-w-3xl min-h-screen">
-        <header class="mb-12 border-b border-neutral-800 pb-8">
+    <!-- Background Grid Pattern -->
+    <div
+        class="fixed inset-0 opacity-40 pointer-events-none z-0"
+        style="background-image: linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px); background-size: 40px 40px;"
+    >
+    </div>
+
+    <div
+        class="relative z-10 px-6 md:px-12 lg:px-20 py-24 max-w-[1920px] mx-auto min-h-screen"
+    >
+        <header class="mb-16 border-b border-border pb-8 max-w-7xl mx-auto">
             <a
                 href="/blog"
-                class="text-neutral-500 hover:text-neutral-300 font-mono text-sm mb-8 inline-block transition-colors"
+                class="text-muted-foreground hover:text-accent font-mono text-xs mb-8 inline-flex items-center gap-2 transition-colors uppercase tracking-widest"
             >
-                ← BACK TO LOGS
+                <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    ><path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Back To Logs
             </a>
-            <h1
-                class="text-3xl md:text-5xl font-bold mb-4 text-neutral-100 leading-tight"
-            >
-                {post.data.title}
-            </h1>
+
+            <div class="flex flex-wrap gap-2 mb-6">
+                {
+                    post.data.tags &&
+                        post.data.tags.map((tag: string) => (
+                            <span class="inline-block px-2 py-1 text-[10px] font-mono tracking-wide text-accent bg-accent/10 border border-accent/20">
+                                {tag}
+                            </span>
+                        ))
+                }
+            </div>
+
+            <div class="relative">
+                <div class="absolute -left-4 top-1 bottom-1 w-1 bg-accent">
+                </div>
+                <h1
+                    class="text-3xl md:text-5xl font-black mb-4 text-foreground leading-tight tracking-tighter"
+                >
+                    {post.data.title}
+                </h1>
+            </div>
+
             <div
-                class="flex items-center gap-4 text-neutral-500 font-mono text-sm"
+                class="flex items-center gap-4 text-muted-foreground font-mono text-[11px] mt-6 tracking-widest uppercase"
             >
+                <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
                 <time datetime={post.data.pubDate.toISOString()}>
                     {new Date(post.data.pubDate).toLocaleDateString("ja-JP")}
                 </time>
+                <span class="text-border">/</span>
+                <span>System_Record</span>
             </div>
         </header>
-        <article
-            class="[&>h1]:text-3xl [&>h1]:font-bold [&>h1]:mt-8 [&>h1]:mb-4 [&>h2]:text-2xl [&>h2]:font-bold [&>h2]:mt-6 [&>h2]:mb-3 [&>p]:mb-4 [&>p]:leading-relaxed [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:mb-4"
+
+        <!-- 3-Column Layout: TOC | CONTENT | GRAPH -->
+        <div
+            class="flex flex-col xl:grid xl:grid-cols-12 gap-12 relative max-w-7xl mx-auto items-start"
         >
-            <Content />
-        </article>
+            <!-- Left Column: Table of Contents -->
+            <aside
+                class="xl:col-span-3 hidden xl:block order-2 xl:order-1 sticky top-24"
+            >
+                <div
+                    class="mb-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"
+                >
+                    <div class="w-1.5 h-1.5 bg-accent"></div>
+                    Page_Index
+                </div>
+                {
+                    headings.length > 0 ? (
+                        <nav class="space-y-1 border-l border-border/50 py-2 relative">
+                            {/* Active scroll indicator could be added here in the future via JS */}
+                            {headings.map((heading: any) => (
+                                <a
+                                    href={`#${heading.slug}`}
+                                    class={`block py-1.5 px-4 text-sm hover:text-accent hover:bg-muted/30 transition-colors
+                                ${
+                                    heading.depth === 2
+                                        ? "font-bold text-foreground relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-0.5 before:bg-border hover:before:bg-accent"
+                                        : "pl-6 text-muted-foreground text-xs"
+                                }
+                                `}
+                                >
+                                    {heading.text}
+                                </a>
+                            ))}
+                        </nav>
+                    ) : (
+                        <div class="text-xs text-muted-foreground font-mono italic opacity-50">
+                            No index available.
+                        </div>
+                    )
+                }
+            </aside>
+
+            <!-- Center Column: Main Content Body -->
+            <main class="xl:col-span-6 w-full order-1 xl:order-2 self-stretch">
+                <article
+                    class="prose prose-neutral max-w-none prose-sm md:prose-base prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground prose-h2:text-lg md:prose-h2:text-xl prose-h2:border-l-[3px] prose-h2:border-accent prose-h2:pl-4 prose-h2:mt-10 prose-h2:mb-5 prose-h3:text-base md:prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-3 prose-p:text-muted-foreground prose-p:leading-[1.8] prose-p:mb-6 prose-strong:text-foreground prose-strong:font-bold prose-a:text-accent hover:prose-a:text-accent/80 prose-a:transition-colors prose-a:underline prose-a:underline-offset-2 prose-img:rounded-md prose-img:border prose-img:border-border prose-img:shadow-sm prose-code:text-accent prose-code:bg-accent/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-sm prose-code:font-mono prose-code:text-xs md:prose-code:text-sm prose-code:before:content-[''] prose-code:after:content-[''] prose-pre:bg-neutral-950 prose-pre:border prose-pre:border-border prose-pre:rounded-md prose-pre:text-xs md:prose-pre:text-sm prose-blockquote:border-l-[3px] prose-blockquote:border-accent prose-blockquote:bg-accent/5 prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:not-italic prose-blockquote:text-muted-foreground prose-ul:my-6 prose-li:text-muted-foreground prose-li:marker:text-accent prose-li:leading-[1.8] mb-24"
+                >
+                    <Content />
+                </article>
+            </main>
+
+            <!-- Right Column: System Graph -->
+            <aside
+                class="xl:col-span-3 order-3 w-full h-[400px] xl:h-[calc(100vh-200px)] sticky top-24 self-start"
+            >
+                <div
+                    class="flex items-center justify-between border-t border-x border-border bg-muted/30 px-3 py-1.5"
+                >
+                    <span
+                        class="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground"
+                        >Context_Graph</span
+                    >
+                    <div class="flex gap-1.5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-border"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-border"></div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-border"></div>
+                    </div>
+                </div>
+                {
+                    graphNodes.length > 0 ? (
+                        <SystemGraph
+                            client:only="react"
+                            nodes={graphNodes}
+                            links={graphLinks}
+                            activeNodeId={`blog-${post.slug}`}
+                            className="rounded-t-none h-full border border-border"
+                        />
+                    ) : (
+                        <div class="h-full w-full border border-border border-t-0 bg-background/50 flex flex-col items-center justify-center font-mono text-xs text-muted-foreground uppercase opacity-50">
+                            <svg
+                                class="w-8 h-8 mb-2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            No Relations
+                        </div>
+                    )
+                }
+            </aside>
+        </div>
+
+        <div
+            class="mt-20 flex items-center justify-center pt-8 border-t border-border opacity-50 max-w-7xl mx-auto w-full"
+        >
+            <span
+                class="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground"
+                >End_of_Record</span
+            >
+        </div>
     </div>
 </BaseLayout>

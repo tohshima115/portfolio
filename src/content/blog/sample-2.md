@@ -2,9 +2,8 @@
 title: "Astro の Content Collections を試す"
 description: "Astro v2 から導入された Content Collections の機能についての検証メモです。"
 pubDate: "2026-02-22"
+tags: ["Astro", "TypeScript", "Engineering"]
 ---
-
-# Content Collections の導入
 
 Astro の Content Collections は、マークダウンのフロントマターを Zod でスキーマ検証できるため非常に便利です。
 

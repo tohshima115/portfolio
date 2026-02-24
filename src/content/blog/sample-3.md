@@ -2,9 +2,8 @@
 title: "React と Astro の共存について"
 description: "アイランドアーキテクチャを利用したパフォーマンス最適化戦略"
 pubDate: "2026-02-23"
+tags: ["React", "Astro", "Performance", "Engineering"]
 ---
-
-# Islands Architecture（アイランドアーキテクチャ）の実装
 
 Astro の最も特徴的な機能の一つがこれです。UI フレームワークを自由に選択し、必要な部分だけをハイドレーションさせます。
 

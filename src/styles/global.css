@@ -14,6 +14,7 @@
    Tailwind CSS v4 Import
    ----------------------------------------------------------------------------- */
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* -----------------------------------------------------------------------------
    Custom Theme Configuration (Tailwind CSS v4 style)
@@ -96,26 +97,26 @@
   }
 
   /* Headings - Using heavier weights for impact */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1:not(.prose *),
+  h2:not(.prose *),
+  h3:not(.prose *),
+  h4:not(.prose *),
+  h5:not(.prose *),
+  h6:not(.prose *) {
     font-weight: 700;
     line-height: 1.25;
     letter-spacing: -0.025em;
   }
 
-  h1 {
+  h1:not(.prose *) {
     font-size: clamp(2.5rem, 5vw + 1rem, 4rem);
   }
 
-  h2 {
+  h2:not(.prose *) {
     font-size: clamp(2rem, 4vw + 0.5rem, 3rem);
   }
 
-  h3 {
+  h3:not(.prose *) {
     font-size: clamp(1.5rem, 3vw + 0.25rem, 2rem);
   }
 
