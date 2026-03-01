@@ -11,8 +11,8 @@ const allUpdates = [
         date: p.data.meta.updatedDate
             ? new Date(p.data.meta.updatedDate)
             : new Date(p.data.meta.date),
-        url: `/works/${p.slug}`,
-        type: "works" as const,
+        url: `/projects/${p.slug}`,
+        type: "projects" as const,
     })),
     ...blogPosts.map((b) => ({
         title: b.data.title,

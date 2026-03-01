@@ -4,7 +4,7 @@ import * as d3Zoom from 'd3-zoom';
 import * as d3Selection from 'd3-selection';
 import { motion } from 'framer-motion';
 
-export type NodeType = 'works' | 'blog' | 'tag';
+export type NodeType = 'projects' | 'blog' | 'tag';
 
 export interface GraphNode extends d3.SimulationNodeDatum {
     id: string;
@@ -155,7 +155,7 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
     const getNodeStyle = (node: GraphNode) => {
         const isActive = node.id === activeNodeId;
         switch (node.type) {
-            case 'works':
+            case 'projects':
                 return {
                     bg: isActive ? 'bg-accent' : 'bg-background',
                     border: 'border-accent',
@@ -267,7 +267,7 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
                                 />
                             </div>
                             {/* Labels */}
-                            {(isActive || node.type === 'works' || node.type === 'tag' || node.type === 'blog') && (
+                            {(isActive || node.type === 'projects' || node.type === 'tag' || node.type === 'blog') && (
                                 <div
                                     className={`absolute pointer-events-none font-mono text-[9px] uppercase tracking-wider whitespace-nowrap mt-1 flex items-center justify-center ${isActive ? 'text-accent font-bold drop-shadow-md' : 'text-muted-foreground'}`}
                                     style={{

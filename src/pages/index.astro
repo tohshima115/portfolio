@@ -14,8 +14,8 @@ const allUpdates = [
 		date: p.data.meta.updatedDate
 			? new Date(p.data.meta.updatedDate)
 			: new Date(p.data.meta.date),
-		url: `/works/${p.slug}`,
-		type: "works" as const,
+		url: `/projects/${p.slug}`,
+		type: "projects" as const,
 	})),
 	...blogPosts.map((b) => ({
 		title: b.data.title,
@@ -53,7 +53,7 @@ const latestUpdates = allUpdates.slice(0, 3).map((u) => ({
 			document.addEventListener("astro:before-swap", (e) => {
 				if (window.location.pathname === "/") {
 					e.newDocument.documentElement.classList.add(
-						"exiting-from-top"
+						"exiting-from-top",
 					);
 				}
 			});

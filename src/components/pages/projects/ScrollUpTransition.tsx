@@ -4,34 +4,39 @@ import { motion, AnimatePresence, useSpring } from 'framer-motion';
 const SCROLL_THRESHOLD = 1200;
 const RESET_TIMEOUT = 1000;
 
-export const ScrollTransition = () => {
+export const ScrollUpTransition = () => {
     const [scrollAmount, setScrollAmount] = useState(0);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [flashKey, setFlashKey] = useState(0);
     const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastTouchYRef = useRef<number | null>(null);
 
-    // Handles the core accumulation logic
     const handleScrollDelta = (deltaY: number) => {
         if (isTransitioning) return;
 
-        // Handling upward scroll (negative deltaY) for the flash effect
-        if (deltaY < 0) {
-            setFlashKey(prev => prev + 1);
-            // Optionally clear scroll amount so downwards scroll has to start from 0 again if they were trying to go up
+        // We only care about scroll inputs when we are at the very top of the page
+        if (window.scrollY > 0) {
             setScrollAmount(0);
             return;
         }
 
-        // Scrolling down (positive deltaY)
+        // Handling downward scroll (positive deltaY)
+        if (deltaY > 0 && window.scrollY <= 0) {
+            if (scrollAmount > 0) {
+                setScrollAmount(0);
+            }
+            return;
+        }
+
+        // Scrolling up (negative deltaY)
         setScrollAmount(prev => {
-            let next = prev + deltaY;
+            // Add the absolute value of the upward scroll
+            let next = prev + Math.abs(deltaY);
             next = Math.max(0, Math.min(next, SCROLL_THRESHOLD));
 
             if (next >= SCROLL_THRESHOLD && !isTransitioning) {
                 setIsTransitioning(true);
                 setTimeout(() => {
-                    window.location.href = '/projects';
+                    window.location.href = '/';
                 }, 400); // Wait for transition visual
             }
             return next;
@@ -57,7 +62,8 @@ export const ScrollTransition = () => {
         const handleTouchMove = (e: TouchEvent) => {
             if (lastTouchYRef.current === null) return;
             const currentY = e.touches[0].clientY;
-            const deltaY = lastTouchYRef.current - currentY; // positive = swipe down (scroll down)
+            // positive = swipe down (scroll up)
+            const deltaY = lastTouchYRef.current - currentY;
 
             lastTouchYRef.current = currentY;
             // Touch screens often need a multiplier for a more responsive feel
@@ -74,9 +80,9 @@ export const ScrollTransition = () => {
             window.removeEventListener('touchmove', handleTouchMove);
             if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
         };
-    }, [isTransitioning]);
+    }, [isTransitioning, scrollAmount]);
 
-    const isVisible = scrollAmount > 0; // Only show indicator when scrolling down
+    const isVisible = scrollAmount > 0; // Only show indicator when scrolling up at top
 
     const CIRCLE_RADIUS = 20;
     const CIRCLE_CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
@@ -96,35 +102,14 @@ export const ScrollTransition = () => {
 
     return (
         <AnimatePresence>
-            {/* Top overscroll input flash effect */}
-            {flashKey > 0 && (
-                <motion.div
-                    key={`flash-${flashKey}`}
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{
-                        opacity: [0, 0.4, 0],
-                        height: [0, 100, 0]
-                    }}
-                    transition={{
-                        duration: 1.2,
-                        times: [0, 0.05, 1],
-                        ease: ["easeIn", "easeOut"]
-                    }}
-                    className="absolute top-0 left-0 w-full z-50 pointer-events-none"
-                    style={{
-                        background: `linear-gradient(to bottom, var(--color-logo) 0%, transparent 100%)`
-                    }}
-                />
-            )}
-
             {isVisible && (
                 <motion.div
-                    key="scroll-indicator"
-                    initial={{ opacity: 0, y: 10 }}
+                    key="scroll-up-indicator"
+                    initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 5 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -5 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute z-50 pointer-events-none flex flex-col items-center gap-4 left-1/2 -translate-x-1/2 bottom-24"
+                    className="fixed z-50 pointer-events-none flex flex-col items-center gap-4 left-1/2 -translate-x-1/2 top-24"
                 >
                     <div className="relative flex items-center justify-center w-16 h-16">
                         <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 50 50">
@@ -170,7 +155,7 @@ export const ScrollTransition = () => {
                                     exit={{ opacity: 0 }}
                                     className="text-muted-foreground"
                                 >
-                                    SCROLL DOWN TO VIEW PROJECTS
+                                    SCROLL UP TO RETURN HOME
                                 </motion.span>
                             ) : (
                                 <motion.span
@@ -180,7 +165,7 @@ export const ScrollTransition = () => {
                                     exit={{ opacity: 0 }}
                                     className="text-accent font-bold"
                                 >
-                                    INITIATING SEQUENCE...
+                                    RETURNING TO SYSTEM...
                                 </motion.span>
                             )}
                         </AnimatePresence>

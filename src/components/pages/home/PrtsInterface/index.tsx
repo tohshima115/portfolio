@@ -14,7 +14,7 @@ export interface UpdateItem {
     title: string;
     date: string; // ISO string to accommodate SSR serialization
     url: string;
-    type: 'works' | 'blog';
+    type: 'projects' | 'blog';
 }
 
 export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {

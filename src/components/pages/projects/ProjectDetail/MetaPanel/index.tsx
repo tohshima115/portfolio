@@ -122,7 +122,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
                                                             return (
                                                                 <a
                                                                     key={p.slug}
-                                                                    href={isCurrent ? "#" : `/works/${p.slug}`}
+                                                                    href={isCurrent ? "#" : `/projects/${p.slug}`}
                                                                     className={cn(
                                                                         "w-12 h-12 flex items-center justify-center border transition-all duration-300 rounded-full overflow-hidden relative group/icon shadow-sm",
                                                                         isCurrent
