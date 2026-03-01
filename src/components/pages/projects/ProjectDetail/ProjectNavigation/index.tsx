@@ -27,10 +27,10 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
     useEffect(() => {
         // Function to update active slug based on URL
         const updateActiveSlug = () => {
-            // Extract slug from URL path: /works/swept -> swept
+            // Extract slug from URL path: /projects/swept -> swept
             const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            // Assuming structure /works/[slug]
-            const slugIndex = pathSegments.indexOf('works');
+            // Assuming structure /projects/[slug]
+            const slugIndex = pathSegments.indexOf('projects');
             if (slugIndex !== -1 && pathSegments[slugIndex + 1]) {
                 setActiveSlug(pathSegments[slugIndex + 1]);
             }
@@ -69,20 +69,27 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
 
     return (
         <nav className={cn(
-            "w-full flex items-center overflow-x-auto scrollbar-hide py-4 px-4 md:px-0 z-30 select-none",
-            "border-b border-gray-300/0 shadow-sm transition-colors duration-300", // Fully transparent base, can add scroll detection later
+            "w-full flex items-center overflow-visible flex-wrap py-4 px-4 md:px-0 z-30 select-none",
+            "transition-colors duration-300",
             className
         )}>
-            <div className="flex items-center gap-4 mx-auto w-full max-w-[1920px]">
+            <div className="flex items-center justify-between mx-auto w-full max-w-[1920px]">
 
-                {/* Visual Label (PRTS System Header style) */}
-                <div className="hidden md:flex flex-col items-end pr-4 border-r border-gray-700 min-w-max">
-                    <span className="text-[10px] text-lime-500 font-mono tracking-[0.2em] leading-none">SYSTEM.NAV</span>
-                    <span className="text-xl font-bold text-black tracking-tighter">PROJECTS</span>
+                {/* Left Area: Navigation Links */}
+                <div className="hidden md:flex justify-start flex-1 items-center gap-6 pr-6 min-w-max">
+                    <a href="/" className="group flex flex-col items-start transition-colors">
+                        <span className="text-[10px] text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">RETURN TO</span>
+                        <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">HOME</span>
+                    </a>
+                    <div className="w-[1px] h-8 bg-gray-300"></div>
+                    <a href="/projects" className="group flex flex-col items-start transition-colors">
+                        <span className="text-[10px] text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">INDEX OF</span>
+                        <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">PROJECTS</span>
+                    </a>
                 </div>
 
                 <motion.ul
-                    className="flex items-center gap-3 pr-8 md:pr-0"
+                    className="flex justify-center flex-shrink-0 flex-wrap gap-3 pr-8 md:pr-0"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -97,7 +104,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                                 className="flex-shrink-0"
                             >
                                 <a
-                                    href={`/works/${project.slug}`}
+                                    href={`/projects/${project.slug}`}
                                     onClick={(e) => {
                                         // e.preventDefault(); // Let default navigation happen for now
                                         if (onProjectClick) onProjectClick(project);
@@ -153,11 +160,8 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                     })}
                 </motion.ul>
 
-                {/* Decorative Line Flex Grow */}
-                <div className="hidden md:block flex-grow h-[1px] bg-gradient-to-r from-gray-800 to-transparent ml-4" />
-
                 {/* Current Project Info (Top Right) */}
-                <div className="hidden lg:flex flex-col items-end text-[10px] text-gray-500 font-mono">
+                <div className="hidden md:flex justify-end flex-1 flex-col items-end text-[10px] text-gray-500 font-mono pl-6">
                     <span>STATUS: ACTIVE</span>
                     <span>MODE: VIEW_ARCHIVE</span>
                 </div>

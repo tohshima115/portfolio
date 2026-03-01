@@ -1,10 +1,10 @@
 ---
 import { getCollection } from "astro:content";
 import ProjectLayout from "@/layouts/ProjectLayout.astro";
-import ProjectMetaPanel from "@/components/pages/works/ProjectDetail/MetaPanel";
-import TableOfContents from "@/components/pages/works/ProjectDetail/TableOfContents";
-import ProjectNavigation from "@/components/pages/works/ProjectDetail/ProjectNavigation";
-import Background from "@/components/pages/works/ProjectDetail/Background";
+import ProjectMetaPanel from "@/components/pages/projects/ProjectDetail/MetaPanel";
+import TableOfContents from "@/components/pages/projects/ProjectDetail/TableOfContents";
+import ProjectNavigation from "@/components/pages/projects/ProjectDetail/ProjectNavigation";
+import Background from "@/components/pages/projects/ProjectDetail/Background";
 import { SystemGraph } from "@/components/common/SystemGraph";
 
 export async function getStaticPaths() {
@@ -30,12 +30,12 @@ const graphNodes: any[] = [];
 const graphLinks: any[] = [];
 const nodeSet = new Set<string>();
 
-const currentProjectId = `works-${entry.slug}`;
+const currentProjectId = `projects-${entry.slug}`;
 nodeSet.add(currentProjectId);
 graphNodes.push({
     id: currentProjectId,
     name: entry.data.title,
-    type: 'works'
+    type: 'projects'
 }); // Current node has no URL since we are already on it
 
 const currentTags = entry.data.attributes?.stack || [];
@@ -54,15 +54,15 @@ currentTags.forEach((tech: string) => {
         
         const pTags = p.data.attributes?.stack || [];
         if (pTags.includes(tech)) {
-            const pId = `works-${p.slug}`;
+            const pId = `projects-${p.slug}`;
             
             if (!nodeSet.has(pId)) {
                 nodeSet.add(pId);
                 graphNodes.push({
                     id: pId,
                     name: p.data.title,
-                    type: 'works',
-                    url: `/works/${p.slug}`
+                    type: 'projects',
+                    url: `/projects/${p.slug}`
                 });
             }
             
@@ -95,10 +95,10 @@ currentTags.forEach((tech: string) => {
             />
         </div>
 
-        <div class="flex flex-col lg:grid lg:grid-cols-12 relative z-10 w-full max-w-[1920px] mx-auto shadow-2xl lg:overflow-hidden h-[calc(100vh-80px)]">
+        <div class="flex flex-col lg:grid lg:grid-cols-12 relative z-10 w-full max-w-[1920px] mx-auto lg:overflow-hidden h-[calc(100vh-80px)]">
             
             <!-- Left Column: Specs Panel -->
-            <aside class="lg:col-span-3 h-full lg:overflow-y-auto border-r border-gray-300 relative flex flex-col">
+            <aside class="lg:col-span-3 h-full lg:overflow-y-auto relative flex flex-col">
                 <div class="p-8 pb-4 shrink-0">
                     <ProjectMetaPanel
                         title={entry.data.title}
@@ -111,13 +111,13 @@ currentTags.forEach((tech: string) => {
                 </div>
                 
                 <!-- System Graph for current project relations -->
-                <div class="flex-grow min-h-[300px] border-t border-gray-300 bg-gray-50 flex flex-col relative w-full h-full p-4 pb-8">
+                <div class="flex-grow min-h-[300px] bg-transparent flex flex-col relative w-full h-full p-4 pb-8">
                      <span class="font-mono text-[9px] uppercase tracking-[0.2em] text-gray-500 mb-4 font-bold">Context_Graph</span>
                      <SystemGraph 
                          client:only="react" 
                          nodes={graphNodes} 
                          links={graphLinks} 
-                         activeNodeId={`works-${entry.slug}`}
+                         activeNodeId={`projects-${entry.slug}`}
                          className="flex-grow w-full h-full rounded-md shadow-sm !bg-white/50"
                      />
                 </div>
@@ -169,7 +169,7 @@ currentTags.forEach((tech: string) => {
             </main>
 
             <!-- Right Column: Navigation Control Panel -->
-            <nav class="hidden lg:block lg:col-span-2 h-full relative shadow-[-10px_0_20px_-5px_rgba(0,0,0,0.1)] z-20">
+            <nav class="hidden lg:block lg:col-span-2 h-full relative z-20">
                 <TableOfContents 
                     headings={headings} 
                     projectLink={entry.data.meta.link}

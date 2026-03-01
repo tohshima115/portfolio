@@ -13,7 +13,7 @@ interface NavigationGridProps {
 
 export const NavigationGrid = ({ onHoverItem }: NavigationGridProps) => {
     const navItems = [
-        { label: "PROJECTS", href: "/works", customIcon: (ref: any) => <FolderGit2Icon ref={ref} size={20} className="mb-0.5" /> },
+        { label: "PROJECTS", href: "/projects", customIcon: (ref: any) => <FolderGit2Icon ref={ref} size={20} className="mb-0.5" />, highlight: true },
         { label: "BLOG", href: "/blog", customIcon: (ref: any) => <FileTextIcon ref={ref} size={20} className="mb-0.5" /> },
         { label: "ABOUT", href: "/about", customIcon: (ref: any) => <IdCardIcon ref={ref} size={20} className="mb-0.5" /> },
         { label: "CONTACT", href: "/contact", customIcon: (ref: any) => <ConnectIcon ref={ref} size={20} className="mb-0.5" /> },

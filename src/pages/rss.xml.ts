@@ -22,7 +22,7 @@ export async function GET(context) {
             pubDate: new Date(post.data.meta.date),
             description: `New project added: ${post.data.title}`,
             // If you have a description field in frontmatter, use post.data.description
-            link: `/works/${post.slug}/`,
+            link: `/projects/${post.slug}/`,
         })),
         customData: `<language>ja-jp</language>`,
     });
