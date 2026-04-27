@@ -15,7 +15,7 @@ export async function GET(context) {
 
     return rss({
         title: 'Shogo Toyoshima Portfolio',
-        description: 'Updates from Shogo Toyoshima - Design Engineer / UX Researcher. Portfolio items and development logs.',
+        description: 'Updates from Shogo Toyoshima — Product Engineer / Designer. Portfolio items and development logs.',
         site: context.site,
         items: projects.map((post) => ({
             title: post.data.title,

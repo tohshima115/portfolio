@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ToyoshimaLogo } from './ToyoshimaLogo';
 import { MAIN_TITLE_TIMING_MS, msToS, DESKTOP_LOGO_TIMING, MOBILE_LOGO_TIMING } from '../config/animationTiming';
 
-export const MainTitle = () => {
+export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
 
     // レイアウト定数 (Desktop)
     // Logoの正確なサイズ計算
@@ -76,7 +76,7 @@ export const MainTitle = () => {
                 animate={{
                     x: `calc(-50% + ${isReady ? logoFinalX : 0}px)`
                 }}
-                transition={{
+                transition={skipIntro ? { duration: 0 } : {
                     delay: msToS(MAIN_TITLE_TIMING_MS.desktop.logoMoveStart),
                     duration: msToS(MAIN_TITLE_TIMING_MS.desktop.logoMoveDuration),
                     ease: [0.83, 0, 0.17, 1]  // var(--ease-in-out-quint) 同等
@@ -86,7 +86,7 @@ export const MainTitle = () => {
                     className="absolute inset-0 bg-accent/20 blur-3xl rounded-full"
                     style={{ transform: "translateZ(0)" }} // GPUレイヤー化
                 />
-                <ToyoshimaLogo unit={UNIT} timingProfile={DESKTOP_LOGO_TIMING} />
+                <ToyoshimaLogo unit={UNIT} timingProfile={DESKTOP_LOGO_TIMING} skipIntro={skipIntro} />
             </motion.div>
 
             {/* Title Section */}
@@ -102,9 +102,9 @@ export const MainTitle = () => {
                 {/* テキスト見切れ対策: pr-8 (padding right) を追加 */}
                 <div className="overflow-hidden pl-2 pr-8" style={{ contain: "paint" }}>
                     <motion.div
-                        initial={{ x: "-100%", opacity: 0.01 }}
+                        initial={skipIntro ? false : { x: "-100%", opacity: 0.01 }}
                         animate={{ x: 0, opacity: 1 }}
-                        transition={{
+                        transition={skipIntro ? { duration: 0 } : {
                             delay: msToS(MAIN_TITLE_TIMING_MS.desktop.textAppearStart),
                             duration: msToS(MAIN_TITLE_TIMING_MS.desktop.textAppearDuration),
                             ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint) 同等
@@ -126,7 +126,7 @@ export const MainTitle = () => {
                         <div className="mt-6 flex items-center gap-4 w-full justify-start">
                             <div className="h-[2px] w-12 bg-accent"></div>
                             <p className="font-mono text-sm tracking-[0.3em] text-accent font-bold uppercase whitespace-nowrap">
-                                Design Engineer
+                                Product Engineer
                             </p>
                         </div>
                     </motion.div>
@@ -139,14 +139,14 @@ export const MainTitle = () => {
             >
                 <div className="relative z-20 mb-8">
                     <div className="absolute inset-0 bg-accent/20 blur-3xl rounded-full" />
-                    <ToyoshimaLogo unit={6} timingProfile={MOBILE_LOGO_TIMING} />
+                    <ToyoshimaLogo unit={6} timingProfile={MOBILE_LOGO_TIMING} skipIntro={skipIntro} />
                 </div>
 
                 <motion.div
                     className="flex flex-col items-center text-center z-10"
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={skipIntro ? false : { opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{
+                    transition={skipIntro ? { duration: 0 } : {
                         delay: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearStart),
                         duration: msToS(MAIN_TITLE_TIMING_MS.mobile.textAppearDuration),
                         ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint) 同等

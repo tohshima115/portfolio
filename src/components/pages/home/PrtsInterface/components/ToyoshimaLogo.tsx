@@ -12,25 +12,27 @@ interface ToyoshimaLogoProps {
     unit?: number;
     className?: string;
     timingProfile: LogoTimingProfile;
+    skipIntro?: boolean;
 }
 
 export const ToyoshimaLogo = ({
     unit = 4,
     className = "",
-    timingProfile
+    timingProfile,
+    skipIntro = false
 }: ToyoshimaLogoProps) => {
     const SIZE = unit * 5;
     const GAP = unit * 3;
     const BORDER = unit * 1;
 
-
+    const skipTransition = { duration: 0, delay: 0 };
 
     // 中央セル (Index 4): 明滅
     const centerBlinkVariants: Variants = {
         hidden: { opacity: 0 },
         visible: {
-            opacity: [0, 0, 1, 1, 0, 0, 1, 1],
-            transition: {
+            opacity: skipIntro ? 1 : [0, 0, 1, 1, 0, 0, 1, 1],
+            transition: skipIntro ? skipTransition : {
                 duration: msToS(timingProfile.blink.duration),
                 times: [0, 0.25, 0.25, 0.5, 0.5, 0.75, 0.75, 1],
                 ease: "linear",
@@ -44,7 +46,7 @@ export const ToyoshimaLogo = ({
         hidden: { scaleY: 0, originY: 0 },
         visible: (i: number) => ({
             scaleY: 1,
-            transition: {
+            transition: skipIntro ? skipTransition : {
                 duration: msToS(timingProfile.fill.duration),
                 ease: EASING.fill,
                 delay: msToS(timingProfile.fill.start) + (i === 0 ? 0 : msToS(timingProfile.fill.stagger))
@@ -57,7 +59,7 @@ export const ToyoshimaLogo = ({
         hidden: { height: 0 },
         visible: {
             height: (SIZE * 3) + (GAP * 2),
-            transition: {
+            transition: skipIntro ? skipTransition : {
                 delay: msToS(timingProfile.drop.start),
                 duration: msToS(timingProfile.drop.duration),
                 ease: EASING.drop as any
@@ -85,9 +87,11 @@ export const ToyoshimaLogo = ({
                 // framer-motion の JS 駆動だと毎フレーム repaint + JS 実行が必要だが、
                 // CSS animation はブラウザのネイティブスケジューラで最適化される。
                 // * 要素の配置上、空白期間をスキップして後半に近い挙動にするため、イージングをease-out相当に調整
-                animation: `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s cubic-bezier(0.83, 0, 0.17, 1) ${msToS(timingProfile.expand.start)}s both`,
+                animation: skipIntro
+                    ? undefined
+                    : `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s cubic-bezier(0.83, 0, 0.17, 1) ${msToS(timingProfile.expand.start)}s both`,
             }}
-            initial="hidden"
+            initial={skipIntro ? "visible" : "hidden"}
             animate="visible"
         >
             {cells.map((i) => {

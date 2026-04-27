@@ -17,10 +17,28 @@ export interface UpdateItem {
     type: 'projects' | 'blog';
 }
 
+const INTRO_STORAGE_KEY = 'prts-intro-seen';
+
 export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
     const [isExiting, setIsExiting] = useState(false);
+    const [skipIntro, setSkipIntro] = useState(false);
+
+    // 初回訪問判定: sessionStorage で 2 回目以降は intro をスキップ
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        try {
+            const seen = sessionStorage.getItem(INTRO_STORAGE_KEY);
+            if (seen) {
+                setSkipIntro(true);
+            } else {
+                sessionStorage.setItem(INTRO_STORAGE_KEY, '1');
+            }
+        } catch {
+            // sessionStorage 利用不可 (シークレット等) の場合は intro 表示
+        }
+    }, []);
 
     // Mouse position
     const mouseX = useMotionValue(0.5);
@@ -108,11 +126,13 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                                 duration: 0.8, // Match view transition duration
                                 ease: [0.83, 0, 0.17, 1] // Match ease-in-out-quint
                             }
-                            : {
-                                delay: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutStart),
-                                duration: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutDuration),
-                                ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint)
-                            }
+                            : skipIntro
+                                ? { duration: 0 }
+                                : {
+                                    delay: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutStart),
+                                    duration: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutDuration),
+                                    ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint)
+                                }
                     }
                     style={{
                         transformStyle: "preserve-3d",
@@ -122,8 +142,8 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 >
                     <FloorPlane />
                     <ShadowLayer contentX={contentX} contentY={contentY} />
-                    <MainTitle />
-                    <NavigationLayer updates={updates} onHoverItem={setHoveredItem} />
+                    <MainTitle skipIntro={skipIntro} />
+                    <NavigationLayer updates={updates} onHoverItem={setHoveredItem} skipIntro={skipIntro} />
                     <Decorations mouseX={mouseX} mouseY={mouseY} />
                 </motion.div>
             </motion.div>

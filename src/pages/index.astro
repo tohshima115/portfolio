@@ -31,6 +31,33 @@ const latestUpdates = allUpdates.slice(0, 3).map((u) => ({
 	...u,
 	date: u.date.toISOString(), // passed via props, keep as string
 }));
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
+const personSchema = {
+	"@context": "https://schema.org",
+	"@type": "Person",
+	name: "Shogo Toyoshima",
+	alternateName: "豊島 昇悟",
+	url: siteUrl || Astro.url.origin,
+	jobTitle: "Product Engineer",
+	description:
+		"Cloudflare Workers / D1 / Durable Objects / Workers AI を本番投入した個人開発SaaS『AIChatClip』のオーナー。プロダクトの企画から実装・運用までを1人で完結する Product Engineer / Designer。",
+	knowsAbout: [
+		"Cloudflare Workers",
+		"Cloudflare D1",
+		"Durable Objects",
+		"Workers AI",
+		"TypeScript",
+		"React",
+		"Hono",
+		"Astro",
+		"Browser Extension Development",
+		"Obsidian Plugin Development",
+		"UI Design",
+		"Visual Identity",
+	],
+	sameAs: ["https://github.com/tohshima115", "https://x.com/"],
+};
 ---
 
 <html lang="ja">
@@ -43,7 +70,11 @@ const latestUpdates = allUpdates.slice(0, 3).map((u) => ({
 		<title>Shogo Toyoshima Portfolio</title>
 		<meta
 			name="description"
-			content="Design Engineer / UX Researcher ポートフォリオサイト"
+			content="Product Engineer / Designer ポートフォリオサイト。Cloudflareスタックで個人プロダクトを出荷。"
+		/>
+		<script
+			type="application/ld+json"
+			set:html={JSON.stringify(personSchema)}
 		/>
 		<ClientRouter />
 	</head>
