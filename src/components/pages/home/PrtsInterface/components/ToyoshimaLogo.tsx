@@ -79,6 +79,7 @@ export const ToyoshimaLogo = ({
 
     return (
         <motion.div
+            data-prts-logo
             className={`relative grid grid-cols-3 ${className}`}
             style={{
                 gap: GAP,
@@ -87,6 +88,10 @@ export const ToyoshimaLogo = ({
                 // framer-motion の JS 駆動だと毎フレーム repaint + JS 実行が必要だが、
                 // CSS animation はブラウザのネイティブスケジューラで最適化される。
                 // * 要素の配置上、空白期間をスキップして後半に近い挙動にするため、イージングをease-out相当に調整
+                //
+                // skipIntro=true の場合 React は animation を出力しないが、SSR HTML には
+                // 焼き付きで残るため、<html class="prts-skip-intro"> 配下の CSS ルールで
+                // !important 上書きして即座に最終状態を表示する (global.css 参照)。
                 animation: skipIntro
                     ? undefined
                     : `logo-clip-reveal ${msToS(timingProfile.expand.duration)}s cubic-bezier(0.83, 0, 0.17, 1) ${msToS(timingProfile.expand.start)}s both`,

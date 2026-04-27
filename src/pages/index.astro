@@ -85,16 +85,22 @@ const personSchema = {
 		-->
 		<script is:inline>
 			(function () {
+				var skip = false;
 				try {
 					var key = "prts-intro-seen";
 					if (window.sessionStorage.getItem(key)) {
-						window.__prtsSkipIntro = true;
+						skip = true;
 					} else {
 						window.sessionStorage.setItem(key, "1");
-						window.__prtsSkipIntro = false;
 					}
 				} catch (e) {
-					window.__prtsSkipIntro = false;
+					skip = false;
+				}
+				window.__prtsSkipIntro = skip;
+				// CSS animation (clip-path 等の React 制御外のもの) を即時抑止するため、
+				// HTML パース前に <html> へクラスを付与する。
+				if (skip) {
+					document.documentElement.classList.add("prts-skip-intro");
 				}
 			})();
 		</script>
