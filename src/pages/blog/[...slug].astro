@@ -124,7 +124,7 @@ currentTags.forEach((tech: string) => {
                 class="flex items-center gap-4 text-muted-foreground font-mono text-[11px] mt-6 tracking-widest uppercase"
             >
                 <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
-                <time datetime={post.data.pubDate.toISOString()}>
+                <time datetime={new Date(post.data.pubDate).toISOString()}>
                     {new Date(post.data.pubDate).toLocaleDateString("ja-JP")}
                 </time>
                 <span class="text-border">/</span>

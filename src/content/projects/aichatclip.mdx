@@ -1,0 +1,66 @@
+---
+title: AIChatClip
+meta:
+  date: 2026-03-27
+  duration: Ongoing
+  link: https://aichatclip.com
+attributes:
+  roles:
+    - ui-design
+    - frontend-dev
+    - backend-dev
+  stack:
+    - React Router v7
+    - Hono
+    - Cloudflare Workers
+    - Cloudflare D1
+    - Durable Objects
+    - Workers AI
+    - WXT
+    - Obsidian API
+    - Tailwind CSS
+    - Turborepo
+---
+
+## Context
+**"Don't Archive, Just Clip." — ログを墓場にするな、知識を切り抜け。**
+
+ChatGPT / Claude / Gemini / Grok などのAIチャットでの「価値ある回答」は、放っておくと履歴の海に埋もれていきます。
+AIChatClipは、チャット画面からワンクリックで回答を切り抜き、Obsidian / Notion / Webhook へ自動で届ける個人開発のサービスです。1人で企画・設計・実装・運用までを行っています。
+
+## Approach
+
+### 1. プロダクト設計
+ターゲットはAIチャットで日常的に作業するナレッジワーカー。Obsidian / Notion ユーザーに加え、Webhook 連携で n8n や Make.com など幅広いワークフローに繋げられる「オープン設計」を軸にしました。
+
+- **ワンクリックClip**: ブラウザ拡張からボタン1つで保存
+- **リアルタイム同期**: WebSocket によるプッシュ型同期で Obsidian に即時反映
+- **AI自動整理 (Pro)**: タイトル・タグ・要約の自動生成と、保存先への自動分類
+- **マルチ保存先**: Obsidian Vault / Notion / Webhook を選択可能
+
+### 2. アーキテクチャ
+Cloudflare のエッジプラットフォーム上に、低レイテンシでスケールするモノレポ構成を構築。
+
+| コンポーネント | 技術 |
+|--------------|------|
+| Web | React Router v7 (SSR on CF Workers) + Tailwind CSS v4 + Motion |
+| API | Hono on Cloudflare Workers |
+| DB | Cloudflare D1 (SQLite) + Drizzle ORM |
+| AI | Workers AI (LLM: Qwen3-30B / Embeddings: BGE-M3) |
+| Realtime | Durable Objects + WebSocket (Hibernation API) |
+| 認証 | Better Auth (Google OAuth) |
+| 拡張機能 | WXT + React (Chrome MV3 / Firefox MV2) |
+| Obsidian | TypeScript + esbuild プラグイン |
+
+Obsidianへの同期は **Durable Object → WebSocket push** を採用し、複数デバイスがある場合も「優先度の高いデバイスにだけ通知する」仕組みを設計。pingによるコネクション維持と指数バックオフによる自動再接続で、生活ワークフローに溶け込む信頼性を確保しました。
+
+### 3. 1人開発のための割り切り
+1人で長く運用するため、運用負荷の最小化を最優先に技術を選定しました。
+
+- **Cloudflareに寄せる**: D1 / Workers AI / Durable Objects / Workers をフル活用し、サーバ運用とAI推論コストを抑制。
+- **Turborepo + pnpm workspaces**: web / api / extension / obsidian / shared / db を1リポジトリで一元管理。
+- **Better Auth**: 自前で認証基盤を組まず、Google OAuth を素早く統合。
+
+## Outcome
+個人開発でありながら、ブラウザ拡張・Webアプリ・API・Obsidianプラグインを横断する「マルチサーフェス」な体験を構築できたことが本プロジェクトの核です。
+AIチャットの履歴を、流れていくログから「自分だけのナレッジベース」へと変える小さなインフラとして、自分自身の日々の仕事にも組み込んで運用しています。

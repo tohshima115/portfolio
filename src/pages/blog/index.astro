@@ -107,11 +107,13 @@ posts.forEach(post => {
                                 {posts.map((post, index) => {
                                     const baseDelay = index * 0.08 + 0.1;
                                     const rowDelay = baseDelay + 's';
-                                    const formattedDate = new Date(post.data.pubDate).toLocaleDateString("ja-JP", {
+                                    const pubDateObj = new Date(post.data.pubDate);
+                                    const formattedDate = pubDateObj.toLocaleDateString("ja-JP", {
                                         year: "numeric",
                                         month: "2-digit",
                                         day: "2-digit",
                                     });
+                                    const isoDate = pubDateObj.toISOString();
 
                                     return (
                                         <a
@@ -150,7 +152,7 @@ posts.forEach(post => {
                                                 <div class="flex-shrink-0 flex items-center gap-4">
                                                     <div class="hidden md:flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
                                                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-accent/60"></span>
-                                                        <time datetime={post.data.pubDate.toISOString()}>
+                                                        <time datetime={isoDate}>
                                                             {formattedDate}
                                                         </time>
                                                     </div>
@@ -167,7 +169,7 @@ posts.forEach(post => {
                                             {/* Mobile Date (falls below description on very small screens if needed, but mostly flex handles it) */}
                                             <div class="md:hidden flex items-center gap-2 font-mono text-[10px] text-muted-foreground py-2 border-t border-border mt-2">
                                                 <span class="inline-block w-1 h-1 rounded-full bg-accent/60"></span>
-                                                <time datetime={post.data.pubDate.toISOString()}>
+                                                <time datetime={isoDate}>
                                                     {formattedDate}
                                                 </time>
                                             </div>
