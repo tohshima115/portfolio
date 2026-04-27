@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { navigate } from 'astro:transitions/client';
+import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import { FloorPlane } from './components/FloorPlane';
 import { ShadowLayer } from './components/ShadowLayer';
 import { MainTitle } from './components/MainTitle';
@@ -72,10 +72,10 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                     e.preventDefault();
                     setIsExiting(true);
 
-                    // Trigger actual navigation *during* the zoom out acceleration
-                    setTimeout(() => {
-                        navigate(target.pathname + target.search + target.hash);
-                    }, 50);
+                    // WebGL トランジション → cover フェーズ内部で navigate() を呼ぶ
+                    playWebGLTransition({
+                        url: target.pathname + target.search + target.hash,
+                    });
                 }
             } catch (err) {
                 // Ignore invalid URLs

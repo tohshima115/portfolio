@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence, useSpring } from 'framer-motion';
+import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 
 const SCROLL_THRESHOLD = 1200;
 const RESET_TIMEOUT = 1000;
@@ -35,9 +36,8 @@ export const ScrollUpTransition = () => {
 
             if (next >= SCROLL_THRESHOLD && !isTransitioning) {
                 setIsTransitioning(true);
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 400); // Wait for transition visual
+                // WebGL トランジション → 内部で navigate() を発火
+                playWebGLTransition({ url: '/' });
             }
             return next;
         });
