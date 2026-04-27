@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { navigate } from 'astro:transitions/client';
 import { FloorPlane } from './components/FloorPlane';
@@ -17,28 +17,20 @@ export interface UpdateItem {
     type: 'projects' | 'blog';
 }
 
-const INTRO_STORAGE_KEY = 'prts-intro-seen';
+// 初回訪問判定: sessionStorage の読み書きは index.astro 内のインラインスクリプトで
+// React マウント前に同期実行され、結果が window.__prtsSkipIntro に格納される。
+// useState の lazy initializer で同期的に読み取ることで、framer-motion の最初の
+// render から initial={false} / transition.duration=0 を適用できる。
+const readSkipIntroFlag = (): boolean => {
+    if (typeof window === 'undefined') return false;
+    return Boolean((window as unknown as { __prtsSkipIntro?: boolean }).__prtsSkipIntro);
+};
 
 export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
     const [isExiting, setIsExiting] = useState(false);
-    const [skipIntro, setSkipIntro] = useState(false);
-
-    // 初回訪問判定: sessionStorage で 2 回目以降は intro をスキップ
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        try {
-            const seen = sessionStorage.getItem(INTRO_STORAGE_KEY);
-            if (seen) {
-                setSkipIntro(true);
-            } else {
-                sessionStorage.setItem(INTRO_STORAGE_KEY, '1');
-            }
-        } catch {
-            // sessionStorage 利用不可 (シークレット等) の場合は intro 表示
-        }
-    }, []);
+    const [skipIntro] = useState<boolean>(readSkipIntroFlag);
 
     // Mouse position
     const mouseX = useMotionValue(0.5);
@@ -114,7 +106,7 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             >
                 {/* Intro Animation Container */}
                 <motion.div
-                    initial={{ scale: 1.8, rotateY: -30, rotateX: 20 }}
+                    initial={skipIntro ? false : { scale: 1.8, rotateY: -30, rotateX: 20 }}
                     animate={
                         isExiting
                             ? { scale: 0.4, rotateY: 0, rotateX: 0 }
