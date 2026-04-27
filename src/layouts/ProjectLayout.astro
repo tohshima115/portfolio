@@ -1,6 +1,7 @@
 ---
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
+import WebGLTransition from "../components/common/WebGLTransition";
 
 interface Props {
     title: string;
@@ -43,5 +44,9 @@ const { title } = Astro.props;
     </head>
     <body class="bg-neutral-950 text-white min-h-screen">
         <slot />
+        <WebGLTransition
+            client:only="react"
+            transition:persist="webgl-transition"
+        />
     </body>
 </html>

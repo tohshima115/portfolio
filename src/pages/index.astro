@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
 import { PrtsInterface } from "../components/pages/home/PrtsInterface";
+import WebGLTransition from "../components/common/WebGLTransition";
 
 const projects = await getCollection("projects");
 const blogPosts = await getCollection("blog");
@@ -108,6 +109,10 @@ const personSchema = {
 	</head>
 	<body class="min-h-screen">
 		<PrtsInterface client:only="react" updates={latestUpdates} />
+		<WebGLTransition
+			client:only="react"
+			transition:persist="webgl-transition"
+		/>
 		<script is:inline>
 			document.addEventListener("astro:before-swap", (e) => {
 				if (window.location.pathname === "/") {
