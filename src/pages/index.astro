@@ -76,6 +76,28 @@ const personSchema = {
 			type="application/ld+json"
 			set:html={JSON.stringify(personSchema)}
 		/>
+		<!--
+		  React マウント前に sessionStorage を読み、
+		  2 回目以降の訪問では PrtsInterface のイントロアニメを
+		  完全スキップするための同期フラグ。
+		  framer-motion の initial / transition.delay は最初の render で確定するため、
+		  必ずレンダリング前に決定する必要がある。
+		-->
+		<script is:inline>
+			(function () {
+				try {
+					var key = "prts-intro-seen";
+					if (window.sessionStorage.getItem(key)) {
+						window.__prtsSkipIntro = true;
+					} else {
+						window.sessionStorage.setItem(key, "1");
+						window.__prtsSkipIntro = false;
+					}
+				} catch (e) {
+					window.__prtsSkipIntro = false;
+				}
+			})();
+		</script>
 		<ClientRouter />
 	</head>
 	<body class="min-h-screen">
