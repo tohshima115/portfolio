@@ -1,104 +1,379 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+
+// ----- データ定義 -----
+const skills = {
+    production: {
+        label: "Production Experience",
+        sublabel: "実プロダクトで採用",
+        items: [
+            "Cloudflare Workers",
+            "Cloudflare D1",
+            "Cloudflare R2",
+            "Durable Objects",
+            "Workers AI",
+            "Cloudflare Zero Trust",
+            "TypeScript",
+            "React",
+            "React Router v7",
+            "Hono",
+            "Astro",
+            "Tailwind CSS",
+            "WXT (Browser Extension)",
+            "Obsidian Plugin API",
+            "Better Auth",
+            "Drizzle ORM",
+            "Remotion",
+        ],
+    },
+    design: {
+        label: "Design",
+        sublabel: "Visual / UI / Print",
+        items: [
+            "Figma",
+            "Illustrator",
+            "Photoshop",
+            "UI Design",
+            "Visual Identity",
+            "Logo Design",
+            "DTP (印刷物入稿)",
+        ],
+    },
+    product: {
+        label: "Product",
+        sublabel: "企画・検証・運用",
+        items: [
+            "プロダクト企画",
+            "ユーザーテスト設計",
+            "リーン仮説検証",
+            "マーケティング戦略",
+            "クライアントワーク10件並行管理",
+        ],
+    },
+    learning: {
+        label: "Currently Exploring",
+        sublabel: "学習・実験中",
+        items: [
+            "Three.js / R3F",
+            "ベクトルDB / RAG",
+            "Cloudflare Containers",
+            "Tauri",
+        ],
+    },
+};
+
+const consistencyTable = [
+    {
+        title: "AIChatClip",
+        type: "0→1 個人プロダクト",
+        body: "自分の課題を起点に、企画から運用まで1人で完結させたSaaS。",
+    },
+    {
+        title: "金額入力の自動化",
+        type: "定型業務の改善",
+        body: "週3時間 → 週20分。年間約130時間の削減。ヒューマンエラー低減も同時実現。",
+    },
+    {
+        title: "カレンダー / LINE 自動化",
+        type: "チーム支援",
+        body: "同僚2人が予定登録できていない状況を見て、音声入力×AIで自発的に解決。",
+    },
+    {
+        title: "PLダッシュボード",
+        type: "既存ツールのリプレイス",
+        body: "見にくいExcel製PLシートを Cloudflare D1 + OOUI のダッシュボードに置き換え。Zero Trust でアクセス制御。",
+    },
+];
+
+const history = [
+    {
+        period: "2025.07 — 2026.06 (退職予定)",
+        role: "デザイン事務所 (アルバイト)",
+        body: "クライアントワーク10件を並行管理。並行して業務改善（PLダッシュボード / 金額入力自動化 / カレンダー・LINE自動化）を自発的に実施。",
+        active: true,
+    },
+    {
+        period: "2025 — Present",
+        role: "個人開発「AIChatClip」",
+        body: "AIチャットの会話をObsidian / Notion / Webhookへ自動同期するマルチサーフェスSaaS。Chrome / Firefoxストア公開済み、課金実装、有料ユーザー獲得。",
+        active: true,
+    },
+    {
+        period: "2023 — 2025",
+        role: "プロダクト開発・事業企画 (起業準備)",
+        body: "共同創業候補と約2年、プロダクト開発と事業企画の実務に従事。方向性の違いから離脱。「ミーティングで芯食ったことを言う能力」はこの期間で鍛えられた。",
+        active: false,
+    },
+    {
+        period: "2023",
+        role: "新卒入社・退職",
+        body: "正社員として就職するも3ヶ月で退職。プロダクト開発を軸に置きたいという自分の指向が明確になった転換点。",
+        active: false,
+    },
+    {
+        period: "〜 2023",
+        role: "東京理科大学 経営学部 卒業",
+        body: "事業視点（課金検証を先にやる、PLダッシュボードを自発的に作る）の土台はこの学部時代に。",
+        active: false,
+    },
+];
 ---
 
 <BaseLayout
-    title="Profile | Shogo Toyoshima"
-    description="About me, skills, and career."
+    title="About | Shogo Toyoshima"
+    description="Product Engineer / Designer. Cloudflare スタックで個人プロダクトを出荷している26歳。"
 >
-    <div class="container mx-auto px-6 py-24 max-w-4xl">
-        <header class="mb-16">
-            <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tighter">
-                PROFILE
-            </h1>
-            <p class="font-mono text-sm text-yellow-400 tracking-widest">
-                USER_DATA_ARCHIVE
-            </p>
-        </header>
+    <main class="relative min-h-screen">
+        <!-- Background Grid -->
+        <div
+            class="fixed inset-0 opacity-40 pointer-events-none z-0"
+            style="background-image: linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px); background-size: 40px 40px;"
+        >
+        </div>
 
-        <section class="mb-20">
-            <h2
-                class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-4"
+        <div
+            class="relative z-10 container mx-auto px-6 md:px-12 lg:px-20 py-24 max-w-5xl"
+        >
+            <!-- Breadcrumb -->
+            <nav
+                class="font-mono text-xs text-muted-foreground tracking-widest uppercase mb-8 flex items-center gap-2"
             >
-                About Me
-            </h2>
-            <div
-                class="prose prose-invert max-w-none text-lg text-neutral-300 leading-relaxed space-y-4"
-            >
-                <p>Design Engineer / UX Researcher based in Japan.</p>
-                <p>
-                    デザインとエンジニアリングの境界を越え、ユーザーにとって最適な体験を構築することを専門としています。
-                    単に美しいだけでなく、機能的で、かつ感情に訴えかけるようなインタラクションデザインを追求しています。
+                <a
+                    href="/"
+                    class="hover:text-accent transition-colors duration-200"
+                    >Home</a
+                >
+                <span class="text-border">/</span>
+                <span class="text-foreground">About</span>
+            </nav>
+
+            <!-- Header -->
+            <header class="mb-20">
+                <p
+                    class="font-mono text-xs text-accent tracking-[0.3em] uppercase mb-4"
+                >
+                    + USER_DATA_ARCHIVE
                 </p>
-            </div>
-        </section>
-
-        <section class="mb-20">
-            <h2
-                class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-4"
-            >
-                Skills
-            </h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {
-                    [
-                        "UX Research",
-                        "UI Design",
-                        "Frontend Dev",
-                        "Prototyping",
-                        "Astro",
-                        "React",
-                        "TypeScript",
-                        "Tailwind CSS",
-                        "Figma",
-                        "Design Systems",
-                    ].map((skill) => (
-                        <div class="p-4 bg-neutral-900 border border-neutral-800 rounded hover:border-yellow-400/50 transition-colors">
-                            <span class="font-mono text-sm text-neutral-400">
-                                {skill}
-                            </span>
-                        </div>
-                    ))
-                }
-            </div>
-        </section>
-
-        <section>
-            <h2
-                class="text-2xl font-bold mb-6 border-l-4 border-yellow-400 pl-4"
-            >
-                History
-            </h2>
-            <div
-                class="relative border-l border-neutral-800 ml-4 pl-8 py-4 space-y-12"
-            >
-                <div class="relative">
-                    <span
-                        class="absolute -left-[37px] top-1.5 w-4 h-4 rounded-full bg-yellow-400 border-4 border-neutral-950"
-                    ></span>
-                    <span class="font-mono text-sm text-yellow-400 block mb-1"
-                        >202X - Present</span
+                <h1
+                    class="text-5xl md:text-7xl font-black mb-6 tracking-tighter leading-[0.9]"
+                >
+                    Shogo<br />Toyoshima
+                </h1>
+                <div class="flex items-center gap-4">
+                    <div class="h-[2px] w-12 bg-accent"></div>
+                    <p
+                        class="font-mono text-sm tracking-[0.25em] text-foreground font-bold uppercase"
                     >
-                    <h3 class="text-xl font-bold">Freelance Design Engineer</h3>
-                    <p class="text-neutral-400 mt-2">
-                        Working on various web applications and design systems.
+                        Product Engineer / Designer
                     </p>
                 </div>
-                <div class="relative">
-                    <span
-                        class="absolute -left-[37px] top-1.5 w-4 h-4 rounded-full bg-neutral-700 border-4 border-neutral-950"
-                    ></span>
-                    <span class="font-mono text-sm text-neutral-500 block mb-1"
-                        >20XX - 202X</span
-                    >
-                    <h3 class="text-xl font-bold text-neutral-500">
-                        Previous Role
-                    </h3>
-                    <p class="text-neutral-600 mt-2">
-                        Description of previous experience.
+            </header>
+
+            <!-- About Me -->
+            <section class="mb-24">
+                <h2
+                    class="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-accent pl-4"
+                >
+                    About
+                </h2>
+                <div
+                    class="prose max-w-none text-base md:text-lg text-foreground/90 leading-relaxed space-y-6"
+                >
+                    <p>
+                        プロダクトの全体設計から実装・運用まで一気通貫で担う Product
+                        Engineer です。Cloudflare のエッジプラットフォーム（Workers / D1 / R2 /
+                        Durable Objects / Workers AI / Zero Trust）を主戦場にしています。
+                    </p>
+                    <p>
+                        肩書きは「広く浅いジェネラリスト」ではなく、<strong
+                            class="text-foreground"
+                            >「レンジが広くて実行力があるが、個々の技術の深さはこれから」</strong
+                        >
+                        が正確な自己像。プロダクトの全体像を描いて、必要な技術を選定・統合し、実際に動くものとして出荷できることが現時点での価値です。
+                    </p>
+                    <p>
+                        経営学部出身で、事業視点（課金検証を先にやる、PLダッシュボードを自発的に作る）が判断軸の一つにあります。デザイン実務（UI / Visual Identity / Logo / DTP）も日常的に手を動かしており、デザインとエンジニアリングの両方を共通言語で扱える立ち位置を強みにしています。
                     </p>
                 </div>
+            </section>
+
+            <!-- Consistent Pattern -->
+            <section class="mb-24">
+                <h2
+                    class="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-accent pl-4"
+                >
+                    一貫した行動パターン
+                </h2>
+                <p class="text-muted-foreground mb-8 leading-relaxed">
+                    「課題を見つける → 技術で解決する → 実際に使われる」というサイクルを、規模や文脈を変えながら繰り返してきました。
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {
+                        consistencyTable.map((item) => (
+                            <div class="group relative border border-border bg-background/60 backdrop-blur-sm p-6 hover:border-accent/60 transition-colors duration-300">
+                                <div class="font-mono text-[10px] text-accent tracking-widest uppercase mb-3">
+                                    {item.type}
+                                </div>
+                                <h3 class="text-lg font-bold mb-2 tracking-tight">
+                                    {item.title}
+                                </h3>
+                                <p class="text-sm text-muted-foreground leading-relaxed">
+                                    {item.body}
+                                </p>
+                                <div class="absolute top-2 right-3 font-mono text-[10px] text-border">
+                                    ◇
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </section>
+
+            <!-- AI Stance -->
+            <section class="mb-24">
+                <h2
+                    class="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-accent pl-4"
+                >
+                    AI との付き合い方
+                </h2>
+                <div
+                    class="border border-border bg-background/60 p-6 md:p-8 space-y-4 text-base text-foreground/90 leading-relaxed"
+                >
+                    <p>
+                        <strong class="text-foreground"
+                            >アーキテクチャ設計と技術選定は自分で判断します。</strong
+                        > 実装の生産性を上げる手段として AI を使い、理解の浅い領域は AI との対話 + 実践で素早く土地勘をつくります。
+                    </p>
+                    <p>
+                        本質的なスキルだと考えているのは
+                        <strong class="text-foreground">「何を AI に聞くべきか」を判断できること</strong
+                        >。問題を分解する力、検証可能な仮説に翻訳する力、そして出力を疑える基準を持つことが、AI 時代でも腐らないコアだと考えています。
+                    </p>
+                    <p class="font-mono text-xs text-muted-foreground tracking-wider pt-2 border-t border-border">
+                        個人開発 AIChatClip も、AI による実装速度を活かしつつ、設計判断（Durable Objects での同期 / Better Auth 採用 / Workers AI でのタグ自動生成）はすべて自前で行っています。
+                    </p>
+                </div>
+            </section>
+
+            <!-- Skills -->
+            <section class="mb-24">
+                <h2
+                    class="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-accent pl-4"
+                >
+                    Skills
+                </h2>
+                <div class="space-y-10">
+                    {
+                        Object.entries(skills).map(([key, group]) => (
+                            <div>
+                                <div class="flex items-baseline gap-3 mb-4">
+                                    <h3 class="text-lg font-bold tracking-tight">
+                                        {group.label}
+                                    </h3>
+                                    <span class="font-mono text-[10px] text-muted-foreground tracking-widest uppercase">
+                                        — {group.sublabel}
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    {group.items.map((skill) => (
+                                        <span
+                                            class={
+                                                key === "learning"
+                                                    ? "inline-block px-3 py-1.5 text-xs font-mono tracking-wide text-muted-foreground border border-dashed border-border"
+                                                    : "inline-block px-3 py-1.5 text-xs font-mono tracking-wide text-foreground border border-border bg-background/60 hover:border-accent/60 transition-colors"
+                                            }
+                                        >
+                                            {skill}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        ))
+                    }
+                </div>
+            </section>
+
+            <!-- History -->
+            <section class="mb-24">
+                <h2
+                    class="text-2xl md:text-3xl font-bold mb-8 border-l-4 border-accent pl-4"
+                >
+                    History
+                </h2>
+                <div
+                    class="relative border-l border-border ml-2 pl-8 py-2 space-y-12"
+                >
+                    {
+                        history.map((entry) => (
+                            <div class="relative">
+                                <span
+                                    class={`absolute -left-[37px] top-2 w-3.5 h-3.5 rounded-full border-4 border-background ${entry.active ? "bg-accent" : "bg-muted-foreground/40"}`}
+                                />
+                                <span
+                                    class={`font-mono text-xs block mb-1 tracking-widest uppercase ${entry.active ? "text-accent" : "text-muted-foreground"}`}
+                                >
+                                    {entry.period}
+                                </span>
+                                <h3 class="text-lg md:text-xl font-bold mb-2 tracking-tight">
+                                    {entry.role}
+                                </h3>
+                                <p class="text-sm md:text-base text-muted-foreground leading-relaxed">
+                                    {entry.body}
+                                </p>
+                            </div>
+                        ))
+                    }
+                </div>
+            </section>
+
+            <!-- Status -->
+            <section class="mb-12">
+                <div
+                    class="border border-accent/40 bg-accent/5 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                >
+                    <div>
+                        <p
+                            class="font-mono text-[10px] text-accent tracking-[0.3em] uppercase mb-2"
+                        >
+                            + STATUS
+                        </p>
+                        <p class="text-base md:text-lg font-bold">
+                            2026年6月末で現職退職予定 / 7月以降の入社可能
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            カジュアル面談・スカウト歓迎です。
+                        </p>
+                    </div>
+                    <a
+                        href="/contact"
+                        class="group inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background font-mono text-xs tracking-widest uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                        Open Channel
+                        <svg
+                            class="w-3 h-3 group-hover:translate-x-1 transition-transform"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            ><path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg
+                        >
+                    </a>
+                </div>
+            </section>
+
+            <!-- Footer Decor -->
+            <div class="mt-20 flex items-center gap-4">
+                <div class="h-px flex-1 bg-border"></div>
+                <span
+                    class="font-mono text-[10px] text-muted-foreground tracking-[0.3em] uppercase"
+                >
+                    End_of_Profile
+                </span>
+                <div class="h-px flex-1 bg-border"></div>
             </div>
-        </section>
-    </div>
+        </div>
+    </main>
 </BaseLayout>

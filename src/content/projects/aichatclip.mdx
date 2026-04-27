@@ -2,7 +2,7 @@
 title: AIChatClip
 meta:
   date: 2026-03-27
-  duration: Ongoing
+  duration: 2025〜現在 (Ongoing)
   link: https://aichatclip.com
 attributes:
   roles:
@@ -22,45 +22,98 @@ attributes:
     - Turborepo
 ---
 
+## TL;DR
+
+AIチャット (ChatGPT / Claude / Gemini / Grok) の回答をワンクリックで Obsidian / Notion / Webhook に同期する個人開発SaaS。**1人で企画から運用までを完結**。
+
+| 項目 | 内容 |
+|---|---|
+| Role | プロダクト企画 / アーキテクチャ設計 / UI・ロゴ / 全実装 / 審査対応 / プロモ動画 / マーケ |
+| Status | **Chrome / Firefox ストア公開済み** / 課金実装済み / 有料ユーザー獲得済み |
+| Stack | Cloudflare Workers / D1 / Durable Objects / Workers AI / Better Auth / WXT / Obsidian Plugin |
+| 独自性 | 拡張機能 + Web + API + Obsidian Plugin + Realtime同期 を横断する**マルチサーフェス** |
+| 動作環境 | https://aichatclip.com (Chrome 拡張・Firefox 拡張・Obsidian Plugin) |
+
+> **Don't Archive, Just Clip.** — ログを墓場にするな、知識を切り抜け。
+
 ## Context
-**"Don't Archive, Just Clip." — ログを墓場にするな、知識を切り抜け。**
 
-ChatGPT / Claude / Gemini / Grok などのAIチャットでの「価値ある回答」は、放っておくと履歴の海に埋もれていきます。
-AIChatClipは、チャット画面からワンクリックで回答を切り抜き、Obsidian / Notion / Webhook へ自動で届ける個人開発のサービスです。1人で企画・設計・実装・運用までを行っています。
+ChatGPT / Claude / Gemini / Grok などの AI チャットでの「価値ある回答」は、放っておくと履歴の海に埋もれていきます。AIチャットを日常的に使うナレッジワーカー（特に Obsidian / Notion ユーザー）にとって、この「流れていくログを止める手段がない」ことが共通の課題でした。
 
-## Approach
+AIChatClip は、チャット画面からワンクリックで回答を切り抜き、自分の知識ベースへ自動配送する個人開発のサービスです。
 
-### 1. プロダクト設計
-ターゲットはAIチャットで日常的に作業するナレッジワーカー。Obsidian / Notion ユーザーに加え、Webhook 連携で n8n や Make.com など幅広いワークフローに繋げられる「オープン設計」を軸にしました。
+**プロダクト検証の進め方:**
+- 元々は n8n で自分用に組んでいた自動化が原型
+- MVP段階で知人に**1,000円の課金意思**を確認してから開発に着手（経営学部出身の事業視点）
+- AI による実装速度を活かし、約2〜3ヶ月でストア公開まで到達
 
-- **ワンクリックClip**: ブラウザ拡張からボタン1つで保存
-- **リアルタイム同期**: WebSocket によるプッシュ型同期で Obsidian に即時反映
-- **AI自動整理 (Pro)**: タイトル・タグ・要約の自動生成と、保存先への自動分類
-- **マルチ保存先**: Obsidian Vault / Notion / Webhook を選択可能
+## Architecture
 
-### 2. アーキテクチャ
-Cloudflare のエッジプラットフォーム上に、低レイテンシでスケールするモノレポ構成を構築。
+Cloudflare のエッジプラットフォーム上に、低レイテンシでスケールする monorepo を構築。**1人で長く運用するため、運用負荷の最小化を最優先**に技術選定を行いました。
 
-| コンポーネント | 技術 |
-|--------------|------|
-| Web | React Router v7 (SSR on CF Workers) + Tailwind CSS v4 + Motion |
-| API | Hono on Cloudflare Workers |
-| DB | Cloudflare D1 (SQLite) + Drizzle ORM |
-| AI | Workers AI (LLM: Qwen3-30B / Embeddings: BGE-M3) |
-| Realtime | Durable Objects + WebSocket (Hibernation API) |
-| 認証 | Better Auth (Google OAuth) |
-| 拡張機能 | WXT + React (Chrome MV3 / Firefox MV2) |
-| Obsidian | TypeScript + esbuild プラグイン |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Browser Extension (WXT + React, MV3/MV2)                   │
+│   ↓ Clip 操作                                                │
+├─────────────────────────────────────────────────────────────┤
+│  Hono on Cloudflare Workers                                 │
+│   ├─ Better Auth (Google OAuth)                             │
+│   ├─ Workers AI (BGE-M3 / Qwen3-30B) → タイトル・タグ生成    │
+│   ├─ D1 (Drizzle ORM) → クリップ保存                         │
+│   └─ Durable Object → WebSocket Push (Hibernation API)      │
+├─────────────────────────────────────────────────────────────┤
+│  Obsidian Plugin (TypeScript + esbuild)                     │
+│   ↑ WebSocket pull + push                                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-Obsidianへの同期は **Durable Object → WebSocket push** を採用し、複数デバイスがある場合も「優先度の高いデバイスにだけ通知する」仕組みを設計。pingによるコネクション維持と指数バックオフによる自動再接続で、生活ワークフローに溶け込む信頼性を確保しました。
+| コンポーネント | 技術 | 役割 |
+|---|---|---|
+| Web | React Router v7 (SSR on CF Workers) + Tailwind v4 + Motion | LP / 設定画面 / 課金ページ |
+| API | Hono on Cloudflare Workers | REST / WebSocket / 認証 |
+| DB | Cloudflare D1 (SQLite) + Drizzle ORM | クリップ・ユーザー・課金状態 |
+| AI | Workers AI (Qwen3-30B / BGE-M3) | タイトル要約 / 自動タグ / 埋め込み |
+| Realtime | Durable Objects + WebSocket (Hibernation API) | Obsidian へのPush型同期 |
+| 認証 | Better Auth (Google OAuth) | 全クライアント横断のSSO |
+| Extension | WXT + React (Chrome MV3 / Firefox MV2) | クリップ取得・UI |
+| Obsidian | TypeScript + esbuild | プラグイン・ローカル書き込み |
+| Monorepo | Turborepo + pnpm workspaces | 5パッケージを一元管理 |
 
-### 3. 1人開発のための割り切り
-1人で長く運用するため、運用負荷の最小化を最優先に技術を選定しました。
+## 設計上の意思決定
 
-- **Cloudflareに寄せる**: D1 / Workers AI / Durable Objects / Workers をフル活用し、サーバ運用とAI推論コストを抑制。
-- **Turborepo + pnpm workspaces**: web / api / extension / obsidian / shared / db を1リポジトリで一元管理。
-- **Better Auth**: 自前で認証基盤を組まず、Google OAuth を素早く統合。
+「なぜこの選定か」を1人開発者として明確に言語化しています。技術判断は**自分で**行い、AIは実装速度の補助に使う設計。
 
-## Outcome
-個人開発でありながら、ブラウザ拡張・Webアプリ・API・Obsidianプラグインを横断する「マルチサーフェス」な体験を構築できたことが本プロジェクトの核です。
-AIチャットの履歴を、流れていくログから「自分だけのナレッジベース」へと変える小さなインフラとして、自分自身の日々の仕事にも組み込んで運用しています。
+### なぜ Durable Objects + WebSocket か
+複数の Obsidian インスタンスがある環境で「優先度の高いデバイスにだけ通知する」必要があり、サーバー側に状態を持つ必要があった。Durable Objects は単一書き込み点を保証しつつ **Hibernation API で常時接続のコストを抑えられる**ため、月額コスト最適化と整合した。**ping によるコネクション維持と指数バックオフによる自動再接続**で、生活ワークフローに溶け込む信頼性を確保。
+
+### なぜ Better Auth か
+1人運用のため自前認証は維持コスト過大。Auth.js / Clerk / Supabase Auth と比較し、**Cloudflare Workers + D1 へ素直に乗る**こと、料金が発生しないこと、Google OAuth 統合が即日完了することから採用。
+
+### なぜ Workers AI か
+タイトル要約・タグ自動生成のために OpenAI / Anthropic を呼ぶと**ユーザー数に比例してコストが線形**に伸びる。Workers AI は**従量課金が極めて安く**、エッジで完結するためレイテンシも低い。BGE-M3 で埋め込みを取り、タイトル衝突回避のための類似検索にも転用。
+
+### なぜ WXT か
+Chrome MV3 / Firefox MV2 を**1コードベースで両対応**させる必要があった。生の WebExtensions API より型安全で、HMR が効き、ストア提出ビルドまで自動化されるため採用。
+
+### なぜ Turborepo か
+web / api / extension / obsidian / shared / db を**型を共有しながら**並行開発するため。`shared` パッケージで型・スキーマ・APIクライアントを共通化し、4つのサーフェス間で齟齬が出ない構造にした。
+
+## Status & Outcome
+
+### 公開状況
+- **Chrome Web Store**: 公開済み
+- **Firefox Add-ons**: 公開済み
+- **Obsidian Plugin**: 自動更新対応版を配布中
+- **Web**: https://aichatclip.com
+
+### 数字 / マイルストーン
+- 課金実装済み（Stripe）/ 有料ユーザー1名獲得済み
+- ユーザーテスト実施済み → オンボーディング改善を継続中
+- プロモーション動画・ガイド動画を **Remotion** で制作
+
+### 1人開発で証明できたこと
+- Cloudflare スタックを**プロダクションで運用**できる
+- 拡張機能・Web・API・Obsidian プラグイン・リアルタイム同期を**横断的に設計**できる
+- 仮説検証（1,000円の課金意思テスト）→設計→出荷→運用までを**自走**できる
+
+> 個人開発プロダクトの主要コードは商用運用中のため非公開ですが、アーキテクチャ・設計判断・運用上の学びは本サイトおよび面談で詳しくお話しできます。

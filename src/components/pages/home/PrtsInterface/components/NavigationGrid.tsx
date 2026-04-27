@@ -9,9 +9,10 @@ import { ConnectIcon } from '@/components/ui/ConnectIcon';
 
 interface NavigationGridProps {
     onHoverItem?: (label: string | null) => void;
+    skipIntro?: boolean;
 }
 
-export const NavigationGrid = ({ onHoverItem }: NavigationGridProps) => {
+export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGridProps) => {
     const navItems = [
         { label: "PROJECTS", href: "/projects", customIcon: (ref: any) => <FolderGit2Icon ref={ref} size={20} className="mb-0.5" />, highlight: true },
         { label: "BLOG", href: "/blog", customIcon: (ref: any) => <FileTextIcon ref={ref} size={20} className="mb-0.5" /> },
@@ -25,9 +26,9 @@ export const NavigationGrid = ({ onHoverItem }: NavigationGridProps) => {
                 {navItems.map((item, index) => (
                     <motion.div
                         key={item.label}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={skipIntro ? false : { opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{
+                        transition={skipIntro ? { duration: 0 } : {
                             duration: msToS(MAIN_TITLE_TIMING_MS.navigation.appearDuration),
                             delay: msToS(MAIN_TITLE_TIMING_MS.navigation.appearStart + MAIN_TITLE_TIMING_MS.navigation.stagger * index),
                             ease: "easeOut"
