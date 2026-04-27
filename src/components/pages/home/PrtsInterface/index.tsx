@@ -29,7 +29,6 @@ const readSkipIntroFlag = (): boolean => {
 export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-    const [isExiting, setIsExiting] = useState(false);
     const [skipIntro] = useState<boolean>(readSkipIntroFlag);
 
     // Mouse position
@@ -70,8 +69,6 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 // Intercept same-origin navigation
                 if (url.origin === window.location.origin) {
                     e.preventDefault();
-                    setIsExiting(true);
-
                     // WebGL トランジション → cover フェーズ内部で navigate() を呼ぶ
                     playWebGLTransition({
                         url: target.pathname + target.search + target.hash,
@@ -107,28 +104,18 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 {/* Intro Animation Container */}
                 <motion.div
                     initial={skipIntro ? false : { scale: 1.8, rotateY: -30, rotateX: 20 }}
-                    animate={
-                        isExiting
-                            ? { scale: 0.4, rotateY: 0, rotateX: 0 }
-                            : { scale: 1, rotateY: 0, rotateX: 0 }
-                    }
+                    animate={{ scale: 1, rotateY: 0, rotateX: 0 }}
                     transition={
-                        isExiting
-                            ? {
-                                duration: 0.8, // Match view transition duration
-                                ease: [0.83, 0, 0.17, 1] // Match ease-in-out-quint
-                            }
-                            : skipIntro
-                                ? { duration: 0 }
-                                : {
-                                    delay: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutStart),
-                                    duration: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutDuration),
-                                    ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint)
-                                }
+                        skipIntro
+                            ? { duration: 0 }
+                            : {
+                                  delay: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutStart),
+                                  duration: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutDuration),
+                                  ease: [0.83, 0, 0.17, 1] // var(--ease-in-out-quint)
+                              }
                     }
                     style={{
                         transformStyle: "preserve-3d",
-                        pointerEvents: isExiting ? "none" : "auto",
                     }}
                     className="w-full h-full absolute inset-0 flex items-center justify-center origin-center"
                 >
