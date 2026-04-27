@@ -161,7 +161,7 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                     <div className="mt-4 flex items-center gap-4 justify-center">
                         <div className="h-[2px] w-8 bg-accent"></div>
                         <p className="font-mono text-xs tracking-[0.2em] text-accent font-bold uppercase">
-                            Design Engineer
+                            Product Engineer
                         </p>
                         <div className="h-[2px] w-8 bg-accent"></div>
                     </div>
