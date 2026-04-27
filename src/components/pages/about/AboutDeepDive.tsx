@@ -257,42 +257,86 @@ const HistoryContent: React.FC = () => {
     );
 };
 
+type SubGroup = { label: string; items: string[] };
+type SkillGroup = {
+    label: string;
+    sub: string;
+    learning?: boolean;
+    items?: string[];
+    subgroups?: SubGroup[];
+};
+
 const SkillsContent: React.FC = () => {
-    const groups: { label: string; sub: string; learning?: boolean; items: string[] }[] = [
+    const groups: SkillGroup[] = [
         {
-            label: "Production Experience",
+            label: "Engineering",
             sub: "実プロダクトで採用",
-            items: [
-                "Cloudflare Workers",
-                "Cloudflare D1",
-                "Cloudflare R2",
-                "Durable Objects",
-                "Workers AI",
-                "Cloudflare Zero Trust",
-                "TypeScript",
-                "React",
-                "React Router v7",
-                "Hono",
-                "Astro",
-                "Tailwind CSS",
-                "WXT (Browser Extension)",
-                "Obsidian Plugin API",
-                "Better Auth",
-                "Drizzle ORM",
-                "Remotion",
+            subgroups: [
+                {
+                    label: "Languages",
+                    items: ["TypeScript"],
+                },
+                {
+                    label: "Frameworks",
+                    items: [
+                        "React",
+                        "React Router v7",
+                        "Astro",
+                        "Hono",
+                        "Tailwind CSS",
+                    ],
+                },
+                {
+                    label: "Cloudflare",
+                    items: [
+                        "Workers",
+                        "D1",
+                        "R2",
+                        "Durable Objects",
+                        "Workers AI",
+                        "Zero Trust",
+                    ],
+                },
+                {
+                    label: "Platform / Surface",
+                    items: [
+                        "WXT (Browser Extension)",
+                        "Obsidian Plugin API",
+                    ],
+                },
+                {
+                    label: "Libraries",
+                    items: ["Better Auth", "Drizzle ORM"],
+                },
+                {
+                    label: "Motion / Video",
+                    items: ["Remotion"],
+                },
             ],
         },
         {
             label: "Design",
             sub: "Visual / UI / Print",
-            items: [
-                "Figma",
-                "Illustrator",
-                "Photoshop",
-                "UI Design",
-                "Visual Identity",
-                "Logo Design",
-                "DTP (印刷物入稿)",
+            subgroups: [
+                {
+                    label: "Tools",
+                    items: [
+                        "Figma",
+                        "Illustrator",
+                        "Photoshop",
+                        "Affinity",
+                        "Canva",
+                    ],
+                },
+                {
+                    label: "Domain",
+                    items: [
+                        "UI Design",
+                        "Visual Identity",
+                        "Logo Design",
+                        "DTP (印刷物入稿)",
+                    ],
+                },
             ],
         },
         {
@@ -303,7 +347,7 @@ const SkillsContent: React.FC = () => {
                 "ユーザーテスト設計",
                 "リーン仮説検証",
                 "マーケティング戦略",
-                "クライアントワーク10件並行管理",
+                "クライアントワーク20件並行管理",
             ],
         },
         {
@@ -312,6 +356,7 @@ const SkillsContent: React.FC = () => {
             learning: true,
             items: [
                 "Three.js / R3F",
+                "GSAP",
                 "ベクトルDB / RAG",
                 "Cloudflare Containers",
                 "Tauri",
@@ -319,11 +364,16 @@ const SkillsContent: React.FC = () => {
         },
     ];
 
+    const chipClass = (learning: boolean | undefined) =>
+        learning
+            ? "inline-block px-3 py-1.5 text-xs font-mono tracking-wide text-muted-foreground border border-dashed border-border"
+            : "inline-block px-3 py-1.5 text-xs font-mono tracking-wide text-foreground border border-border bg-background/60";
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-10">
             {groups.map((group) => (
                 <div key={group.label}>
-                    <div className="flex items-baseline gap-3 mb-3">
+                    <div className="flex items-baseline gap-3 mb-4">
                         <h3 className="text-base font-bold tracking-tight">
                             {group.label}
                         </h3>
@@ -331,20 +381,44 @@ const SkillsContent: React.FC = () => {
                             — {group.sub}
                         </span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {group.items.map((skill) => (
-                            <span
-                                key={skill}
-                                className={
-                                    group.learning
-                                        ? "inline-block px-3 py-1.5 text-xs font-mono tracking-wide text-muted-foreground border border-dashed border-border"
-                                        : "inline-block px-3 py-1.5 text-xs font-mono tracking-wide text-foreground border border-border bg-background/60"
-                                }
-                            >
-                                {skill}
-                            </span>
-                        ))}
-                    </div>
+
+                    {group.items && (
+                        <div className="flex flex-wrap gap-2">
+                            {group.items.map((skill) => (
+                                <span
+                                    key={skill}
+                                    className={chipClass(group.learning)}
+                                >
+                                    {skill}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
+                    {group.subgroups && (
+                        <div className="space-y-4">
+                            {group.subgroups.map((sub) => (
+                                <div
+                                    key={sub.label}
+                                    className="grid grid-cols-1 md:grid-cols-[140px_1fr] gap-2 md:gap-4 items-start"
+                                >
+                                    <div className="font-mono text-[10px] text-accent tracking-widest uppercase pt-2">
+                                        {sub.label}
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {sub.items.map((skill) => (
+                                            <span
+                                                key={skill}
+                                                className={chipClass(group.learning)}
+                                            >
+                                                {skill}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             ))}
         </div>
