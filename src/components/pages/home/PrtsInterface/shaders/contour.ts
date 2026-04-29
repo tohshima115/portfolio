@@ -87,10 +87,10 @@ void main() {
     // そこから 1 fwidth 分でフェードアウト。
     float line  = 1.0 - smoothstep(uLineWidth * fw, (uLineWidth + 1.0) * fw, dist);
 
-    // 画面端を放射状にフェード。FloorPlane の radial-gradient (40% / 80%) に
-    // 揃えて、コーナーまでの距離 (~0.707) を基準に inner 0.28, outer 0.56。
+    // 画面端を放射状にフェード。コーナーまでの距離 (~0.707) を基準に
+    // inner 0.18, outer 0.45 で早めに消すことで、エッジ付近をしっかり透過させる。
     float edgeDist = length(vUv - 0.5);
-    float edgeMask = 1.0 - smoothstep(0.28, 0.56, edgeDist);
+    float edgeMask = 1.0 - smoothstep(0.18, 0.45, edgeDist);
 
     gl_FragColor = vec4(uLineColor, line * uOpacity * edgeMask);
 }

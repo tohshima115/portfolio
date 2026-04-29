@@ -111,18 +111,12 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             onClickCapture={handleLinkClick}
         >
             {/*
-              等高線背景: 3D シーンと同じ rotateX を共有してマウス追従カメラの適用範囲に入れる。
-              HoverBackground (mix-blend-overlay) より下 (= 先に描画) に置く。
-              shader 側でコーナーに向けて放射状にフェードするので wrapper は viewport
-              サイズで十分。回転で生じる edge のギャップはフェード領域に隠れる。
+              等高線背景: rotateX を適用するとパースペクティブで上半分が縮み
+              下半分が膨らむため、shader の放射状フェードが画面上で非対称に
+              見える問題があった。視覚的中心を維持するため rotateX wrapper は
+              使わず、viewport に直接固定する。
             */}
-            <motion.div
-                aria-hidden="true"
-                style={{ rotateX }}
-                className="absolute inset-0 origin-center pointer-events-none"
-            >
-                <ContourBackground skipIntro={skipIntro} />
-            </motion.div>
+            <ContourBackground skipIntro={skipIntro} />
             <HoverBackground hoveredItem={hoveredItem} />
             <ScrollTransition />
 
