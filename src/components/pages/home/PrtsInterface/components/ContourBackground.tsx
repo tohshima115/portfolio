@@ -5,8 +5,6 @@ import * as THREE from 'three';
 import { contourVertex, contourFragment } from '../shaders/contour';
 
 interface Props {
-    /** イントロアニメをスキップする (sessionStorage 由来) */
-    skipIntro: boolean;
     /**
      * カメラ追従用の X 軸回転 (deg)。任意。
      *
@@ -20,8 +18,6 @@ interface Props {
 }
 
 const TARGET_OPACITY = 0.26;
-const FADE_IN_DURATION_S = 1.4;
-const FADE_IN_DELAY_S = 3.4; // MAIN_TITLE_TIMING_MS.cameraZoomOutStart と同じタイミングで滑り込ませる
 // uSpeed が極めて遅いのでフレーム間差分は視覚的に区別できない。24fps まで落としても劣化なし。
 const TARGET_FPS = 24;
 // 親 DOM の perspective は R3F のラッパ越しに canvas へ伝わらないため、canvas 自身の
@@ -45,14 +41,12 @@ const readForegroundColor = (): THREE.Color => {
     }
 };
 
-const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean; inView: boolean }> = ({
-    skipIntro,
+const ContourScene: React.FC<{ reducedMotion: boolean; inView: boolean }> = ({
     reducedMotion,
     inView,
 }) => {
     const materialRef = useRef<THREE.ShaderMaterial | null>(null);
     const { size, viewport, invalidate } = useThree();
-    const elapsedRef = useRef(0);
 
     // frameloop="demand" の Canvas を rAF + delta 蓄積で TARGET_FPS にスロットル。
     // setInterval と違い、タブ非表示時は rAF が自動で止まるのでバッテリーにも優しい。
@@ -84,7 +78,7 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean; inVie
             uTime: { value: 0 },
             uResolution: { value: new THREE.Vector2(1, 1) },
             uLineColor: { value: lineColor },
-            uOpacity: { value: skipIntro || reducedMotion ? TARGET_OPACITY : 0 },
+            uOpacity: { value: TARGET_OPACITY },
             uLineWidth: { value: 0.5 },
             uBands: { value: 28 },
             uScale: { value: 2.4 },
@@ -107,13 +101,6 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean; inVie
         if (!reducedMotion) {
             mat.uniforms.uTime.value += delta;
         }
-        // フェードイン (skipIntro / reduced-motion 時はすでに最大値)
-        if (!skipIntro && !reducedMotion) {
-            elapsedRef.current += delta;
-            const t = Math.max(0, elapsedRef.current - FADE_IN_DELAY_S) / FADE_IN_DURATION_S;
-            const eased = Math.min(1, t < 0 ? 0 : 1 - Math.pow(1 - t, 3));
-            mat.uniforms.uOpacity.value = eased * TARGET_OPACITY;
-        }
     });
 
     return (
@@ -132,7 +119,7 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean; inVie
     );
 };
 
-export const ContourBackground: React.FC<Props> = ({ skipIntro, rotateX }) => {
+export const ContourBackground: React.FC<Props> = ({ rotateX }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [reducedMotion, setReducedMotion] = useState(false);
@@ -207,7 +194,7 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro, rotateX }) => {
                     canvas.addEventListener('webglcontextlost', handleLost, { once: true });
                 }}
             >
-                <ContourScene skipIntro={skipIntro} reducedMotion={reducedMotion} inView={inView} />
+                <ContourScene reducedMotion={reducedMotion} inView={inView} />
             </Canvas>
         </div>
     );
