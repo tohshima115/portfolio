@@ -8,7 +8,7 @@ interface Props {
     skipIntro: boolean;
 }
 
-const TARGET_OPACITY = 0.16;
+const TARGET_OPACITY = 0.42;
 const FADE_IN_DURATION_S = 1.4;
 const FADE_IN_DELAY_S = 3.4; // MAIN_TITLE_TIMING_MS.cameraZoomOutStart と同じタイミングで滑り込ませる
 
@@ -45,10 +45,10 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = (
             uResolution: { value: new THREE.Vector2(1, 1) },
             uLineColor: { value: lineColor },
             uOpacity: { value: skipIntro || reducedMotion ? TARGET_OPACITY : 0 },
-            uLineWidth: { value: 0.42 },
-            uBands: { value: 11 },
-            uScale: { value: 2.6 },
-            uSpeed: { value: reducedMotion ? 0 : 0.045 },
+            uLineWidth: { value: 0.5 },
+            uBands: { value: 9 },
+            uScale: { value: 2.4 },
+            uSpeed: { value: reducedMotion ? 0 : 0.08 },
         }),
         // 初期化のみで上書き不要
         // eslint-disable-next-line react-hooks/exhaustive-deps
