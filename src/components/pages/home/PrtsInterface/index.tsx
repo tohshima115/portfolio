@@ -112,14 +112,14 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         >
             {/*
               等高線背景: 3D シーンと同じ rotateX を共有してマウス追従カメラの適用範囲に入れる。
-              HoverBackground は mix-blend-overlay で contour 上に重ねるため、ここは
-              HoverBackground より下 (= 先に描画) に置く。
-              wrapper は 150vw × 150vh まで広げて、回転で edge にギャップが出ないようにする。
+              HoverBackground (mix-blend-overlay) より下 (= 先に描画) に置く。
+              shader 側でコーナーに向けて放射状にフェードするので wrapper は viewport
+              サイズで十分。回転で生じる edge のギャップはフェード領域に隠れる。
             */}
             <motion.div
                 aria-hidden="true"
                 style={{ rotateX }}
-                className="absolute top-[-25vh] left-[-25vw] w-[150vw] h-[150vh] origin-center pointer-events-none"
+                className="absolute inset-0 origin-center pointer-events-none"
             >
                 <ContourBackground skipIntro={skipIntro} />
             </motion.div>
