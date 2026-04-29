@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { gsap } from 'gsap';
+import { animate, type AnimationPlaybackControls } from 'framer-motion';
 import { navigate } from 'astro:transitions/client';
 import { TransitionScene, type TransitionSceneHandle } from './TransitionScene';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
@@ -16,17 +16,19 @@ import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
  */
 export const WebGLTransition: React.FC = () => {
     const handleRef = useRef<TransitionSceneHandle | null>(null);
-    const tlRef = useRef<gsap.core.Timeline | null>(null);
+    const animRef = useRef<AnimationPlaybackControls | null>(null);
+    const tokenRef = useRef(0);
     const [active, setActive] = useState(false);
 
     useEffect(() => {
-        const handlePlay = (e: Event) => {
+        const handlePlay = async (e: Event) => {
             const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
             const coverDuration = detail.coverDuration ?? 0.6;
             const revealDuration = detail.revealDuration ?? 0.6;
 
-            // 進行中の遷移があれば破棄
-            tlRef.current?.kill();
+            // 進行中の遷移があれば中断
+            const token = ++tokenRef.current;
+            animRef.current?.stop();
 
             const handle = handleRef.current;
             if (!handle) return;
@@ -35,49 +37,37 @@ export const WebGLTransition: React.FC = () => {
             handle.setCover(0);
             handle.setReveal(0);
 
-            const proxy = { cover: 0, reveal: 0 };
-
-            const tl = gsap.timeline({
-                onComplete: () => {
-                    setActive(false);
-                },
-            });
-
             // Cover phase: 黒帯が降りてきて画面を覆う
-            tl.to(proxy, {
-                cover: 1,
+            const coverAnim = animate(0, 1, {
                 duration: coverDuration,
-                ease: 'power2.inOut',
-                onUpdate: () => handle.setCover(proxy.cover),
+                ease: 'easeInOut',
+                onUpdate: (v) => handle.setCover(v),
             });
+            animRef.current = coverAnim;
+            try { await coverAnim; } catch { /* stopped */ }
+            if (token !== tokenRef.current) return;
 
             // 完了直後に navigate (Astro ClientRouter)
-            tl.add(() => {
-                if (detail.url) {
-                    void navigate(detail.url);
-                }
+            if (detail.url) void navigate(detail.url);
+
+            // Reveal phase: 軽くディレイを挟んでから黒帯を引き上げ
+            const revealAnim = animate(0, 1, {
+                duration: revealDuration,
+                delay: 0.05,
+                ease: 'easeInOut',
+                onUpdate: (v) => handle.setReveal(v),
             });
+            animRef.current = revealAnim;
+            try { await revealAnim; } catch { /* stopped */ }
+            if (token !== tokenRef.current) return;
 
-            // navigate の完了を待たずに、astro:after-swap で reveal を始めたい。
-            // が、ここでは単純化のため少し遅延させて reveal を流す。
-            // 後でイベント連動に作り変える。
-            tl.to(
-                proxy,
-                {
-                    reveal: 1,
-                    duration: revealDuration,
-                    ease: 'power2.inOut',
-                    onUpdate: () => handle.setReveal(proxy.reveal),
-                },
-                `+=0.05`,
-            );
-
-            tlRef.current = tl;
+            setActive(false);
         };
 
         window.addEventListener(TRANSITION_EVENT, handlePlay);
         return () => {
             window.removeEventListener(TRANSITION_EVENT, handlePlay);
+            animRef.current?.stop();
         };
     }, []);
 
