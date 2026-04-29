@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import { FloorPlane } from './components/FloorPlane';
@@ -46,13 +46,33 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
     const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
 
+    // mousemove は 60-120Hz で発火するため、毎回 getBoundingClientRect() すると
+    // レイアウト読み出しでメインスレッドが詰まる。ResizeObserver + scroll/resize
+    // でキャッシュし、ハンドラ側ではキャッシュを参照するだけにする。
+    const rectRef = useRef<DOMRect | null>(null);
+    useEffect(() => {
+        const target = containerRef.current;
+        if (!target) return;
+        const update = () => {
+            rectRef.current = target.getBoundingClientRect();
+        };
+        update();
+        const ro = new ResizeObserver(update);
+        ro.observe(target);
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener('scroll', update);
+            window.removeEventListener('resize', update);
+        };
+    }, []);
+
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (!containerRef.current) return;
-        const { width, height, left, top } = containerRef.current.getBoundingClientRect();
-
-        const x = (e.clientX - left) / width;
-        const y = (e.clientY - top) / height;
-
+        const rect = rectRef.current;
+        if (!rect) return;
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
         mouseX.set(x);
         mouseY.set(y);
     };
@@ -90,7 +110,19 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             onMouseLeave={handleMouseLeave}
             onClickCapture={handleLinkClick}
         >
-            <ContourBackground skipIntro={skipIntro} />
+            {/*
+              等高線背景: 3D シーンと同じ rotateX を共有してマウス追従カメラの適用範囲に入れる。
+              HoverBackground は mix-blend-overlay で contour 上に重ねるため、ここは
+              HoverBackground より下 (= 先に描画) に置く。
+              wrapper は 150vw × 150vh まで広げて、回転で edge にギャップが出ないようにする。
+            */}
+            <motion.div
+                aria-hidden="true"
+                style={{ rotateX }}
+                className="absolute top-[-25vh] left-[-25vw] w-[150vw] h-[150vh] origin-center pointer-events-none"
+            >
+                <ContourBackground skipIntro={skipIntro} />
+            </motion.div>
             <HoverBackground hoveredItem={hoveredItem} />
             <ScrollTransition />
 
