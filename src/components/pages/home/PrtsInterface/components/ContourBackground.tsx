@@ -1,11 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import type { MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { contourVertex, contourFragment } from '../shaders/contour';
 
 interface Props {
     /** イントロアニメをスキップする (sessionStorage 由来) */
     skipIntro: boolean;
+    /**
+     * カメラ追従用の X 軸回転 (deg)。任意。
+     *
+     * 重要: 親 DOM に CSS transform + perspective をかけると R3F の Canvas が
+     * `getBoundingClientRect` で post-projection の AABB を読み、framebuffer を
+     * 不当に拡大して画面中央からズレる (2024 年の調査で確認済み)。
+     * そのため transform は ContourBackground 自身が canvas DOM 要素へ直接当てる。
+     * 親側で transform を巻くのは禁止。
+     */
+    rotateX?: MotionValue<number>;
 }
 
 const TARGET_OPACITY = 0.26;
@@ -13,6 +24,9 @@ const FADE_IN_DURATION_S = 1.4;
 const FADE_IN_DELAY_S = 3.4; // MAIN_TITLE_TIMING_MS.cameraZoomOutStart と同じタイミングで滑り込ませる
 // uSpeed が極めて遅いのでフレーム間差分は視覚的に区別できない。24fps まで落としても劣化なし。
 const TARGET_FPS = 24;
+// 親 DOM の perspective は R3F のラッパ越しに canvas へ伝わらないため、canvas 自身の
+// transform に perspective() を組み込んでパース感を出す。値は親の perspective: 1000px と同等。
+const CANVAS_PERSPECTIVE_PX = 1000;
 
 const readForegroundColor = (): THREE.Color => {
     if (typeof window === 'undefined') return new THREE.Color('#0a0a0a');
@@ -118,11 +132,29 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean; inVie
     );
 };
 
-export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
+export const ContourBackground: React.FC<Props> = ({ skipIntro, rotateX }) => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const [reducedMotion, setReducedMotion] = useState(false);
     const [contextLost, setContextLost] = useState(false);
     const [inView, setInView] = useState(true);
+
+    // 親 DOM に transform をかけると R3F が canvas を over-size するので、
+    // rotateX は canvas DOM 要素に直接適用する。
+    // - canvas の CSS width/height は変わらない (ResizeObserver は layout 変化のみ検知)
+    //   ので R3F の auto-resize には影響しない。
+    // - perspective() を transform に組み込むことで、親の perspective プロパティに
+    //   依存せず単独でパース感を出す。
+    useEffect(() => {
+        if (!rotateX) return;
+        const apply = (v: number) => {
+            const c = canvasRef.current;
+            if (c) c.style.transform = `perspective(${CANVAS_PERSPECTIVE_PX}px) rotateX(${v}deg)`;
+        };
+        apply(rotateX.get());
+        const unsub = rotateX.on('change', apply);
+        return () => unsub();
+    }, [rotateX]);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -163,6 +195,11 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
                 style={{ width: '100%', height: '100%' }}
                 onCreated={({ gl }) => {
                     const canvas = gl.domElement;
+                    canvasRef.current = canvas;
+                    // 既に rotateX が初期化されていれば即座に反映
+                    if (rotateX) {
+                        canvas.style.transform = `perspective(${CANVAS_PERSPECTIVE_PX}px) rotateX(${rotateX.get()}deg)`;
+                    }
                     const handleLost = (e: Event) => {
                         e.preventDefault();
                         setContextLost(true);
