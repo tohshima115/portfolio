@@ -111,18 +111,14 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             onClickCapture={handleLinkClick}
         >
             {/*
-              等高線背景: 3D シーンと同じ rotateX を共有してマウス追従カメラの
-              適用範囲に入れる。パースペクティブで上下に伸縮が出るが、それ込みで
-              「画面が傾いている」感を出すためそのまま採用。
-              HoverBackground (mix-blend-overlay) より下 (= 先に描画) に置く。
+              等高線背景: rotateX MotionValue を渡して 3D シーンと同じカメラ追従。
+              重要: ここで `<motion.div style={{ rotateX }}>` で wrap してはいけない。
+              親 DOM に CSS transform + perspective がかかると R3F が canvas を
+              getBoundingClientRect の post-projection AABB で sizing して画面中央
+              からズレる二重バグが発生する。ContourBackground 内部で canvas DOM に
+              直接 transform を当てる方式で対処済み。
             */}
-            <motion.div
-                aria-hidden="true"
-                style={{ rotateX }}
-                className="absolute inset-0 origin-center pointer-events-none"
-            >
-                <ContourBackground skipIntro={skipIntro} />
-            </motion.div>
+            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} />
             <HoverBackground hoveredItem={hoveredItem} />
             <ScrollTransition />
 

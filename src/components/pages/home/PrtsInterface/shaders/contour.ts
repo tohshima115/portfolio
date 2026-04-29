@@ -95,20 +95,6 @@ void main() {
     float edgeDist = length(maskUv);
     float edgeMask = 1.0 - smoothstep(0.18, 0.45, edgeDist);
 
-    // ===== DEBUG: shader が認識している中心に緑十字線を表示 =====
-    // FloorPlane の円と中心がズレているか目視確認用。後で削除する。
-    float cx = abs(vUv.x - 0.5);
-    float cy = abs(vUv.y - 0.5);
-    float aa2 = max(fwidth(vUv.x), fwidth(vUv.y));
-    float crossV = 1.0 - smoothstep(0.0, aa2 * 1.5, cx);
-    float crossH = 1.0 - smoothstep(0.0, aa2 * 1.5, cy);
-    float crosshair = max(crossV, crossH);
-    if (crosshair > 0.0) {
-        gl_FragColor = vec4(0.0, 0.9, 0.3, crosshair);
-        return;
-    }
-    // ===== /DEBUG =====
-
     gl_FragColor = vec4(uLineColor, line * uOpacity * edgeMask);
 }
 `;
