@@ -84,7 +84,7 @@ const personSchema = {
 		  framer-motion の initial / transition.delay は最初の render で確定するため、
 		  必ずレンダリング前に決定する必要がある。
 		-->
-		<script is:inline>
+		<script is:inline data-astro-rerun>
 			(function () {
 				var skip = false;
 				try {
