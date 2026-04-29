@@ -87,9 +87,12 @@ void main() {
     // そこから 1 fwidth 分でフェードアウト。
     float line  = 1.0 - smoothstep(uLineWidth * fw, (uLineWidth + 1.0) * fw, dist);
 
-    // 画面端を放射状にフェード。コーナーまでの距離 (~0.707) を基準に
-    // inner 0.18, outer 0.45 で早めに消すことで、エッジ付近をしっかり透過させる。
-    float edgeDist = length(vUv - 0.5);
+    // 画面端を放射状にフェード。アスペクト補正することでスクリーン空間で
+    // 真円になる (補正なしだと横長スクリーンで横長の楕円になり、横方向の
+    // フェードがビューポート端まで届かず効いて見えない問題があった)。
+    vec2 maskUv = vUv - 0.5;
+    maskUv.x *= uResolution.x / uResolution.y;
+    float edgeDist = length(maskUv);
     float edgeMask = 1.0 - smoothstep(0.18, 0.45, edgeDist);
 
     gl_FragColor = vec4(uLineColor, line * uOpacity * edgeMask);
