@@ -11,9 +11,8 @@ interface Props {
 const TARGET_OPACITY = 0.42;
 const FADE_IN_DURATION_S = 1.4;
 const FADE_IN_DELAY_S = 3.4; // MAIN_TITLE_TIMING_MS.cameraZoomOutStart と同じタイミングで滑り込ませる
-// uSpeed が極めて遅いので 30fps で描画してもフレーム間の差分は視覚的にわからない。
-// 60fps → 30fps で GPU 描画コストが半減する。
-const TARGET_FPS = 30;
+// uSpeed が極めて遅いのでフレーム間差分は視覚的に区別できない。24fps まで落としても劣化なし。
+const TARGET_FPS = 24;
 
 const readForegroundColor = (): THREE.Color => {
     if (typeof window === 'undefined') return new THREE.Color('#0a0a0a');
@@ -32,18 +31,20 @@ const readForegroundColor = (): THREE.Color => {
     }
 };
 
-const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = ({
+const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean; inView: boolean }> = ({
     skipIntro,
     reducedMotion,
+    inView,
 }) => {
     const materialRef = useRef<THREE.ShaderMaterial | null>(null);
     const { size, viewport, invalidate } = useThree();
     const elapsedRef = useRef(0);
 
-    // frameloop="demand" の Canvas を rAF + delta 蓄積で 30fps 相当にスロットル。
+    // frameloop="demand" の Canvas を rAF + delta 蓄積で TARGET_FPS にスロットル。
     // setInterval と違い、タブ非表示時は rAF が自動で止まるのでバッテリーにも優しい。
+    // hero が画面外になっている間 (inView=false) はループ自体を張らない。
     useEffect(() => {
-        if (reducedMotion) return;
+        if (reducedMotion || !inView) return;
         const interval = 1000 / TARGET_FPS;
         let raf = 0;
         let last = performance.now();
@@ -60,7 +61,7 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = (
         };
         raf = requestAnimationFrame(tick);
         return () => cancelAnimationFrame(raf);
-    }, [invalidate, reducedMotion]);
+    }, [invalidate, reducedMotion, inView]);
 
     const lineColor = useMemo(readForegroundColor, []);
 
@@ -73,7 +74,7 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = (
             uLineWidth: { value: 0.5 },
             uBands: { value: 28 },
             uScale: { value: 2.4 },
-            uSpeed: { value: reducedMotion ? 0 : 0.010 },
+            uSpeed: { value: reducedMotion ? 0 : 0.006 },
         }),
         // 初期化のみで上書き不要
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,8 +119,10 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = (
 };
 
 export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
     const [reducedMotion, setReducedMotion] = useState(false);
     const [contextLost, setContextLost] = useState(false);
+    const [inView, setInView] = useState(true);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -130,10 +133,24 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
         return () => mq.removeEventListener('change', update);
     }, []);
 
+    // hero がスクロールで画面外に抜けたらアニメーションを止める。
+    // hero 自体は h-screen なので、スクロールダウンで完全に外れる。
+    useEffect(() => {
+        const target = containerRef.current;
+        if (!target || typeof IntersectionObserver === 'undefined') return;
+        const io = new IntersectionObserver(
+            ([entry]) => setInView(entry.isIntersecting),
+            { threshold: 0 },
+        );
+        io.observe(target);
+        return () => io.disconnect();
+    }, []);
+
     if (contextLost) return null;
 
     return (
         <div
+            ref={containerRef}
             className="absolute inset-0 pointer-events-none"
             aria-hidden="true"
             style={{ zIndex: 0 }}
@@ -141,7 +158,7 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
             <Canvas
                 orthographic
                 gl={{ alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' }}
-                dpr={[1, 1.5]}
+                dpr={1}
                 frameloop="demand"
                 style={{ width: '100%', height: '100%' }}
                 onCreated={({ gl }) => {
@@ -153,7 +170,7 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
                     canvas.addEventListener('webglcontextlost', handleLost, { once: true });
                 }}
             >
-                <ContourScene skipIntro={skipIntro} reducedMotion={reducedMotion} />
+                <ContourScene skipIntro={skipIntro} reducedMotion={reducedMotion} inView={inView} />
             </Canvas>
         </div>
     );
