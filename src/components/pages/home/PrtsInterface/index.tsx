@@ -8,6 +8,7 @@ import { NavigationLayer } from './components/NavigationLayer';
 import { Decorations } from './components/Decorations';
 import { HoverBackground } from './components/HoverBackground';
 import { ScrollTransition } from './components/ScrollTransition';
+import { ContourBackground } from './components/ContourBackground';
 import { MAIN_TITLE_TIMING_MS, msToS } from './config/animationTiming';
 
 export interface UpdateItem {
@@ -89,6 +90,7 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             onMouseLeave={handleMouseLeave}
             onClickCapture={handleLinkClick}
         >
+            <ContourBackground skipIntro={skipIntro} />
             <HoverBackground hoveredItem={hoveredItem} />
             <ScrollTransition />
 
