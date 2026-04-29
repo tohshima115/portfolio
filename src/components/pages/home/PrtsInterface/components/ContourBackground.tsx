@@ -11,6 +11,9 @@ interface Props {
 const TARGET_OPACITY = 0.42;
 const FADE_IN_DURATION_S = 1.4;
 const FADE_IN_DELAY_S = 3.4; // MAIN_TITLE_TIMING_MS.cameraZoomOutStart と同じタイミングで滑り込ませる
+// uSpeed が極めて遅いので 30fps で描画してもフレーム間の差分は視覚的にわからない。
+// 60fps → 30fps で GPU 描画コストが半減する。
+const TARGET_FPS = 30;
 
 const readForegroundColor = (): THREE.Color => {
     if (typeof window === 'undefined') return new THREE.Color('#0a0a0a');
@@ -34,8 +37,30 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = (
     reducedMotion,
 }) => {
     const materialRef = useRef<THREE.ShaderMaterial | null>(null);
-    const { size, viewport } = useThree();
+    const { size, viewport, invalidate } = useThree();
     const elapsedRef = useRef(0);
+
+    // frameloop="demand" の Canvas を rAF + delta 蓄積で 30fps 相当にスロットル。
+    // setInterval と違い、タブ非表示時は rAF が自動で止まるのでバッテリーにも優しい。
+    useEffect(() => {
+        if (reducedMotion) return;
+        const interval = 1000 / TARGET_FPS;
+        let raf = 0;
+        let last = performance.now();
+        let acc = 0;
+        const tick = (now: number) => {
+            acc += now - last;
+            last = now;
+            if (acc >= interval) {
+                acc -= interval;
+                if (acc > interval) acc = 0; // 大きな遅延後にバーストさせない
+                invalidate();
+            }
+            raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+        return () => cancelAnimationFrame(raf);
+    }, [invalidate, reducedMotion]);
 
     const lineColor = useMemo(readForegroundColor, []);
 
@@ -117,7 +142,7 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro }) => {
                 orthographic
                 gl={{ alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' }}
                 dpr={[1, 1.5]}
-                frameloop={reducedMotion ? 'demand' : 'always'}
+                frameloop="demand"
                 style={{ width: '100%', height: '100%' }}
                 onCreated={({ gl }) => {
                     const canvas = gl.domElement;
