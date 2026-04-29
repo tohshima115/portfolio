@@ -118,7 +118,7 @@ export const PrtsInterface = ({ updates = [] }: { updates?: UpdateItem[] }) => {
               からズレる二重バグが発生する。ContourBackground 内部で canvas DOM に
               直接 transform を当てる方式で対処済み。
             */}
-            <ContourBackground rotateX={rotateX} />
+            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} />
             <HoverBackground hoveredItem={hoveredItem} />
             <ScrollTransition />
 
