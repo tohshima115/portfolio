@@ -46,9 +46,9 @@ const ContourScene: React.FC<{ skipIntro: boolean; reducedMotion: boolean }> = (
             uLineColor: { value: lineColor },
             uOpacity: { value: skipIntro || reducedMotion ? TARGET_OPACITY : 0 },
             uLineWidth: { value: 0.5 },
-            uBands: { value: 22 },
+            uBands: { value: 28 },
             uScale: { value: 2.4 },
-            uSpeed: { value: reducedMotion ? 0 : 0.018 },
+            uSpeed: { value: reducedMotion ? 0 : 0.010 },
         }),
         // 初期化のみで上書き不要
         // eslint-disable-next-line react-hooks/exhaustive-deps
