@@ -8,7 +8,7 @@ interface Props {
     skipIntro: boolean;
 }
 
-const TARGET_OPACITY = 0.42;
+const TARGET_OPACITY = 0.26;
 const FADE_IN_DURATION_S = 1.4;
 const FADE_IN_DELAY_S = 3.4; // MAIN_TITLE_TIMING_MS.cameraZoomOutStart と同じタイミングで滑り込ませる
 // uSpeed が極めて遅いのでフレーム間差分は視覚的に区別できない。24fps まで落としても劣化なし。
