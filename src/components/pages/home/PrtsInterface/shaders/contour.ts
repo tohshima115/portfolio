@@ -1,9 +1,12 @@
 /**
  * 等高線背景用シェーダ。
  *
- * fullscreen quad に Value ノイズ + fBm の高さ場を描き、
- * 等高線 (iso-line) のみを fract+fwidth でアンチエイリアスして抜き出す。
- * 重さの主因は fBm のオクターブ数 × ピクセル数。
+ * 3D Value ノイズ + fBm の高さ場を fullscreen quad に描き、
+ * 整数しきい値 (= 等高線) からの距離が 0 付近の画素だけを描画する。
+ * 時間は Z 軸として 3D ノイズへ渡すため、XY 平面では平行移動せずに
+ * その場で形がうねる。
+ *
+ * 重さの主因は fBm のオクターブ数 × ピクセル数。3D ノイズは 2D の約 2 倍。
  */
 
 export const contourVertex = /* glsl */ `
@@ -22,33 +25,45 @@ uniform float uTime;
 uniform vec2  uResolution;
 uniform vec3  uLineColor;
 uniform float uOpacity;
-uniform float uLineWidth;
-uniform float uBands;
-uniform float uScale;
-uniform float uSpeed;
+uniform float uLineWidth;   // 線の半値幅 (フラグメント単位)。0 で 1px AA のみ、0.5 で約 1.5px
+uniform float uBands;       // 等高線本数 (高さ場 [0,1] を何分割するか)
+uniform float uScale;       // 空間スケール (大きいほど密)
+uniform float uSpeed;       // Z 軸方向の進行速度 (秒あたり)
 
 varying vec2 vUv;
 
-float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+float hash3(vec3 p) {
+    p = fract(p * vec3(443.897, 441.423, 437.195));
+    p += dot(p, p.yzx + 19.19);
+    return fract((p.x + p.y) * p.z);
 }
 
-float noise2(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    vec2 u = f * f * (3.0 - 2.0 * f);
+float noise3(vec3 p) {
+    vec3 i = floor(p);
+    vec3 f = fract(p);
+    vec3 u = f * f * (3.0 - 2.0 * f);
+
+    float n000 = hash3(i);
+    float n100 = hash3(i + vec3(1.0, 0.0, 0.0));
+    float n010 = hash3(i + vec3(0.0, 1.0, 0.0));
+    float n110 = hash3(i + vec3(1.0, 1.0, 0.0));
+    float n001 = hash3(i + vec3(0.0, 0.0, 1.0));
+    float n101 = hash3(i + vec3(1.0, 0.0, 1.0));
+    float n011 = hash3(i + vec3(0.0, 1.0, 1.0));
+    float n111 = hash3(i + vec3(1.0, 1.0, 1.0));
+
     return mix(
-        mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
-        mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
-        u.y
+        mix(mix(n000, n100, u.x), mix(n010, n110, u.x), u.y),
+        mix(mix(n001, n101, u.x), mix(n011, n111, u.x), u.y),
+        u.z
     );
 }
 
-float fbm(vec2 p) {
+float fbm(vec3 p) {
     float v = 0.0;
     float a = 0.5;
     for (int i = 0; i < 4; i++) {
-        v += a * noise2(p);
+        v += a * noise3(p);
         p *= 2.0;
         a *= 0.5;
     }
@@ -59,13 +74,17 @@ void main() {
     vec2 uv = vUv;
     uv.x *= uResolution.x / uResolution.y;
 
-    vec2 q = uv * uScale + vec2(uTime * uSpeed, uTime * uSpeed * 0.6);
+    // Z 軸 = 時間。XY は固定で形だけがうねる。
+    vec3 q = vec3(uv * uScale, uTime * uSpeed);
     float h = fbm(q);
 
-    float band = h * uBands;
-    float d    = abs(fract(band) - 0.5);
-    float aa   = fwidth(band);
-    float line = 1.0 - smoothstep(uLineWidth - aa, uLineWidth + aa, d);
+    float bands = h * uBands;
+    float fw    = fwidth(bands);
+    // 各整数しきい値からの距離。0 = しきい値の真上 (線)、0.5 = 帯の中央 (線なし)。
+    float dist  = abs(fract(bands - 0.5) - 0.5);
+    // fwidth ベースのアンチエイリアス。コア幅 (uLineWidth*fw) を完全不透明にし、
+    // そこから 1 fwidth 分でフェードアウト。
+    float line  = 1.0 - smoothstep(uLineWidth * fw, (uLineWidth + 1.0) * fw, dist);
 
     gl_FragColor = vec4(uLineColor, line * uOpacity);
 }
