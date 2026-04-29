@@ -62,7 +62,8 @@ float noise3(vec3 p) {
 float fbm(vec3 p) {
     float v = 0.0;
     float a = 0.5;
-    for (int i = 0; i < 4; i++) {
+    // 3 オクターブ (4 → 3 で fragment あたりのノイズサンプルが約 25% 削減)
+    for (int i = 0; i < 3; i++) {
         v += a * noise3(p);
         p *= 2.0;
         a *= 0.5;
