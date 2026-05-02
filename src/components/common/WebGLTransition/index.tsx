@@ -13,19 +13,17 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * 遷移オーバーレイ (VFX-JS slit-scan 方式)。
+ * 遷移オーバーレイ (VFX-JS slit-scan 方式 / overlay 適用)。
  *
- * - `playWebGLTransition({ url })` で発火
- * - 進入時: VFX-JS を <body> に適用し、現ページのテクスチャを横方向に「引き延ばす」
- *   shader を progress 0→1 で適用 (cover)
- * - progress が最大付近 (画面が smear で覆われた状態) で navigate を発火、
- *   `astro:after-swap` を待って DOM が新ページに差し替わったことを確認
- * - 退場時: progress 1→0 で smear が解け、新ページが現れる (reveal)
- * - 完了後 VFX-JS を破棄して通常の表示に戻す
+ * 注意: VFX-JS の dom-to-canvas は body 全体に対しては foreignObject SVG の
+ *       capture が失敗する (Google Fonts / cross-origin / 複雑な CSS) ため、
+ *       単純な CSS gradient 背景の overlay 要素にのみ shader を適用する。
  *
- * shader は per-row のランダムな水平オフセットを progress でスケールし、
- * direction (+1 / -1) に偏らせる。すべての行が同方向へ引き延ばされるので
- * 「現画面が一方向に流される → 戻ってきて新画面」になる。
+ * - progress = 0: shader が全フラグメントを discard → overlay は透明 → ページ可視
+ * - progress 0→1 (cover): 行ごとに ±dir 方向へ uv をオフセットしつつ、
+ *   ベースシフト ((1-progress)*dir) で初期は範囲外 (discard) だったテクスチャが
+ *   範囲内 (描画) に入ってきて、最終的に画面全体を覆う
+ * - progress 1→0 (reveal): 逆に範囲外へ流れて discard されていき、ページが現れる
  */
 
 const SLIT_SHADER = /* glsl */ `
@@ -33,7 +31,6 @@ precision highp float;
 uniform vec2 resolution;
 uniform vec2 offset;
 uniform float time;
-uniform bool autoCrop;
 uniform sampler2D src;
 uniform float progress;
 uniform float dir;
@@ -49,97 +46,122 @@ float hash11(float p) {
 void main() {
     vec2 uv = (gl_FragCoord.xy - offset) / resolution;
 
-    // 行ごとにランダムなオフセット強度 (0.4〜1.0)
-    float row = floor(uv.y * 80.0);
+    // 行を 64 段に分割し、行ごとに 0.4〜1.0 のスピード倍率
+    float row = floor(uv.y * 64.0);
     float r = 0.4 + hash11(row) * 0.6;
 
-    // progress の二乗で滑らかに立ち上がり、dir で左右どちらかに偏らせる。
-    // 最大引き延ばし量は viewport 幅の 1.2 倍 (画面外まで流す)
-    float shift = progress * progress * r * 1.2 * dir;
+    // 1) baseShift: progress 0 で uv が範囲外 (discard)、progress 1 で範囲内
+    //    (= 一方向から sweep してくる動き)。dir=+1 で右から左に流れる。
+    float baseShift = (1.0 - progress) * r * dir;
+
+    // 2) smear: progress 0.5 付近で最大、progress=1 では 0。行ごとにランダム量。
+    //    モーションブラーっぽい streak を出す。
+    float smearStrength = progress * (1.0 - progress) * 4.0;
+    float smear = smearStrength * (hash11(row + 17.0) - 0.5) * 1.2 * dir;
+
+    float shift = baseShift + smear;
 
     vec2 srcUv = uv - vec2(shift, 0.0);
-
-    // テクスチャ範囲外は端の色を引き延ばす (clamp)
-    srcUv.x = clamp(srcUv.x, 0.001, 0.999);
+    if (srcUv.x < 0.0 || srcUv.x > 1.0) {
+        discard;
+    }
 
     outColor = texture(src, srcUv);
 }
 `;
 
 export const WebGLTransition: React.FC = () => {
+    const overlayRef = useRef<HTMLDivElement | null>(null);
     const vfxRef = useRef<VFX | null>(null);
-    const targetRef = useRef<HTMLElement | null>(null);
     const tlRef = useRef<gsap.core.Timeline | null>(null);
     const progressRef = useRef(0);
     const dirRef = useRef(1);
+    const vfxAttachedRef = useRef(false);
 
     useEffect(() => {
-        const handlePlay = (e: Event) => {
-            const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
-            const coverDuration = detail.coverDuration ?? 0.8;
-            const revealDuration = detail.revealDuration ?? 0.7;
+        let cancelled = false;
+        const overlay = overlayRef.current;
+        if (!overlay) return;
 
-            // 既存遷移を中断
-            tlRef.current?.kill();
-            cleanupVfx();
-
-            // VFX-JS を body に適用
+        // VFX-JS 初期化 + overlay へ shader を attach。component 寿命中ずっと
+        // 適用しっぱなしにする (progress=0 では discard なので透明)。
+        try {
             const vfx = new VFX();
-            const target = document.body;
             vfxRef.current = vfx;
-            targetRef.current = target;
-
-            progressRef.current = 0;
-            dirRef.current = 1; // +1 = 右方向に流す
-
-            try {
-                vfx.add(target, {
+            void vfx
+                .add(overlay, {
                     shader: SLIT_SHADER,
-                    overflow: 200,
+                    overflow: 100,
                     uniforms: {
                         progress: () => progressRef.current,
                         dir: () => dirRef.current,
                     },
+                })
+                .then(() => {
+                    if (!cancelled) vfxAttachedRef.current = true;
+                })
+                .catch((err: unknown) => {
+                    console.warn('[WebGLTransition] vfx.add failed', err);
                 });
-            } catch (err) {
-                console.warn('[WebGLTransition] vfx.add failed', err);
-                return;
+        } catch (err) {
+            console.warn('[WebGLTransition] VFX init failed', err);
+        }
+
+        return () => {
+            cancelled = true;
+            const v = vfxRef.current;
+            const o = overlayRef.current;
+            if (v && o) {
+                try {
+                    v.remove(o);
+                } catch {
+                    // noop
+                }
             }
+            vfxRef.current = null;
+            vfxAttachedRef.current = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        const handlePlay = (e: Event) => {
+            const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
+            const coverDuration = detail.coverDuration ?? 0.85;
+            const revealDuration = detail.revealDuration ?? 0.75;
+
+            tlRef.current?.kill();
+
+            // dir は進行方向。ここでは固定 (+1: 右側から sweep)。
+            dirRef.current = 1;
+            progressRef.current = 0;
 
             const fallEase = 'hop';
 
-            // --- Phase 1: Cover (progress 0 → 1) ---
             const tl = gsap.timeline();
+
+            // --- Cover: progress 0 → 1 ---
             tl.to(progressRef, {
                 current: 1,
                 duration: coverDuration,
                 ease: fallEase,
             });
 
-            // navigate を発火 → astro:after-swap を待って Reveal
+            // navigate 発火 + hold (after-swap 待ち)
             tl.add(() => {
-                if (!detail.url) return;
-                void navigate(detail.url);
+                if (detail.url) void navigate(detail.url);
             });
-
-            // hold (after-swap を待つ): timeline を pause、event 受信で resume
             tl.addPause();
 
-            // --- Phase 2: Reveal (progress 1 → 0) ---
+            // --- Reveal: progress 1 → 0 ---
             tl.to(progressRef, {
                 current: 0,
                 duration: revealDuration,
                 ease: fallEase,
             });
 
-            // 完了で VFX を破棄
-            tl.add(() => {
-                cleanupVfx();
-            });
-
             tlRef.current = tl;
 
-            // after-swap を受信したら timeline を resume
+            // after-swap で resume。fallback timeout も設定。
             let resumed = false;
             const resume = () => {
                 if (resumed) return;
@@ -152,35 +174,40 @@ export const WebGLTransition: React.FC = () => {
             if (detail.url) {
                 document.addEventListener('astro:after-swap', resume, { once: true });
             } else {
-                // url が無い場合は即 reveal
                 queueMicrotask(resume);
             }
-        };
-
-        const cleanupVfx = () => {
-            const vfx = vfxRef.current;
-            const target = targetRef.current;
-            if (vfx && target) {
-                try {
-                    vfx.remove(target);
-                } catch {
-                    // noop
-                }
-            }
-            vfxRef.current = null;
-            targetRef.current = null;
         };
 
         window.addEventListener(TRANSITION_EVENT, handlePlay);
         return () => {
             window.removeEventListener(TRANSITION_EVENT, handlePlay);
             tlRef.current?.kill();
-            cleanupVfx();
         };
     }, []);
 
-    // transition:persist 用の不可視ダミー要素
-    return <div aria-hidden="true" style={{ display: 'none' }} />;
+    return (
+        <div
+            ref={overlayRef}
+            aria-hidden="true"
+            style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 9999,
+                pointerEvents: 'none',
+                // VFX-JS が capture する overlay 自体の見た目。
+                // 細かい横ストライプを敷くことで、shader の uv ずれが
+                // モーションブラー / streak 風に見える。
+                background:
+                    'repeating-linear-gradient(' +
+                    '0deg,' +
+                    '#0a0a0a 0px,' +
+                    '#0a0a0a 3px,' +
+                    '#1a1a1a 3px,' +
+                    '#1a1a1a 6px' +
+                    ')',
+            }}
+        />
+    );
 };
 
 export default WebGLTransition;
