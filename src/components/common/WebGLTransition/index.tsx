@@ -1,110 +1,81 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { CustomEase } from 'gsap/CustomEase';
 import { navigate } from 'astro:transitions/client';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
 
-if (typeof window !== 'undefined') {
-    gsap.registerPlugin(CustomEase);
-    if (!CustomEase.get('hop')) {
-        CustomEase.create('hop', '0.56, 0, 0.35, 0.98');
-    }
-}
-
 /**
- * 遷移オーバーレイ (Deform Line — SVG filter, 軽量版)。
+ * 遷移アニメ: Deform Line のみ。
  *
  * 参考: https://zenn.dev/er/articles/bfa3bfdfe1ac9b
- *   GLSL 実装:
+ *   GLSL:
  *     uv.y *= N; uv.y = floor(uv.y);
- *     deformLine = random1d(uv.y);   // 行ごとの定数乱数
- *     uv.x += deformLine * scale;    // 行ごとに横ずらし
+ *     deformLine = random1d(uv.y);
+ *     color = texture2D(tex, uv + vec2(deformLine, 0.0));
  *
- * これを SVG filter に置き換えると:
- *   feTurbulence (X ≒ 一定 / Y 高周波) → 行ごとに違うランダム値の "縞" を生成
- *   feDisplacementMap (R チャンネルで X 方向のみ displacement)
- *   feOffset (全体の sweep)
+ * SVG <filter> 等価:
+ *   feTurbulence (X 一定 / Y 高周波)  → 行ごとに違う乱数の縞
+ *   feColorMatrix (alpha = 0.5 固定)  → Y 方向の displacement を 0 にする
+ *   feDisplacementMap (scale)         → R を使って行ごとに X だけ displacement
  *
- * 前バージョンが重かった主因は baseFrequency / seed をフレームごとに動かして
- * turbulence を毎フレーム再計算していたこと。今回は turbulence パラメータを
- * "遷移開始時に 1 回だけ設定" し、フレームごとには scale と dx だけ書き換える。
+ * GSAP は scale を 0 → 強 → 0 と動かすだけ。
+ *   - cover phase で scale を上げる ⇒ 画面が行ごとに横方向にバラバラに歪む
+ *   - hold (画面が崩れた状態で navigate → astro:after-swap)
+ *   - reveal phase で scale を 0 に戻す ⇒ 新しいページが整って現れる
  */
 
 const FILTER_ID = 'page-deform-filter';
+const PEAK_SCALE = 80;
 
 export const WebGLTransition: React.FC = () => {
-    const svgRef = useRef<SVGSVGElement | null>(null);
     const tlRef = useRef<gsap.core.Timeline | null>(null);
 
     useEffect(() => {
         const handlePlay = (e: Event) => {
             const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
-            const coverDuration = detail.coverDuration ?? 0.55;
+            const coverDuration = detail.coverDuration ?? 0.5;
             const revealDuration = detail.revealDuration ?? 0.5;
 
-            const svg = svgRef.current;
-            if (!svg) return;
-            const turbulence = svg.querySelector('feTurbulence');
-            const displacement = svg.querySelector('feDisplacementMap');
-            const offset = svg.querySelector('feOffset');
-            if (!turbulence || !displacement || !offset) return;
+            const displacement = document.querySelector(`#${FILTER_ID} feDisplacementMap`);
+            if (!displacement) return;
 
             tlRef.current?.kill();
 
-            // 遷移ごとに seed だけランダム化 (毎回違う Deform Line パターン)。
-            // baseFrequency / numOctaves はアニメさせない → turbulence 再計算なし
-            turbulence.setAttribute('seed', String(Math.floor(Math.random() * 100)));
-
-            // ページのコンテンツだけを filter 対象にする (#page-root)。
-            // body 全体だと WebGLTransition 自身の SVG も filter graph に
-            // 含まれてしまい余計なコストがかかる。フォールバックとして body を使う。
-            const findTarget = (): HTMLElement =>
+            const findTarget = () =>
                 (document.getElementById('page-root') as HTMLElement | null) ?? document.body;
             let target = findTarget();
             target.style.filter = `url(#${FILTER_ID})`;
 
-            const state = { scale: 0, dx: 0 };
-
+            const state = { scale: 0 };
             const apply = () => {
                 displacement.setAttribute('scale', state.scale.toFixed(1));
-                offset.setAttribute('dx', state.dx.toFixed(1));
-            };
-            apply();
-
-            const cleanup = () => {
-                // navigate 後は target の参照が外れている可能性 (page-root は
-                // ナビゲーションで作り変わる) があるので、body と現在の page-root
-                // 両方を念のためクリア。
-                target.style.filter = '';
-                const currentRoot = document.getElementById('page-root');
-                if (currentRoot && currentRoot !== target) currentRoot.style.filter = '';
-                document.body.style.filter = '';
             };
 
             const tl = gsap.timeline({
                 onUpdate: apply,
-                onComplete: cleanup,
+                onComplete: () => {
+                    target.style.filter = '';
+                    document.body.style.filter = '';
+                },
             });
 
-            // Cover: 行ごとの displacement が立ち上がりつつ、全体が左へ shift
+            // Cover: scale 0 → PEAK
             tl.to(state, {
-                scale: 60,
-                dx: -45,
+                scale: PEAK_SCALE,
                 duration: coverDuration,
-                ease: 'hop',
+                ease: 'power2.in',
             });
 
+            // hold: navigate → astro:after-swap
             tl.add(() => {
                 if (detail.url) void navigate(detail.url);
             });
             tl.addPause();
 
-            // Reveal: 同じ右側へ引き戻す
+            // Reveal: scale PEAK → 0
             tl.to(state, {
                 scale: 0,
-                dx: 0,
                 duration: revealDuration,
-                ease: 'hop',
+                ease: 'power2.out',
             });
 
             tlRef.current = tl;
@@ -114,14 +85,13 @@ export const WebGLTransition: React.FC = () => {
                 if (resumed) return;
                 resumed = true;
                 document.removeEventListener('astro:after-swap', resume);
-                clearTimeout(fallbackTimer);
-                // swap 後は #page-root が新しい要素に差し替わっているので
-                // filter を当て直す
+                clearTimeout(fallback);
+                // swap 後は #page-root が新しい要素になっているので当て直す
                 target = findTarget();
                 target.style.filter = `url(#${FILTER_ID})`;
                 tl.resume();
             };
-            const fallbackTimer = window.setTimeout(resume, 1500);
+            const fallback = window.setTimeout(resume, 1500);
             if (detail.url) {
                 document.addEventListener('astro:after-swap', resume, { once: true });
             } else {
@@ -134,36 +104,27 @@ export const WebGLTransition: React.FC = () => {
             window.removeEventListener(TRANSITION_EVENT, handlePlay);
             tlRef.current?.kill();
             document.body.style.filter = '';
+            const root = document.getElementById('page-root');
+            if (root) root.style.filter = '';
         };
     }, []);
 
     return (
         <svg
-            ref={svgRef}
             aria-hidden="true"
             style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}
         >
             <defs>
                 <filter id={FILTER_ID} x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
-                    {/*
-                     * baseFrequency "0.001 0.012":
-                     *   X = 0.001 → ほぼ一定 (= 行内では同じ乱数)
-                     *   Y = 0.012 → 縦方向に縞が出る (Deform Line の bands)
-                     * numOctaves=1 で最小計算量。これらは静的に固定して使い回す。
-                     */}
+                    {/* X はほぼ一定 / Y 高周波 → 行ごとに違うランダム値の縞 (静的) */}
                     <feTurbulence
                         type="turbulence"
-                        baseFrequency="0.001 0.012"
+                        baseFrequency="0 0.012"
                         numOctaves="1"
                         seed="3"
                         result="noise"
                     />
-                    {/*
-                     * feTurbulence の alpha 出力もノイズなので、そのまま
-                     * yChannelSelector="A" にすると Y 方向にもズレて斜めに歪む。
-                     * feColorMatrix で alpha を 0.5 (= 中点 = 変位 0) に固定して
-                     * 純粋に X 方向のみの displacement にする。
-                     */}
+                    {/* alpha を 0.5 (中点) に固定 → Y 方向 displacement を完全にゼロ */}
                     <feColorMatrix
                         in="noise"
                         type="matrix"
@@ -173,15 +134,14 @@ export const WebGLTransition: React.FC = () => {
                                 0 0 0 0 0.5"
                         result="noiseFlat"
                     />
+                    {/* R チャンネルで X 方向のみ displacement (= deform line) */}
                     <feDisplacementMap
                         in="SourceGraphic"
                         in2="noiseFlat"
                         scale="0"
                         xChannelSelector="R"
                         yChannelSelector="A"
-                        result="displaced"
                     />
-                    <feOffset in="displaced" dx="0" dy="0" />
                 </filter>
             </defs>
         </svg>
