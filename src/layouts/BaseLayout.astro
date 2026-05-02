@@ -100,9 +100,7 @@ const personSchema = {
     <body
         class="min-h-screen relative overflow-x-hidden selection:bg-accent selection:text-accent-foreground font-sans antialiased"
     >
-        <div id="page-root">
-            <slot />
-        </div>
+        <slot />
         <WebGLTransition
             client:only="react"
             transition:persist="webgl-transition"
