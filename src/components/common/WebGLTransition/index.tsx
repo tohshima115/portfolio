@@ -1,12 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { CustomEase } from 'gsap/CustomEase';
-import * as THREE from 'three';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
-import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { navigate } from 'astro:transitions/client';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
 
@@ -18,240 +12,98 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * 遷移オーバーレイ (Three.js + GlitchPass + 方向付きワイプ)。
+ * 遷移オーバーレイ (SVG フィルタによる現ページの直接歪み)。
  *
- * Pipeline: RenderPass → GlitchPass → DirectionalWipePass → OutputPass
+ * Three.js / VFX-JS のように "別のシーンを overlay する" 方式だと、
+ * 「現在の画面そのものが glitch している」感が出ない。SVG フィルタを body に
+ * 適用すると、ライブの DOM が GPU で feDisplacementMap 処理されるので、
+ * 現在の画面が直接引き延ばされる/砂嵐がかかる挙動になる。
  *
- * - 暗色のフルスクリーンクワッドを RenderPass で描画
- * - GlitchPass (goWild=true) で全体にグリッチを乗せる
- * - DirectionalWipePass は `progress` (0..1) と `dir` (+1/-1) で
- *   uv.x を行ごとにランダム速度でしきい値スイープし、cover 面を一方向から
- *   伸びてくるように見せる。先頭エッジは smoothstep でソフトフェード。
- * - cover phase: progress 0→1 (右側から左へ glitch 帯がなだれ込む)
- * - hold 中に navigate → astro:after-swap 待ち
- * - reveal phase: progress 1→0 (同じ右側へ glitch 帯が引き戻される)
+ * Pipeline (SVG <filter>):
+ *   feTurbulence (baseFrequency 0.005 / 0.5 → 横方向はほぼ一定、縦方向は高周波)
+ *     ↓ 結果は per-row のランダム値 → スリットスキャン的な水平 displacement
+ *   feDisplacementMap (scale を 0→80→0 でアニメ、X 方向のみ歪ませる)
+ *     ↓
+ *   feOffset (dx を 0→-60→0 で左方向へ全体シフト → 一方向の sweep)
+ *
+ * GSAP timeline:
+ *   - cover (progress 0→1): scale / dx / baseFrequency が立ち上がる
+ *   - hold: navigate → astro:after-swap 待機
+ *   - reveal (progress 1→0): 元に戻って新ページが見える
  */
 
-const wipeShader = {
-    uniforms: {
-        tDiffuse: { value: null as THREE.Texture | null },
-        progress: { value: 0 },
-        dir: { value: 1 },
-    },
-    vertexShader: /* glsl */ `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `,
-    fragmentShader: /* glsl */ `
-        uniform sampler2D tDiffuse;
-        uniform float progress;
-        uniform float dir;
-        varying vec2 vUv;
-
-        float hash11(float p) {
-            p = fract(p * 0.1031);
-            p *= p + 33.33;
-            p *= p + p;
-            return fract(p);
-        }
-
-        void main() {
-            vec4 c = texture2D(tDiffuse, vUv);
-
-            // 行ごとのスピード倍率 (0.55〜1.0)
-            float row = floor(vUv.y * 90.0);
-            float r = 0.55 + hash11(row) * 0.45;
-
-            float coverP = clamp(progress * r * 1.3, 0.0, 1.0);
-            // dir = +1: cover は右から押し寄せる (threshold が 1→0)
-            float threshold = dir > 0.0 ? (1.0 - coverP) : coverP;
-
-            // 先頭エッジからの距離。dir が逆向きなら符号反転
-            float distFromEdge = dir > 0.0 ? (vUv.x - threshold) : (threshold - vUv.x);
-
-            if (distFromEdge <= 0.0) {
-                discard;
-            }
-
-            // 先頭 ~3% を soft edge にしてストリークの余韻を作る
-            float edgeFade = smoothstep(0.0, 0.03, distFromEdge);
-
-            gl_FragColor = vec4(c.rgb, c.a * edgeFade);
-        }
-    `,
-};
+const FILTER_ID = 'page-glitch-filter';
 
 export const WebGLTransition: React.FC = () => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
+    const svgRef = useRef<SVGSVGElement | null>(null);
     const tlRef = useRef<gsap.core.Timeline | null>(null);
-    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-    const composerRef = useRef<EffectComposer | null>(null);
-    const sceneRef = useRef<THREE.Scene | null>(null);
-    const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
-    const glitchRef = useRef<GlitchPass | null>(null);
-    const wipePassRef = useRef<ShaderPass | null>(null);
-    const rafRef = useRef<number | null>(null);
-    const runningRef = useRef(false);
 
     useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        // --- Three.js セットアップ ---
-        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight, false);
-        renderer.setClearColor(0x000000, 0);
-        const canvas = renderer.domElement;
-        canvas.style.cssText = [
-            'position:fixed',
-            'inset:0',
-            'width:100vw',
-            'height:100vh',
-            'z-index:9999',
-            'pointer-events:none',
-        ].join(';');
-        container.appendChild(canvas);
-
-        const scene = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        // material 自体は常に opacity=1 で描画。表示/非表示は wipePass の
-        // progress uniform でコントロールする。
-        const material = new THREE.MeshBasicMaterial({
-            color: 0x0a0a0a,
-            transparent: true,
-            opacity: 1,
-        });
-        const quad = new THREE.Mesh(geometry, material);
-        scene.add(quad);
-
-        // --- EffectComposer + GlitchPass ---
-        const composer = new EffectComposer(renderer);
-        composer.setSize(window.innerWidth, window.innerHeight);
-        composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-        const renderPass = new RenderPass(scene, camera);
-        // RenderPass はデフォルトで毎回 clear するが、alpha を活かしたいので
-        // 明示的に clear color を透過にする
-        renderPass.clearColor = new THREE.Color(0x000000);
-        renderPass.clearAlpha = 0;
-        composer.addPass(renderPass);
-
-        const glitch = new GlitchPass();
-        glitch.goWild = true; // 常時グリッチ
-        composer.addPass(glitch);
-
-        const wipePass = new ShaderPass(wipeShader);
-        composer.addPass(wipePass);
-
-        composer.addPass(new OutputPass());
-
-        rendererRef.current = renderer;
-        composerRef.current = composer;
-        sceneRef.current = scene;
-        materialRef.current = material;
-        glitchRef.current = glitch;
-        wipePassRef.current = wipePass;
-
-        // --- Resize 対応 ---
-        const handleResize = () => {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            renderer.setSize(w, h, false);
-            composer.setSize(w, h);
-        };
-        window.addEventListener('resize', handleResize);
-
-        return () => {
-            window.removeEventListener('resize', handleResize);
-            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
-            runningRef.current = false;
-            tlRef.current?.kill();
-            try {
-                composer.dispose();
-            } catch {
-                /* noop */
-            }
-            try {
-                geometry.dispose();
-                material.dispose();
-                renderer.dispose();
-            } catch {
-                /* noop */
-            }
-            if (canvas.parentNode === container) {
-                container.removeChild(canvas);
-            }
-            rendererRef.current = null;
-            composerRef.current = null;
-            sceneRef.current = null;
-            materialRef.current = null;
-            glitchRef.current = null;
-            wipePassRef.current = null;
-        };
-    }, []);
-
-    useEffect(() => {
-        const startRenderLoop = () => {
-            if (runningRef.current) return;
-            runningRef.current = true;
-            const tick = () => {
-                if (!runningRef.current) return;
-                composerRef.current?.render();
-                rafRef.current = requestAnimationFrame(tick);
-            };
-            rafRef.current = requestAnimationFrame(tick);
-        };
-
-        const stopRenderLoop = () => {
-            runningRef.current = false;
-            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
-            rafRef.current = null;
-        };
-
         const handlePlay = (e: Event) => {
             const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
-            const coverDuration = detail.coverDuration ?? 0.7;
-            const revealDuration = detail.revealDuration ?? 0.6;
+            const coverDuration = detail.coverDuration ?? 0.65;
+            const revealDuration = detail.revealDuration ?? 0.55;
 
-            const wipePass = wipePassRef.current;
-            if (!wipePass) return;
+            const svg = svgRef.current;
+            if (!svg) return;
+            const turbulence = svg.querySelector('feTurbulence');
+            const displacement = svg.querySelector('feDisplacementMap');
+            const offset = svg.querySelector('feOffset');
+            if (!turbulence || !displacement || !offset) return;
 
             tlRef.current?.kill();
 
-            // 初期化: progress=0 (透明) / dir=+1 (右側から sweep)
-            wipePass.uniforms.progress.value = 0;
-            wipePass.uniforms.dir.value = 1;
-            startRenderLoop();
+            // body に filter を適用 (現ページが歪む対象)
+            const target = document.body;
+            target.style.filter = `url(#${FILTER_ID})`;
+            // パフォーマンス: GPU レイヤーに昇格させると合成が速い
+            target.style.willChange = 'filter';
+
+            const state = {
+                scale: 0,        // feDisplacementMap.scale  (歪みの大きさ)
+                dx: 0,           // feOffset.dx              (左方向シフト)
+                freqY: 0.05,     // feTurbulence.baseFrequency Y
+                seed: Math.floor(Math.random() * 1000),
+            };
+
+            const apply = () => {
+                turbulence.setAttribute('baseFrequency', `0.005 ${state.freqY.toFixed(4)}`);
+                turbulence.setAttribute('seed', String(state.seed));
+                displacement.setAttribute('scale', state.scale.toFixed(2));
+                offset.setAttribute('dx', state.dx.toFixed(2));
+            };
+            apply();
+
+            const cleanup = () => {
+                target.style.filter = '';
+                target.style.willChange = '';
+            };
 
             const tl = gsap.timeline({
-                onComplete: () => {
-                    stopRenderLoop();
-                },
+                onUpdate: apply,
+                onComplete: cleanup,
             });
 
-            // --- Cover: progress 0 → 1 (右側から glitch 帯が sweep してくる) ---
-            tl.to(wipePass.uniforms.progress, {
-                value: 1,
+            // --- Cover: 画面が左方向へ引き延ばされながら歪んでいく ---
+            tl.to(state, {
+                scale: 90,
+                dx: -65,
+                freqY: 0.45,
                 duration: coverDuration,
                 ease: 'hop',
             });
 
-            // --- Hold: navigate → after-swap 待ち ---
+            // --- Hold: navigate → after-swap ---
             tl.add(() => {
                 if (detail.url) void navigate(detail.url);
             });
             tl.addPause();
 
-            // --- Reveal: progress 1 → 0 (同じ側へ引き戻して新ページが現れる) ---
-            tl.to(wipePass.uniforms.progress, {
-                value: 0,
+            // --- Reveal: 歪みが解けて新ページが見える ---
+            tl.to(state, {
+                scale: 0,
+                dx: 0,
+                freqY: 0.05,
                 duration: revealDuration,
                 ease: 'hop',
             });
@@ -278,10 +130,45 @@ export const WebGLTransition: React.FC = () => {
         window.addEventListener(TRANSITION_EVENT, handlePlay);
         return () => {
             window.removeEventListener(TRANSITION_EVENT, handlePlay);
+            tlRef.current?.kill();
+            document.body.style.filter = '';
+            document.body.style.willChange = '';
         };
     }, []);
 
-    return <div ref={containerRef} aria-hidden="true" style={{ display: 'contents' }} />;
+    return (
+        <svg
+            ref={svgRef}
+            aria-hidden="true"
+            // 描画は不要だが filter 参照のために DOM に存在させる
+            style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}
+        >
+            <defs>
+                <filter id={FILTER_ID} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+                    {/*
+                     * baseFrequency "0.005 0.05" → 静止時はほぼ無視できる程度のノイズ
+                     * GSAP が動的に 0.45 まで上げて high-frequency horizontal bands を出す
+                     */}
+                    <feTurbulence
+                        type="turbulence"
+                        baseFrequency="0.005 0.05"
+                        numOctaves="2"
+                        seed="5"
+                        result="noise"
+                    />
+                    <feDisplacementMap
+                        in="SourceGraphic"
+                        in2="noise"
+                        scale="0"
+                        xChannelSelector="R"
+                        yChannelSelector="A" /* A は常に 0 → Y 方向の歪みは出ない */
+                        result="displaced"
+                    />
+                    <feOffset in="displaced" dx="0" dy="0" />
+                </filter>
+            </defs>
+        </svg>
+    );
 };
 
 export default WebGLTransition;
