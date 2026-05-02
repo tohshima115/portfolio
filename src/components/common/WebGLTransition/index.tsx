@@ -66,73 +66,76 @@ function buildHalftone(rgba: string): string {
 
 function generateTiles(seed: number): Tile[] {
     const rand = makeRng(seed);
-    const cols = 9;
-    const rows = 6;
     const tiles: Tile[] = [];
-    const cellW = 1 / cols;
-    const cellH = 1 / rows;
 
-    for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-            // 各セルに 1〜2 個の長方形を重ねて配置 (オーバーラップでムラを作る)
-            const count = rand() < 0.55 ? 2 : 1;
-            for (let i = 0; i < count; i++) {
-                const wMul = 0.85 + rand() * 1.4; // セル幅の 0.85〜2.25 倍
-                const hMul = 0.7 + rand() * 1.6;
-                const w = Math.min(cellW * wMul, 0.55);
-                const h = Math.min(cellH * hMul, 0.6);
-                const jitterX = (rand() - 0.5) * cellW * 1.2;
-                const jitterY = (rand() - 0.5) * cellH * 0.8;
-                const x = Math.max(-0.05, Math.min(1 - w * 0.5, c * cellW + jitterX));
-                const y = Math.max(-0.05, Math.min(1 - h * 0.4, r * cellH + jitterY));
+    // ベースとなる縦長カラム。画面幅をスロットに分割し、各スロットに 1 本ずつ
+    // 縦に長い長方形を置く。隣のスロットと少しオーバーラップさせ隙間を作らない。
+    const SLOT_COUNT = 11;
+    const slotW = 1 / SLOT_COUNT;
 
-                const isAccent = rand() < 0.04;
-                const isHalftone = rand() < 0.18;
-                const isLight = rand() < 0.18;
+    for (let s = 0; s < SLOT_COUNT; s++) {
+        // 幅: スロット幅の 1.0〜1.6 倍 (隣にかぶる)
+        const w = slotW * (1.0 + rand() * 0.6);
+        const jitterX = (rand() - 0.5) * slotW * 0.5;
+        const x = s * slotW + jitterX - (w - slotW) * 0.5;
 
-                let background: string;
-                if (isAccent) {
-                    background = ACCENT_COLORS[Math.floor(rand() * ACCENT_COLORS.length)];
-                } else if (isLight) {
-                    background = PALETTE[6 + Math.floor(rand() * 4)];
-                } else {
-                    background = PALETTE[Math.floor(rand() * 6)];
-                }
+        // 高さ: 画面より高め (110〜160% vh) → 必ず縦を覆う
+        const h = 1.1 + rand() * 0.5;
+        // y は 0 付近から少し上方向に (上端より上から見える形)
+        const y = -rand() * 0.15;
 
-                let overlay: string | undefined;
-                if (isHalftone) {
-                    const dotColor = isLight || isAccent ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.35)';
-                    overlay = buildHalftone(dotColor);
-                }
+        const isAccent = rand() < 0.06;
+        const isLight = rand() < 0.2;
+        const isHalftone = rand() < 0.15;
 
-                // 落下のディレイ: 列ごとに少しまとまって、行内でランダム
-                const colBias = c / cols; // 左から右へやや遅らせる (or rand バリエーション)
-                const delay = Math.min(0.85, Math.max(0, colBias * 0.25 + rand() * 0.55));
-                const speed = 0.85 + rand() * 0.45;
-
-                tiles.push({ x, y, w, h, delay, speed, background, overlay });
-            }
+        let background: string;
+        if (isAccent) {
+            background = ACCENT_COLORS[Math.floor(rand() * ACCENT_COLORS.length)];
+        } else if (isLight) {
+            background = PALETTE[6 + Math.floor(rand() * 4)];
+        } else {
+            background = PALETTE[Math.floor(rand() * 6)];
         }
-    }
 
-    // 大きめの "ヒーロー" 長方形を数個重ねる (画面に強いリズムを作る)
-    for (let i = 0; i < 6; i++) {
-        const w = 0.08 + rand() * 0.18;
-        const h = 0.35 + rand() * 0.55;
-        const x = rand() * (1 - w);
-        const y = rand() * 0.3;
-        const isAccent = rand() < 0.18;
-        const background = isAccent
-            ? ACCENT_COLORS[Math.floor(rand() * ACCENT_COLORS.length)]
-            : PALETTE[Math.floor(rand() * 5)];
+        let overlay: string | undefined;
+        if (isHalftone) {
+            const dotColor = isLight || isAccent ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)';
+            overlay = buildHalftone(dotColor);
+        }
+
         tiles.push({
             x,
             y,
             w,
             h,
+            delay: rand() * 0.7,
+            speed: 0.85 + rand() * 0.4,
             background,
-            delay: rand() * 0.4,
-            speed: 0.8 + rand() * 0.4,
+            overlay,
+        });
+    }
+
+    // バリエーション用の細めの縦長長方形 (短いもの含む) をいくつか重ねる
+    const ACCENT_TILE_COUNT = 6;
+    for (let i = 0; i < ACCENT_TILE_COUNT; i++) {
+        const w = 0.025 + rand() * 0.06;
+        const h = 0.4 + rand() * 0.7;
+        const x = rand() * (1 - w);
+        const y = rand() * 0.2 - 0.05;
+
+        const isAccent = rand() < 0.25;
+        const background = isAccent
+            ? ACCENT_COLORS[Math.floor(rand() * ACCENT_COLORS.length)]
+            : PALETTE[Math.floor(rand() * PALETTE.length)];
+
+        tiles.push({
+            x,
+            y,
+            w,
+            h,
+            delay: rand() * 0.6,
+            speed: 0.8 + rand() * 0.5,
+            background,
         });
     }
 
