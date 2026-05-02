@@ -69,20 +69,27 @@ function generateTiles(seed: number): Tile[] {
     const tiles: Tile[] = [];
 
     // ベースとなる縦長カラム。画面幅をスロットに分割し、各スロットに 1 本ずつ
-    // 縦に長い長方形を置く。隣のスロットと少しオーバーラップさせ隙間を作らない。
+    // 縦に長い長方形を置く。隣のスロットと必ず重なるよう、幅とジッタの上下限を
+    // 制御している (重なり幅 > ジッタ最大ズレで隙間が生まれない)。
     const SLOT_COUNT = 11;
     const slotW = 1 / SLOT_COUNT;
+    // 幅は最低でも slotW * 1.3 (= 30% オーバーラップ確保)
+    const W_MIN_FACTOR = 1.3;
+    const W_RAND_RANGE = 0.5;
+    // ジッタは最小オーバーラップを食い潰さない範囲に抑える
+    const JITTER_MAX = slotW * 0.08;
 
     for (let s = 0; s < SLOT_COUNT; s++) {
-        // 幅: スロット幅の 1.0〜1.6 倍 (隣にかぶる)
-        const w = slotW * (1.0 + rand() * 0.6);
-        const jitterX = (rand() - 0.5) * slotW * 0.5;
-        const x = s * slotW + jitterX - (w - slotW) * 0.5;
+        const w = slotW * (W_MIN_FACTOR + rand() * W_RAND_RANGE);
+        const jitterX = (rand() - 0.5) * 2 * JITTER_MAX;
+        let x = s * slotW + jitterX - (w - slotW) * 0.5;
+        // 端は viewport の外まで伸ばす (左右の端で隙間が出ないよう保険)
+        if (s === 0) x = Math.min(x, -0.02);
+        if (s === SLOT_COUNT - 1 && x + w < 1.02) x = 1.02 - w;
 
-        // 高さ: 画面より高め (110〜160% vh) → 必ず縦を覆う
-        const h = 1.1 + rand() * 0.5;
-        // y は 0 付近から少し上方向に (上端より上から見える形)
-        const y = -rand() * 0.15;
+        // y/h: 必ず viewport 全縦をカバーするよう (y + h >= 1.05 を保証)
+        const y = -rand() * 0.05;
+        const h = 1.15 + rand() * 0.55;
 
         const isAccent = rand() < 0.06;
         const isLight = rand() < 0.2;
