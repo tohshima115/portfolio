@@ -5,7 +5,7 @@ import { navigate } from 'astro:transitions/client';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
 
 // Codrops "Custom Page Transitions in Astro" 記事と同じ "hop" カスタムイージング。
-// 標準の power3.inOut よりも入りと出が緩やかでミドルが伸びる S 字カーブ。
+// S 字カーブで両端の速度が 0 に近く、cover 着地と reveal 出発を滑らかに繋ぐ。
 if (typeof window !== 'undefined') {
     gsap.registerPlugin(CustomEase);
     if (!CustomEase.get('hop')) {
@@ -14,33 +14,32 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * 遷移オーバーレイ。
+ * 遷移オーバーレイ (横スリットスライド方式)。
  *
  * - `transition:persist` で root に置き、ナビゲーション間で生存させる前提
  * - `playWebGLTransition({ url })` の発火を購読
- * - 大量の長方形が上から降りてきて画面を覆い (cover)、navigate 完了後にそのまま下へ抜ける (reveal)
+ * - 横長のストリップが左右からスライドインして画面を覆い、navigate 後に同じ方向へ
+ *   そのまま画面外へ抜けていく。各ストリップごとに方向 / 速度 / 遅延がランダム。
  */
 
-type Tile = {
-    /** 0..1 横位置 (左端) */
-    x: number;
-    /** 0..1 横幅 */
-    w: number;
-    /** 0..1 縦位置 (上端、最終静止位置) */
+type Strip = {
+    /** 0..1 縦位置 (上端) */
     y: number;
-    /** 0..1 縦幅 */
+    /** 0..1 高さ */
     h: number;
-    /** 落下遅延 0..1 */
+    /** -1: 左方向にスライド (右から入って左へ抜ける) / +1: 逆 */
+    direction: -1 | 1;
+    /** スライドイン開始遅延 0..1 */
     delay: number;
-    /** 0..1 速度倍率 (1 が標準) */
+    /** 速度倍率 0.7〜1.4 */
     speed: number;
     /** 表示色 */
     background: string;
-    /** ハーフトーン / ノイズ オーバーレイ用 */
+    /** オプション: ハーフトーン / ストライプ オーバーレイ */
     overlay?: string;
 };
 
-// 簡易な seeded random (mulberry32)
+// mulberry32
 function makeRng(seed: number) {
     let t = seed >>> 0;
     return () => {
@@ -74,36 +73,18 @@ function buildHalftone(rgba: string): string {
     return `radial-gradient(${rgba} 1px, transparent 1.4px) 0 0 / 6px 6px`;
 }
 
-function generateTiles(seed: number): Tile[] {
+function generateStrips(seed: number): Strip[] {
     const rand = makeRng(seed);
-    const tiles: Tile[] = [];
+    const strips: Strip[] = [];
 
-    // ベースとなる縦長カラム。画面幅をスロットに分割し、各スロットに 1 本ずつ
-    // 縦に長い長方形を置く。隣のスロットと必ず重なるよう、幅とジッタの上下限を
-    // 制御している (重なり幅 > ジッタ最大ズレで隙間が生まれない)。
-    const SLOT_COUNT = 11;
-    const slotW = 1 / SLOT_COUNT;
-    // 幅は最低でも slotW * 1.3 (= 30% オーバーラップ確保)
-    const W_MIN_FACTOR = 1.3;
-    const W_RAND_RANGE = 0.5;
-    // ジッタは最小オーバーラップを食い潰さない範囲に抑える
-    const JITTER_MAX = slotW * 0.08;
-
-    for (let s = 0; s < SLOT_COUNT; s++) {
-        const w = slotW * (W_MIN_FACTOR + rand() * W_RAND_RANGE);
-        const jitterX = (rand() - 0.5) * 2 * JITTER_MAX;
-        let x = s * slotW + jitterX - (w - slotW) * 0.5;
-        // 端は viewport の外まで伸ばす (左右の端で隙間が出ないよう保険)
-        if (s === 0) x = Math.min(x, -0.02);
-        if (s === SLOT_COUNT - 1 && x + w < 1.02) x = 1.02 - w;
-
-        // y/h: 必ず viewport 全縦をカバーするよう (y + h >= 1.05 を保証)
-        const y = -rand() * 0.05;
-        const h = 1.15 + rand() * 0.55;
-
-        const isAccent = rand() < 0.06;
-        const isLight = rand() < 0.2;
-        const isHalftone = rand() < 0.15;
+    // viewport を埋め尽くすまで縦に積む。各ストリップの高さは 1.5%vh 〜 12%vh。
+    // 隣のストリップと少しオーバーラップさせ隙間を作らない。
+    let y = -0.01;
+    while (y < 1.01) {
+        const h = 0.015 + rand() * 0.105;
+        const isAccent = rand() < 0.04;
+        const isLight = rand() < 0.18;
+        const isHalftone = rand() < 0.12;
 
         let background: string;
         if (isAccent) {
@@ -120,90 +101,59 @@ function generateTiles(seed: number): Tile[] {
             overlay = buildHalftone(dotColor);
         }
 
-        tiles.push({
-            x,
+        strips.push({
             y,
-            w,
-            h,
-            delay: rand() * 0.7,
-            speed: 0.85 + rand() * 0.4,
+            h: h + 0.004, // 隣との重なり
+            direction: rand() < 0.5 ? -1 : 1,
+            delay: rand() * 0.6,
+            speed: 0.7 + rand() * 0.7,
             background,
             overlay,
         });
+
+        y += h;
     }
 
-    // バリエーション用の細めの縦長長方形 (短いもの含む) をいくつか重ねる
-    const ACCENT_TILE_COUNT = 6;
-    for (let i = 0; i < ACCENT_TILE_COUNT; i++) {
-        const w = 0.025 + rand() * 0.06;
-        const h = 0.4 + rand() * 0.7;
-        const x = rand() * (1 - w);
-        const y = rand() * 0.2 - 0.05;
-
-        const isAccent = rand() < 0.25;
-        const background = isAccent
-            ? ACCENT_COLORS[Math.floor(rand() * ACCENT_COLORS.length)]
-            : PALETTE[Math.floor(rand() * PALETTE.length)];
-
-        tiles.push({
-            x,
-            y,
-            w,
-            h,
-            delay: rand() * 0.6,
-            speed: 0.8 + rand() * 0.5,
-            background,
-        });
-    }
-
-    return tiles;
+    return strips;
 }
 
 export const WebGLTransition: React.FC = () => {
     const overlayRef = useRef<HTMLDivElement | null>(null);
-    const tileRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const stripRefs = useRef<(HTMLDivElement | null)[]>([]);
     const tlRef = useRef<gsap.core.Timeline | null>(null);
     const [active, setActive] = useState(false);
-    // 遷移ごとに seed を変えると毎回違うレイアウトに。固定したい場合は定数に。
     const seedRef = useRef<number>(Math.floor(Math.random() * 0xffffffff));
-    const tiles = useMemo(() => generateTiles(seedRef.current), []);
+    const strips = useMemo(() => generateStrips(seedRef.current), []);
 
     useEffect(() => {
         const handlePlay = (e: Event) => {
             const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
-            const coverDuration = detail.coverDuration ?? 0.9;
+            const coverDuration = detail.coverDuration ?? 0.85;
             const revealDuration = detail.revealDuration ?? 0.85;
 
             tlRef.current?.kill();
 
-            const els = tileRefs.current.filter((el): el is HTMLDivElement => !!el);
+            const els = stripRefs.current.filter((el): el is HTMLDivElement => !!el);
             if (els.length === 0) return;
 
             setActive(true);
 
-            // 初期状態: 各タイルを viewport の外 (上方向) に押し出す。
-            // y を vh 単位で指定することで「viewport 高さ基準」で計算できる。
+            // 初期状態: 各ストリップを direction の逆側 viewport 外に押し出す。
+            // direction = -1 → 右側 (+110vw) から進入。direction = +1 → 左側 (-110vw)。
             els.forEach((el, i) => {
-                const t = tiles[i];
-                if (!t) return;
-                const startVh = -(t.y * 100 + t.h * 100 + 10);
-                gsap.set(el, { y: `${startVh}vh`, opacity: 1 });
+                const s = strips[i];
+                if (!s) return;
+                const startVw = -s.direction * 110;
+                gsap.set(el, { x: `${startVw}vw` });
             });
 
-            // 各 phase で「両端を 0 速度に揃えた S 字カーブ」を使うことで、
-            // hold 直前は自然に減速して着地し、hold 後は自然に加速して離れる。
-            // 速度の不連続が消えるため、二段階アニメーションが連続したひとつの動きに
-            // 感じられる。記事の hop ease (0.56,0,0.35,0.98) を採用。
             const fallEase = 'hop';
 
             // --- Phase 1: Cover ---
             const coverTl = gsap.timeline({
                 onComplete: () => {
-                    // 1) navigate を発火 (Astro が裏で DOM を swap)
                     if (detail.url) void navigate(detail.url);
 
-                    // 2) astro:after-swap を待ってから Reveal を再生。
-                    //    url が null / event が届かない場合の保険に timeout も設定。
                     let started = false;
                     const startReveal = () => {
                         if (started) return;
@@ -216,23 +166,22 @@ export const WebGLTransition: React.FC = () => {
                     if (detail.url) {
                         document.addEventListener('astro:after-swap', startReveal, { once: true });
                     } else {
-                        // 遷移先なし: 即 Reveal
                         startReveal();
                     }
                 },
             });
 
             els.forEach((el, i) => {
-                const t = tiles[i];
-                if (!t) return;
+                const s = strips[i];
+                if (!s) return;
                 coverTl.to(
                     el,
                     {
-                        y: '0vh',
-                        duration: coverDuration * t.speed,
+                        x: '0vw',
+                        duration: coverDuration * s.speed,
                         ease: fallEase,
                     },
-                    t.delay * coverDuration * 0.6,
+                    s.delay * coverDuration * 0.6,
                 );
             });
 
@@ -245,33 +194,21 @@ export const WebGLTransition: React.FC = () => {
                 });
 
                 els.forEach((el, i) => {
-                    const t = tiles[i];
-                    if (!t) return;
-                    const endVh = (1 - t.y) * 100 + 10;
-                    const tileStart = t.delay * revealDuration * 0.5;
-                    const tileDuration = revealDuration * t.speed;
+                    const s = strips[i];
+                    if (!s) return;
+                    const endVw = s.direction * 110;
+                    const tileStart = s.delay * revealDuration * 0.5;
+                    const tileDuration = revealDuration * s.speed;
 
                     revealTl.to(
                         el,
                         {
-                            y: `${endVh}vh`,
+                            x: `${endVw}vw`,
                             duration: tileDuration,
                             ease: fallEase,
                             overwrite: false,
                         },
                         tileStart,
-                    );
-                    // 退場の中盤からフェードアウトも重ねる。落下しながら徐々に消える。
-                    // 別 property への独立トゥイーンなので overwrite:false で並走させる。
-                    revealTl.to(
-                        el,
-                        {
-                            opacity: 0,
-                            duration: tileDuration * 0.7,
-                            ease: 'power2.in',
-                            overwrite: false,
-                        },
-                        tileStart + tileDuration * 0.3,
                     );
                 });
 
@@ -285,7 +222,7 @@ export const WebGLTransition: React.FC = () => {
         return () => {
             window.removeEventListener(TRANSITION_EVENT, handlePlay);
         };
-    }, [tiles]);
+    }, [strips]);
 
     return (
         <div
@@ -298,22 +235,22 @@ export const WebGLTransition: React.FC = () => {
             }}
             aria-hidden="true"
         >
-            {tiles.map((t, i) => (
+            {strips.map((s, i) => (
                 <div
                     key={i}
                     ref={(el) => {
-                        tileRefs.current[i] = el;
+                        stripRefs.current[i] = el;
                     }}
                     style={{
                         position: 'absolute',
-                        left: `${t.x * 100}%`,
-                        top: `${t.y * 100}%`,
-                        width: `${t.w * 100}%`,
-                        height: `${t.h * 100}%`,
-                        background: t.background,
-                        backgroundImage: t.overlay,
+                        left: 0,
+                        top: `${s.y * 100}%`,
+                        width: '100%',
+                        height: `${s.h * 100}%`,
+                        background: s.background,
+                        backgroundImage: s.overlay,
                         willChange: 'transform',
-                        transform: 'translateY(-200vh)',
+                        transform: `translateX(${-s.direction * 110}vw)`,
                     }}
                 />
             ))}

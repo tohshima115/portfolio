@@ -30,6 +30,8 @@ export const NavButton = ({ href, label, icon: Icon, customIcon, onHover, highli
     return (
         <a
             href={href}
+            // TOP からの主要な下層遷移は事前読み込みして遷移を瞬時にする
+            data-astro-prefetch="load"
             className="group relative flex items-center justify-center py-1.5 px-2.5 md:px-3 pointer-events-auto overflow-hidden"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
