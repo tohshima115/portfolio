@@ -13,18 +13,24 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * 遷移オーバーレイ (VFX-JS slit-scan 方式 / overlay 適用)。
+ * 遷移オーバーレイ (VFX-JS slit-scan + procedural)。
  *
- * 注意: VFX-JS の dom-to-canvas は body 全体に対しては foreignObject SVG の
- *       capture が失敗する (Google Fonts / cross-origin / 複雑な CSS) ため、
- *       単純な CSS gradient 背景の overlay 要素にのみ shader を適用する。
+ * VFX-JS のドキュメント (https://amagi.dev/vfx-js/docs/) に従い、
+ * テクスチャ捕捉が確実に動く `<img>` 要素 (1x1 透過 PNG を fullscreen に伸ばしたもの)
+ * に対して shader を適用する。shader は src テクスチャを使わず、`progress` と
+ * `dir` uniform から完全に procedural に出力色を計算するので、フォントや
+ * cross-origin といった DOM 捕捉特有の落とし穴が一切ない。
  *
- * - progress = 0: shader が全フラグメントを discard → overlay は透明 → ページ可視
- * - progress 0→1 (cover): 行ごとに ±dir 方向へ uv をオフセットしつつ、
- *   ベースシフト ((1-progress)*dir) で初期は範囲外 (discard) だったテクスチャが
- *   範囲内 (描画) に入ってきて、最終的に画面全体を覆う
- * - progress 1→0 (reveal): 逆に範囲外へ流れて discard されていき、ページが現れる
+ * 動き:
+ * - progress = 0 : 全 fragment を discard → 透過 → ページが見える
+ * - progress 0→1 (cover) : 行ごとにランダムなスピードで右端から左へ「埋まっていく」
+ *   先頭エッジ付近を明るくしてストリーク / モーションブラーの質感を出す
+ * - hold (画面が完全に覆われた状態で navigate → after-swap 待ち)
+ * - progress 1→0 (reveal) : 同じく行ごとに引いて新ページが現れる
  */
+
+const TRANSPARENT_PIXEL =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 const SLIT_SHADER = /* glsl */ `
 precision highp float;
@@ -46,80 +52,104 @@ float hash11(float p) {
 void main() {
     vec2 uv = (gl_FragCoord.xy - offset) / resolution;
 
-    // 行を 64 段に分割し、行ごとに 0.4〜1.0 のスピード倍率
-    float row = floor(uv.y * 64.0);
-    float r = 0.4 + hash11(row) * 0.6;
+    // 行を 80 段に分割し、行ごとに 0.6〜1.0 のスピード倍率
+    float row = floor(uv.y * 80.0);
+    float r = 0.6 + hash11(row) * 0.4;
 
-    // 1) baseShift: progress 0 で uv が範囲外 (discard)、progress 1 で範囲内
-    //    (= 一方向から sweep してくる動き)。dir=+1 で右から左に流れる。
-    float baseShift = (1.0 - progress) * r * dir;
+    // dir = +1 で "右側から左へ" 埋まる。
+    // progress が 0→1 に進むに従って 1 → 0 へ閾値が動き、
+    // uv.x > threshold の領域が "覆われた" 状態に。
+    float coverP = clamp(progress * r * 1.25, 0.0, 1.0);
+    float threshold = dir > 0.0 ? (1.0 - coverP) : coverP;
 
-    // 2) smear: progress 0.5 付近で最大、progress=1 では 0。行ごとにランダム量。
-    //    モーションブラーっぽい streak を出す。
-    float smearStrength = progress * (1.0 - progress) * 4.0;
-    float smear = smearStrength * (hash11(row + 17.0) - 0.5) * 1.2 * dir;
-
-    float shift = baseShift + smear;
-
-    vec2 srcUv = uv - vec2(shift, 0.0);
-    if (srcUv.x < 0.0 || srcUv.x > 1.0) {
+    bool covered = dir > 0.0 ? (uv.x > threshold) : (uv.x < threshold);
+    if (!covered) {
         discard;
     }
 
-    outColor = texture(src, srcUv);
+    // 先頭エッジからの距離。0 = 進入直後, 1 = 行の奥側
+    float distFromEdge = dir > 0.0 ? (uv.x - threshold) : (threshold - uv.x);
+
+    // ベースの暗色 + 行ごとのバリエーション
+    float base = mix(0.04, 0.13, hash11(row + 7.0));
+
+    // 先頭付近を僅かに明るく → "leading streak / motion blur" っぽさ
+    float edgeGlow = exp(-distFromEdge * 8.0) * 0.18;
+
+    // ごくたまにアクセントカラー (logo green) をストリークに混ぜる
+    float accentRand = hash11(row + 31.0);
+    vec3 accent = vec3(0.55, 0.85, 0.35);
+    float accentWeight = step(0.96, accentRand) * edgeGlow * 1.2;
+
+    vec3 color = vec3(base + edgeGlow);
+    color = mix(color, accent, accentWeight);
+
+    outColor = vec4(color, 1.0);
 }
 `;
 
 export const WebGLTransition: React.FC = () => {
-    const overlayRef = useRef<HTMLDivElement | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
     const vfxRef = useRef<VFX | null>(null);
     const tlRef = useRef<gsap.core.Timeline | null>(null);
     const progressRef = useRef(0);
     const dirRef = useRef(1);
-    const vfxAttachedRef = useRef(false);
+    const readyRef = useRef(false);
 
     useEffect(() => {
+        const img = imgRef.current;
+        if (!img) return;
         let cancelled = false;
-        const overlay = overlayRef.current;
-        if (!overlay) return;
 
-        // VFX-JS 初期化 + overlay へ shader を attach。component 寿命中ずっと
-        // 適用しっぱなしにする (progress=0 では discard なので透明)。
-        try {
-            const vfx = new VFX();
-            vfxRef.current = vfx;
-            void vfx
-                .add(overlay, {
+        const attach = async () => {
+            try {
+                const vfx = new VFX();
+                vfxRef.current = vfx;
+                await vfx.add(img, {
                     shader: SLIT_SHADER,
-                    overflow: 100,
+                    overflow: 0,
                     uniforms: {
                         progress: () => progressRef.current,
                         dir: () => dirRef.current,
                     },
-                })
-                .then(() => {
-                    if (!cancelled) vfxAttachedRef.current = true;
-                })
-                .catch((err: unknown) => {
-                    console.warn('[WebGLTransition] vfx.add failed', err);
                 });
-        } catch (err) {
-            console.warn('[WebGLTransition] VFX init failed', err);
+                if (cancelled) {
+                    try {
+                        vfx.remove(img);
+                    } catch {
+                        /* noop */
+                    }
+                    return;
+                }
+                readyRef.current = true;
+            } catch (err) {
+                console.warn('[WebGLTransition] vfx.add failed', err);
+            }
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+            void attach();
+        } else {
+            img.addEventListener('load', () => void attach(), { once: true });
         }
 
         return () => {
             cancelled = true;
-            const v = vfxRef.current;
-            const o = overlayRef.current;
-            if (v && o) {
+            const vfx = vfxRef.current;
+            if (vfx && img) {
                 try {
-                    v.remove(o);
+                    vfx.remove(img);
                 } catch {
-                    // noop
+                    /* noop */
                 }
             }
+            try {
+                vfx?.destroy?.();
+            } catch {
+                /* noop */
+            }
             vfxRef.current = null;
-            vfxAttachedRef.current = false;
+            readyRef.current = false;
         };
     }, []);
 
@@ -130,38 +160,30 @@ export const WebGLTransition: React.FC = () => {
             const revealDuration = detail.revealDuration ?? 0.75;
 
             tlRef.current?.kill();
-
-            // dir は進行方向。ここでは固定 (+1: 右側から sweep)。
             dirRef.current = 1;
             progressRef.current = 0;
 
-            const fallEase = 'hop';
-
             const tl = gsap.timeline();
 
-            // --- Cover: progress 0 → 1 ---
             tl.to(progressRef, {
                 current: 1,
                 duration: coverDuration,
-                ease: fallEase,
+                ease: 'hop',
             });
 
-            // navigate 発火 + hold (after-swap 待ち)
             tl.add(() => {
                 if (detail.url) void navigate(detail.url);
             });
             tl.addPause();
 
-            // --- Reveal: progress 1 → 0 ---
             tl.to(progressRef, {
                 current: 0,
                 duration: revealDuration,
-                ease: fallEase,
+                ease: 'hop',
             });
 
             tlRef.current = tl;
 
-            // after-swap で resume。fallback timeout も設定。
             let resumed = false;
             const resume = () => {
                 if (resumed) return;
@@ -186,25 +208,23 @@ export const WebGLTransition: React.FC = () => {
     }, []);
 
     return (
-        <div
-            ref={overlayRef}
+        <img
+            ref={imgRef}
+            src={TRANSPARENT_PIXEL}
+            alt=""
             aria-hidden="true"
+            // VFX-JS は要素の boundingRect を WebGL canvas のサイズ / 位置に
+            // 反映するため、画面いっぱいに固定する。1x1 PNG を CSS で
+            // 拡大しているだけなので、テクスチャ自体は使わなくても要素として成立する。
             style={{
                 position: 'fixed',
                 inset: 0,
+                width: '100vw',
+                height: '100vh',
                 zIndex: 9999,
                 pointerEvents: 'none',
-                // VFX-JS が capture する overlay 自体の見た目。
-                // 細かい横ストライプを敷くことで、shader の uv ずれが
-                // モーションブラー / streak 風に見える。
-                background:
-                    'repeating-linear-gradient(' +
-                    '0deg,' +
-                    '#0a0a0a 0px,' +
-                    '#0a0a0a 3px,' +
-                    '#1a1a1a 3px,' +
-                    '#1a1a1a 6px' +
-                    ')',
+                opacity: 0,
+                userSelect: 'none',
             }}
         />
     );
