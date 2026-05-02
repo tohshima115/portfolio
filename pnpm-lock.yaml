@@ -35,6 +35,9 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.1.18(vite@6.4.1(jiti@2.6.1)(lightningcss@1.30.2))
+      '@vfx-js/core':
+        specifier: ^0.13.0
+        version: 0.13.0
       astro:
         specifier: ^5.17.1
         version: 5.17.1(idb-keyval@6.2.2)(jiti@2.6.1)(lightningcss@1.30.2)(rollup@4.57.1)(typescript@5.9.3)
@@ -2203,6 +2206,9 @@ packages:
     resolution: {integrity: sha512-VRGYFNW0gaT7+VCR/1rCMWEP9gvnDnlAolKisysLYkv8Zeysbqx+Omw4IgIRCLjI6oHWPkH8zOhFbqA3GRQ9HQ==}
     peerDependencies:
       '@urql/core': ^5.0.0
+
+  '@vfx-js/core@0.13.0':
+    resolution: {integrity: sha512-DPhMJ5bgq4j6jWcW34Y3FHRxfnQb6PIpAbg/CoD8Ii1J6ufTX2ebsb0k4fypz6aVCREHIJvZNt24Jf3gQsVPSQ==}
 
   '@vitejs/plugin-react@4.7.0':
     resolution: {integrity: sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==}
@@ -6464,6 +6470,8 @@ snapshots:
     dependencies:
       '@urql/core': 5.2.0(graphql@16.12.0)
       wonka: 6.3.5
+
+  '@vfx-js/core@0.13.0': {}
 
   '@vitejs/plugin-react@4.7.0(vite@6.4.1(jiti@2.6.1)(lightningcss@1.30.2))':
     dependencies:
