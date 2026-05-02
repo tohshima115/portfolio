@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { navigate } from 'astro:transitions/client';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
@@ -17,18 +18,71 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * 遷移オーバーレイ (Three.js + GlitchPass)。
+ * 遷移オーバーレイ (Three.js + GlitchPass + 方向付きワイプ)。
  *
- * - フルスクリーンの WebGLRenderer を 1 枚走らせ、暗色のフルスクリーンクワッドを
- *   不透明度でフェードイン/アウトさせる
- * - 上にかかる EffectComposer の GlitchPass (goWild = true) で常時グリッチ
- * - 不透明度 0→1 (cover): 画面が glitch しながら覆われる
- * - hold 中に navigate、`astro:after-swap` を待って DOM 入替
- * - 不透明度 1→0 (reveal): 新ページが現れる
+ * Pipeline: RenderPass → GlitchPass → DirectionalWipePass → OutputPass
  *
- * 通常時は不透明度 0 で render loop も停止しているので、トランジション中以外は
- * GPU コストゼロ。
+ * - 暗色のフルスクリーンクワッドを RenderPass で描画
+ * - GlitchPass (goWild=true) で全体にグリッチを乗せる
+ * - DirectionalWipePass は `progress` (0..1) と `dir` (+1/-1) で
+ *   uv.x を行ごとにランダム速度でしきい値スイープし、cover 面を一方向から
+ *   伸びてくるように見せる。先頭エッジは smoothstep でソフトフェード。
+ * - cover phase: progress 0→1 (右側から左へ glitch 帯がなだれ込む)
+ * - hold 中に navigate → astro:after-swap 待ち
+ * - reveal phase: progress 1→0 (同じ右側へ glitch 帯が引き戻される)
  */
+
+const wipeShader = {
+    uniforms: {
+        tDiffuse: { value: null as THREE.Texture | null },
+        progress: { value: 0 },
+        dir: { value: 1 },
+    },
+    vertexShader: /* glsl */ `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: /* glsl */ `
+        uniform sampler2D tDiffuse;
+        uniform float progress;
+        uniform float dir;
+        varying vec2 vUv;
+
+        float hash11(float p) {
+            p = fract(p * 0.1031);
+            p *= p + 33.33;
+            p *= p + p;
+            return fract(p);
+        }
+
+        void main() {
+            vec4 c = texture2D(tDiffuse, vUv);
+
+            // 行ごとのスピード倍率 (0.55〜1.0)
+            float row = floor(vUv.y * 90.0);
+            float r = 0.55 + hash11(row) * 0.45;
+
+            float coverP = clamp(progress * r * 1.3, 0.0, 1.0);
+            // dir = +1: cover は右から押し寄せる (threshold が 1→0)
+            float threshold = dir > 0.0 ? (1.0 - coverP) : coverP;
+
+            // 先頭エッジからの距離。dir が逆向きなら符号反転
+            float distFromEdge = dir > 0.0 ? (vUv.x - threshold) : (threshold - vUv.x);
+
+            if (distFromEdge <= 0.0) {
+                discard;
+            }
+
+            // 先頭 ~3% を soft edge にしてストリークの余韻を作る
+            float edgeFade = smoothstep(0.0, 0.03, distFromEdge);
+
+            gl_FragColor = vec4(c.rgb, c.a * edgeFade);
+        }
+    `,
+};
 
 export const WebGLTransition: React.FC = () => {
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -38,6 +92,7 @@ export const WebGLTransition: React.FC = () => {
     const sceneRef = useRef<THREE.Scene | null>(null);
     const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
     const glitchRef = useRef<GlitchPass | null>(null);
+    const wipePassRef = useRef<ShaderPass | null>(null);
     const rafRef = useRef<number | null>(null);
     const runningRef = useRef(false);
 
@@ -65,10 +120,12 @@ export const WebGLTransition: React.FC = () => {
         const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
         const geometry = new THREE.PlaneGeometry(2, 2);
+        // material 自体は常に opacity=1 で描画。表示/非表示は wipePass の
+        // progress uniform でコントロールする。
         const material = new THREE.MeshBasicMaterial({
             color: 0x0a0a0a,
             transparent: true,
-            opacity: 0,
+            opacity: 1,
         });
         const quad = new THREE.Mesh(geometry, material);
         scene.add(quad);
@@ -89,6 +146,9 @@ export const WebGLTransition: React.FC = () => {
         glitch.goWild = true; // 常時グリッチ
         composer.addPass(glitch);
 
+        const wipePass = new ShaderPass(wipeShader);
+        composer.addPass(wipePass);
+
         composer.addPass(new OutputPass());
 
         rendererRef.current = renderer;
@@ -96,6 +156,7 @@ export const WebGLTransition: React.FC = () => {
         sceneRef.current = scene;
         materialRef.current = material;
         glitchRef.current = glitch;
+        wipePassRef.current = wipePass;
 
         // --- Resize 対応 ---
         const handleResize = () => {
@@ -132,6 +193,7 @@ export const WebGLTransition: React.FC = () => {
             sceneRef.current = null;
             materialRef.current = null;
             glitchRef.current = null;
+            wipePassRef.current = null;
         };
     }, []);
 
@@ -158,13 +220,14 @@ export const WebGLTransition: React.FC = () => {
             const coverDuration = detail.coverDuration ?? 0.7;
             const revealDuration = detail.revealDuration ?? 0.6;
 
-            const material = materialRef.current;
-            if (!material) return;
+            const wipePass = wipePassRef.current;
+            if (!wipePass) return;
 
             tlRef.current?.kill();
 
-            // 初期化
-            material.opacity = 0;
+            // 初期化: progress=0 (透明) / dir=+1 (右側から sweep)
+            wipePass.uniforms.progress.value = 0;
+            wipePass.uniforms.dir.value = 1;
             startRenderLoop();
 
             const tl = gsap.timeline({
@@ -173,9 +236,9 @@ export const WebGLTransition: React.FC = () => {
                 },
             });
 
-            // --- Cover: opacity 0 → 1 (画面が glitch しながら覆われる) ---
-            tl.to(material, {
-                opacity: 1,
+            // --- Cover: progress 0 → 1 (右側から glitch 帯が sweep してくる) ---
+            tl.to(wipePass.uniforms.progress, {
+                value: 1,
                 duration: coverDuration,
                 ease: 'hop',
             });
@@ -186,9 +249,9 @@ export const WebGLTransition: React.FC = () => {
             });
             tl.addPause();
 
-            // --- Reveal: opacity 1 → 0 (新ページが現れる) ---
-            tl.to(material, {
-                opacity: 0,
+            // --- Reveal: progress 1 → 0 (同じ側へ引き戻して新ページが現れる) ---
+            tl.to(wipePass.uniforms.progress, {
+                value: 0,
                 duration: revealDuration,
                 ease: 'hop',
             });
