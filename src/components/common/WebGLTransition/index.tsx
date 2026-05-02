@@ -180,53 +180,78 @@ export const WebGLTransition: React.FC = () => {
                 gsap.set(el, { y: `${startVh}vh` });
             });
 
-            const tl = gsap.timeline({
+            // Cover/Reveal で同じ ease ("power2.in") を使うことで、(hold を挟んだ)
+            // 連続落下に見える挙動にする。停止 → 再加速の段差は hold 中に画面が完全に
+            // 覆われているため視覚的にはマスクされる。
+            const fallEase = 'power2.in';
+
+            // --- Phase 1: Cover ---
+            const coverTl = gsap.timeline({
                 onComplete: () => {
-                    setActive(false);
+                    // 1) navigate を発火 (Astro が裏で DOM を swap)
+                    if (detail.url) void navigate(detail.url);
+
+                    // 2) astro:after-swap を待ってから Reveal を再生。
+                    //    url が null / event が届かない場合の保険に timeout も設定。
+                    let started = false;
+                    const startReveal = () => {
+                        if (started) return;
+                        started = true;
+                        document.removeEventListener('astro:after-swap', startReveal);
+                        clearTimeout(fallbackTimer);
+                        playReveal();
+                    };
+                    const fallbackTimer = window.setTimeout(startReveal, 1500);
+                    if (detail.url) {
+                        document.addEventListener('astro:after-swap', startReveal, { once: true });
+                    } else {
+                        // 遷移先なし: 即 Reveal
+                        startReveal();
+                    }
                 },
             });
 
-            // Cover phase: 上から落ちてきて静止位置 (y: 0) で止まる
             els.forEach((el, i) => {
                 const t = tiles[i];
                 if (!t) return;
-                tl.to(
+                coverTl.to(
                     el,
                     {
                         y: '0vh',
                         duration: coverDuration * t.speed,
-                        ease: 'power3.in',
+                        ease: fallEase,
                     },
                     t.delay * coverDuration * 0.6,
                 );
             });
 
-            // navigate: cover が概ね完了したタイミング
-            const coverEnd = coverDuration + 0.05;
-            tl.add(() => {
-                if (detail.url) {
-                    void navigate(detail.url);
-                }
-            }, coverEnd);
-
-            // Reveal phase: cover 完了後、各タイルが個別の delay でさらに下へ抜ける
-            const revealStart = coverEnd + 0.1;
-            els.forEach((el, i) => {
-                const t = tiles[i];
-                if (!t) return;
-                const endVh = (1 - t.y) * 100 + 10;
-                tl.to(
-                    el,
-                    {
-                        y: `${endVh}vh`,
-                        duration: revealDuration * t.speed,
-                        ease: 'power2.in',
+            // --- Phase 2: Reveal ---
+            const playReveal = () => {
+                const revealTl = gsap.timeline({
+                    onComplete: () => {
+                        setActive(false);
                     },
-                    revealStart + t.delay * revealDuration * 0.5,
-                );
-            });
+                });
 
-            tlRef.current = tl;
+                els.forEach((el, i) => {
+                    const t = tiles[i];
+                    if (!t) return;
+                    const endVh = (1 - t.y) * 100 + 10;
+                    revealTl.to(
+                        el,
+                        {
+                            y: `${endVh}vh`,
+                            duration: revealDuration * t.speed,
+                            ease: fallEase,
+                        },
+                        t.delay * revealDuration * 0.5,
+                    );
+                });
+
+                tlRef.current = revealTl;
+            };
+
+            tlRef.current = coverTl;
         };
 
         window.addEventListener(TRANSITION_EVENT, handlePlay);
