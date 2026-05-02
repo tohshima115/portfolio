@@ -1,7 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { CustomEase } from 'gsap/CustomEase';
 import { navigate } from 'astro:transitions/client';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
+
+// Codrops "Custom Page Transitions in Astro" 記事と同じ "hop" カスタムイージング。
+// 標準の power3.inOut よりも入りと出が緩やかでミドルが伸びる S 字カーブ。
+if (typeof window !== 'undefined') {
+    gsap.registerPlugin(CustomEase);
+    if (!CustomEase.get('hop')) {
+        CustomEase.create('hop', '0.56, 0, 0.35, 0.98');
+    }
+}
 
 /**
  * 遷移オーバーレイ。
@@ -180,10 +190,11 @@ export const WebGLTransition: React.FC = () => {
                 gsap.set(el, { y: `${startVh}vh` });
             });
 
-            // Cover/Reveal で同じ ease ("power2.in") を使うことで、(hold を挟んだ)
-            // 連続落下に見える挙動にする。停止 → 再加速の段差は hold 中に画面が完全に
-            // 覆われているため視覚的にはマスクされる。
-            const fallEase = 'power2.in';
+            // 各 phase で「両端を 0 速度に揃えた S 字カーブ」を使うことで、
+            // hold 直前は自然に減速して着地し、hold 後は自然に加速して離れる。
+            // 速度の不連続が消えるため、二段階アニメーションが連続したひとつの動きに
+            // 感じられる。記事の hop ease (0.56,0,0.35,0.98) を採用。
+            const fallEase = 'hop';
 
             // --- Phase 1: Cover ---
             const coverTl = gsap.timeline({
