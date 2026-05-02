@@ -27,17 +27,22 @@ type Strip = {
     y: number;
     /** 0..1 高さ */
     h: number;
-    /** -1: 左方向にスライド (右から入って左へ抜ける) / +1: 逆 */
-    direction: -1 | 1;
     /** スライドイン開始遅延 0..1 */
     delay: number;
-    /** 速度倍率 0.7〜1.4 */
+    /** 速度倍率 0.6〜1.6 */
     speed: number;
     /** 表示色 */
     background: string;
     /** オプション: ハーフトーン / ストライプ オーバーレイ */
     overlay?: string;
 };
+
+/**
+ * 進入方向。+1 なら右側 viewport 外から入ってきて中央で停止し、
+ * reveal で同じ右側へ戻る ("一方向から流れ込んで、引き戻す" 動き)。
+ * 遷移ごとにランダムに ±1 を切り替えてもよい。今回は固定で +1。
+ */
+const SLIDE_FROM: 1 | -1 = 1;
 
 // mulberry32
 function makeRng(seed: number) {
@@ -77,14 +82,14 @@ function generateStrips(seed: number): Strip[] {
     const rand = makeRng(seed);
     const strips: Strip[] = [];
 
-    // viewport を埋め尽くすまで縦に積む。各ストリップの高さは 1.5%vh 〜 12%vh。
-    // 隣のストリップと少しオーバーラップさせ隙間を作らない。
+    // viewport を埋め尽くすまで縦に積む。スリットの「引き延ばし感」を出すため
+    // 高さを細めに (0.8〜6.5%vh)、本数を多めに。
     let y = -0.01;
     while (y < 1.01) {
-        const h = 0.015 + rand() * 0.105;
-        const isAccent = rand() < 0.04;
-        const isLight = rand() < 0.18;
-        const isHalftone = rand() < 0.12;
+        const h = 0.008 + rand() * 0.057;
+        const isAccent = rand() < 0.03;
+        const isLight = rand() < 0.16;
+        const isHalftone = rand() < 0.1;
 
         let background: string;
         if (isAccent) {
@@ -103,10 +108,11 @@ function generateStrips(seed: number): Strip[] {
 
         strips.push({
             y,
-            h: h + 0.004, // 隣との重なり
-            direction: rand() < 0.5 ? -1 : 1,
-            delay: rand() * 0.6,
-            speed: 0.7 + rand() * 0.7,
+            h: h + 0.003, // 隣との重なり
+            // 速度を大きく散らすことで、layered な「ストリーク / モーションブラー」
+            // っぽい見た目にする (速いストリップが先行、遅いものが後追いで残像)
+            delay: rand() * 0.5,
+            speed: 0.6 + rand() * 1.0,
             background,
             overlay,
         });
@@ -138,13 +144,11 @@ export const WebGLTransition: React.FC = () => {
 
             setActive(true);
 
-            // 初期状態: 各ストリップを direction の逆側 viewport 外に押し出す。
-            // direction = -1 → 右側 (+110vw) から進入。direction = +1 → 左側 (-110vw)。
-            els.forEach((el, i) => {
-                const s = strips[i];
-                if (!s) return;
-                const startVw = -s.direction * 110;
-                gsap.set(el, { x: `${startVw}vw` });
+            // 初期状態: 全ストリップを SLIDE_FROM 側 viewport 外に押し出す。
+            // 一方向から「流れ込んで」きて、reveal で「同じ側へ引き戻す」動き。
+            const sourceVw = SLIDE_FROM * 110;
+            els.forEach((el) => {
+                gsap.set(el, { x: `${sourceVw}vw` });
             });
 
             const fallEase = 'hop';
@@ -196,14 +200,14 @@ export const WebGLTransition: React.FC = () => {
                 els.forEach((el, i) => {
                     const s = strips[i];
                     if (!s) return;
-                    const endVw = s.direction * 110;
                     const tileStart = s.delay * revealDuration * 0.5;
                     const tileDuration = revealDuration * s.speed;
 
                     revealTl.to(
                         el,
                         {
-                            x: `${endVw}vw`,
+                            // cover で来た側へそのまま「引き戻す」
+                            x: `${sourceVw}vw`,
                             duration: tileDuration,
                             ease: fallEase,
                             overwrite: false,
@@ -250,7 +254,7 @@ export const WebGLTransition: React.FC = () => {
                         background: s.background,
                         backgroundImage: s.overlay,
                         willChange: 'transform',
-                        transform: `translateX(${-s.direction * 110}vw)`,
+                        transform: `translateX(${SLIDE_FROM * 110}vw)`,
                     }}
                 />
             ))}
