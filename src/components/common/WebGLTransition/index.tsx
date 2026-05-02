@@ -257,18 +257,21 @@ export const WebGLTransition: React.FC = () => {
                             y: `${endVh}vh`,
                             duration: tileDuration,
                             ease: fallEase,
+                            overwrite: false,
                         },
                         tileStart,
                     );
                     // 退場の中盤からフェードアウトも重ねる。落下しながら徐々に消える。
+                    // 別 property への独立トゥイーンなので overwrite:false で並走させる。
                     revealTl.to(
                         el,
                         {
                             opacity: 0,
-                            duration: tileDuration * 0.6,
+                            duration: tileDuration * 0.7,
                             ease: 'power2.in',
+                            overwrite: false,
                         },
-                        tileStart + tileDuration * 0.4,
+                        tileStart + tileDuration * 0.3,
                     );
                 });
 
