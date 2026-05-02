@@ -222,7 +222,9 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro = false, rotateX 
         >
             <Canvas
                 orthographic
-                gl={{ alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' }}
+                // preserveDrawingBuffer: html-to-image による遷移スナップショットで
+                // この WebGL canvas の中身も拾えるようにする (デフォルトだと clear 後のため空)
+                gl={{ alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power', preserveDrawingBuffer: true }}
                 dpr={1}
                 frameloop="demand"
                 style={{ width: '100%', height: '100%' }}
