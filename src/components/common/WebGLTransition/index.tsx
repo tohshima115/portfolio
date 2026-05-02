@@ -55,7 +55,12 @@ export const WebGLTransition: React.FC = () => {
             // baseFrequency / numOctaves はアニメさせない → turbulence 再計算なし
             turbulence.setAttribute('seed', String(Math.floor(Math.random() * 100)));
 
-            const target = document.body;
+            // ページのコンテンツだけを filter 対象にする (#page-root)。
+            // body 全体だと WebGLTransition 自身の SVG も filter graph に
+            // 含まれてしまい余計なコストがかかる。フォールバックとして body を使う。
+            const findTarget = (): HTMLElement =>
+                (document.getElementById('page-root') as HTMLElement | null) ?? document.body;
+            let target = findTarget();
             target.style.filter = `url(#${FILTER_ID})`;
 
             const state = { scale: 0, dx: 0 };
@@ -67,7 +72,13 @@ export const WebGLTransition: React.FC = () => {
             apply();
 
             const cleanup = () => {
+                // navigate 後は target の参照が外れている可能性 (page-root は
+                // ナビゲーションで作り変わる) があるので、body と現在の page-root
+                // 両方を念のためクリア。
                 target.style.filter = '';
+                const currentRoot = document.getElementById('page-root');
+                if (currentRoot && currentRoot !== target) currentRoot.style.filter = '';
+                document.body.style.filter = '';
             };
 
             const tl = gsap.timeline({
@@ -104,6 +115,10 @@ export const WebGLTransition: React.FC = () => {
                 resumed = true;
                 document.removeEventListener('astro:after-swap', resume);
                 clearTimeout(fallbackTimer);
+                // swap 後は #page-root が新しい要素に差し替わっているので
+                // filter を当て直す
+                target = findTarget();
+                target.style.filter = `url(#${FILTER_ID})`;
                 tl.resume();
             };
             const fallbackTimer = window.setTimeout(resume, 1500);
@@ -143,12 +158,27 @@ export const WebGLTransition: React.FC = () => {
                         seed="3"
                         result="noise"
                     />
+                    {/*
+                     * feTurbulence の alpha 出力もノイズなので、そのまま
+                     * yChannelSelector="A" にすると Y 方向にもズレて斜めに歪む。
+                     * feColorMatrix で alpha を 0.5 (= 中点 = 変位 0) に固定して
+                     * 純粋に X 方向のみの displacement にする。
+                     */}
+                    <feColorMatrix
+                        in="noise"
+                        type="matrix"
+                        values="1 0 0 0 0
+                                0 1 0 0 0
+                                0 0 1 0 0
+                                0 0 0 0 0.5"
+                        result="noiseFlat"
+                    />
                     <feDisplacementMap
                         in="SourceGraphic"
-                        in2="noise"
+                        in2="noiseFlat"
                         scale="0"
                         xChannelSelector="R"
-                        yChannelSelector="A" /* A は常に 0 → Y 方向歪みゼロ */
+                        yChannelSelector="A"
                         result="displaced"
                     />
                     <feOffset in="displaced" dx="0" dy="0" />
