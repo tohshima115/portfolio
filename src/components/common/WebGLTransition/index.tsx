@@ -187,7 +187,7 @@ export const WebGLTransition: React.FC = () => {
                 const t = tiles[i];
                 if (!t) return;
                 const startVh = -(t.y * 100 + t.h * 100 + 10);
-                gsap.set(el, { y: `${startVh}vh` });
+                gsap.set(el, { y: `${startVh}vh`, opacity: 1 });
             });
 
             // 各 phase で「両端を 0 速度に揃えた S 字カーブ」を使うことで、
@@ -248,14 +248,27 @@ export const WebGLTransition: React.FC = () => {
                     const t = tiles[i];
                     if (!t) return;
                     const endVh = (1 - t.y) * 100 + 10;
+                    const tileStart = t.delay * revealDuration * 0.5;
+                    const tileDuration = revealDuration * t.speed;
+
                     revealTl.to(
                         el,
                         {
                             y: `${endVh}vh`,
-                            duration: revealDuration * t.speed,
+                            duration: tileDuration,
                             ease: fallEase,
                         },
-                        t.delay * revealDuration * 0.5,
+                        tileStart,
+                    );
+                    // 退場の中盤からフェードアウトも重ねる。落下しながら徐々に消える。
+                    revealTl.to(
+                        el,
+                        {
+                            opacity: 0,
+                            duration: tileDuration * 0.6,
+                            ease: 'power2.in',
+                        },
+                        tileStart + tileDuration * 0.4,
                     );
                 });
 
