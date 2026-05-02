@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { CustomEase } from 'gsap/CustomEase';
-import { VFX } from '@vfx-js/core';
+import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { navigate } from 'astro:transitions/client';
 import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
 
@@ -13,177 +17,185 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * 遷移オーバーレイ (VFX-JS slit-scan + procedural)。
+ * 遷移オーバーレイ (Three.js + GlitchPass)。
  *
- * VFX-JS のドキュメント (https://amagi.dev/vfx-js/docs/) に従い、
- * テクスチャ捕捉が確実に動く `<img>` 要素 (1x1 透過 PNG を fullscreen に伸ばしたもの)
- * に対して shader を適用する。shader は src テクスチャを使わず、`progress` と
- * `dir` uniform から完全に procedural に出力色を計算するので、フォントや
- * cross-origin といった DOM 捕捉特有の落とし穴が一切ない。
+ * - フルスクリーンの WebGLRenderer を 1 枚走らせ、暗色のフルスクリーンクワッドを
+ *   不透明度でフェードイン/アウトさせる
+ * - 上にかかる EffectComposer の GlitchPass (goWild = true) で常時グリッチ
+ * - 不透明度 0→1 (cover): 画面が glitch しながら覆われる
+ * - hold 中に navigate、`astro:after-swap` を待って DOM 入替
+ * - 不透明度 1→0 (reveal): 新ページが現れる
  *
- * 動き:
- * - progress = 0 : 全 fragment を discard → 透過 → ページが見える
- * - progress 0→1 (cover) : 行ごとにランダムなスピードで右端から左へ「埋まっていく」
- *   先頭エッジ付近を明るくしてストリーク / モーションブラーの質感を出す
- * - hold (画面が完全に覆われた状態で navigate → after-swap 待ち)
- * - progress 1→0 (reveal) : 同じく行ごとに引いて新ページが現れる
+ * 通常時は不透明度 0 で render loop も停止しているので、トランジション中以外は
+ * GPU コストゼロ。
  */
 
-const TRANSPARENT_PIXEL =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-
-const SLIT_SHADER = /* glsl */ `
-precision highp float;
-uniform vec2 resolution;
-uniform vec2 offset;
-uniform float time;
-uniform sampler2D src;
-uniform float progress;
-uniform float dir;
-out vec4 outColor;
-
-float hash11(float p) {
-    p = fract(p * 0.1031);
-    p *= p + 33.33;
-    p *= p + p;
-    return fract(p);
-}
-
-void main() {
-    vec2 uv = (gl_FragCoord.xy - offset) / resolution;
-
-    // 行を 80 段に分割し、行ごとに 0.6〜1.0 のスピード倍率
-    float row = floor(uv.y * 80.0);
-    float r = 0.6 + hash11(row) * 0.4;
-
-    // dir = +1 で "右側から左へ" 埋まる。
-    // progress が 0→1 に進むに従って 1 → 0 へ閾値が動き、
-    // uv.x > threshold の領域が "覆われた" 状態に。
-    float coverP = clamp(progress * r * 1.25, 0.0, 1.0);
-    float threshold = dir > 0.0 ? (1.0 - coverP) : coverP;
-
-    bool covered = dir > 0.0 ? (uv.x > threshold) : (uv.x < threshold);
-    if (!covered) {
-        discard;
-    }
-
-    // 先頭エッジからの距離。0 = 進入直後, 1 = 行の奥側
-    float distFromEdge = dir > 0.0 ? (uv.x - threshold) : (threshold - uv.x);
-
-    // ベースの暗色 + 行ごとのバリエーション
-    float base = mix(0.04, 0.13, hash11(row + 7.0));
-
-    // 先頭付近を僅かに明るく → "leading streak / motion blur" っぽさ
-    float edgeGlow = exp(-distFromEdge * 8.0) * 0.18;
-
-    // ごくたまにアクセントカラー (logo green) をストリークに混ぜる
-    float accentRand = hash11(row + 31.0);
-    vec3 accent = vec3(0.55, 0.85, 0.35);
-    float accentWeight = step(0.96, accentRand) * edgeGlow * 1.2;
-
-    vec3 color = vec3(base + edgeGlow);
-    color = mix(color, accent, accentWeight);
-
-    outColor = vec4(color, 1.0);
-}
-`;
-
 export const WebGLTransition: React.FC = () => {
-    const imgRef = useRef<HTMLImageElement | null>(null);
-    const vfxRef = useRef<VFX | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
     const tlRef = useRef<gsap.core.Timeline | null>(null);
-    const progressRef = useRef(0);
-    const dirRef = useRef(1);
-    const readyRef = useRef(false);
+    const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+    const composerRef = useRef<EffectComposer | null>(null);
+    const sceneRef = useRef<THREE.Scene | null>(null);
+    const materialRef = useRef<THREE.MeshBasicMaterial | null>(null);
+    const glitchRef = useRef<GlitchPass | null>(null);
+    const rafRef = useRef<number | null>(null);
+    const runningRef = useRef(false);
 
     useEffect(() => {
-        const img = imgRef.current;
-        if (!img) return;
-        let cancelled = false;
+        const container = containerRef.current;
+        if (!container) return;
 
-        const attach = async () => {
-            try {
-                const vfx = new VFX();
-                vfxRef.current = vfx;
-                await vfx.add(img, {
-                    shader: SLIT_SHADER,
-                    overflow: 0,
-                    uniforms: {
-                        progress: () => progressRef.current,
-                        dir: () => dirRef.current,
-                    },
-                });
-                if (cancelled) {
-                    try {
-                        vfx.remove(img);
-                    } catch {
-                        /* noop */
-                    }
-                    return;
-                }
-                readyRef.current = true;
-            } catch (err) {
-                console.warn('[WebGLTransition] vfx.add failed', err);
-            }
+        // --- Three.js セットアップ ---
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: false });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        renderer.setClearColor(0x000000, 0);
+        const canvas = renderer.domElement;
+        canvas.style.cssText = [
+            'position:fixed',
+            'inset:0',
+            'width:100vw',
+            'height:100vh',
+            'z-index:9999',
+            'pointer-events:none',
+        ].join(';');
+        container.appendChild(canvas);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+        const geometry = new THREE.PlaneGeometry(2, 2);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x0a0a0a,
+            transparent: true,
+            opacity: 0,
+        });
+        const quad = new THREE.Mesh(geometry, material);
+        scene.add(quad);
+
+        // --- EffectComposer + GlitchPass ---
+        const composer = new EffectComposer(renderer);
+        composer.setSize(window.innerWidth, window.innerHeight);
+        composer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+        const renderPass = new RenderPass(scene, camera);
+        // RenderPass はデフォルトで毎回 clear するが、alpha を活かしたいので
+        // 明示的に clear color を透過にする
+        renderPass.clearColor = new THREE.Color(0x000000);
+        renderPass.clearAlpha = 0;
+        composer.addPass(renderPass);
+
+        const glitch = new GlitchPass();
+        glitch.goWild = true; // 常時グリッチ
+        composer.addPass(glitch);
+
+        composer.addPass(new OutputPass());
+
+        rendererRef.current = renderer;
+        composerRef.current = composer;
+        sceneRef.current = scene;
+        materialRef.current = material;
+        glitchRef.current = glitch;
+
+        // --- Resize 対応 ---
+        const handleResize = () => {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            renderer.setSize(w, h, false);
+            composer.setSize(w, h);
         };
-
-        if (img.complete && img.naturalWidth > 0) {
-            void attach();
-        } else {
-            img.addEventListener('load', () => void attach(), { once: true });
-        }
+        window.addEventListener('resize', handleResize);
 
         return () => {
-            cancelled = true;
-            const vfx = vfxRef.current;
-            if (vfx && img) {
-                try {
-                    vfx.remove(img);
-                } catch {
-                    /* noop */
-                }
-            }
+            window.removeEventListener('resize', handleResize);
+            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
+            runningRef.current = false;
+            tlRef.current?.kill();
             try {
-                vfx?.destroy?.();
+                composer.dispose();
             } catch {
                 /* noop */
             }
-            vfxRef.current = null;
-            readyRef.current = false;
+            try {
+                geometry.dispose();
+                material.dispose();
+                renderer.dispose();
+            } catch {
+                /* noop */
+            }
+            if (canvas.parentNode === container) {
+                container.removeChild(canvas);
+            }
+            rendererRef.current = null;
+            composerRef.current = null;
+            sceneRef.current = null;
+            materialRef.current = null;
+            glitchRef.current = null;
         };
     }, []);
 
     useEffect(() => {
+        const startRenderLoop = () => {
+            if (runningRef.current) return;
+            runningRef.current = true;
+            const tick = () => {
+                if (!runningRef.current) return;
+                composerRef.current?.render();
+                rafRef.current = requestAnimationFrame(tick);
+            };
+            rafRef.current = requestAnimationFrame(tick);
+        };
+
+        const stopRenderLoop = () => {
+            runningRef.current = false;
+            if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+            rafRef.current = null;
+        };
+
         const handlePlay = (e: Event) => {
             const detail = (e as CustomEvent<PlayTransitionDetail>).detail || ({ url: null } as PlayTransitionDetail);
-            const coverDuration = detail.coverDuration ?? 0.85;
-            const revealDuration = detail.revealDuration ?? 0.75;
+            const coverDuration = detail.coverDuration ?? 0.7;
+            const revealDuration = detail.revealDuration ?? 0.6;
+
+            const material = materialRef.current;
+            if (!material) return;
 
             tlRef.current?.kill();
-            dirRef.current = 1;
-            progressRef.current = 0;
 
-            const tl = gsap.timeline();
+            // 初期化
+            material.opacity = 0;
+            startRenderLoop();
 
-            tl.to(progressRef, {
-                current: 1,
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    stopRenderLoop();
+                },
+            });
+
+            // --- Cover: opacity 0 → 1 (画面が glitch しながら覆われる) ---
+            tl.to(material, {
+                opacity: 1,
                 duration: coverDuration,
                 ease: 'hop',
             });
 
+            // --- Hold: navigate → after-swap 待ち ---
             tl.add(() => {
                 if (detail.url) void navigate(detail.url);
             });
             tl.addPause();
 
-            tl.to(progressRef, {
-                current: 0,
+            // --- Reveal: opacity 1 → 0 (新ページが現れる) ---
+            tl.to(material, {
+                opacity: 0,
                 duration: revealDuration,
                 ease: 'hop',
             });
 
             tlRef.current = tl;
 
+            // after-swap で resume
             let resumed = false;
             const resume = () => {
                 if (resumed) return;
@@ -203,31 +215,10 @@ export const WebGLTransition: React.FC = () => {
         window.addEventListener(TRANSITION_EVENT, handlePlay);
         return () => {
             window.removeEventListener(TRANSITION_EVENT, handlePlay);
-            tlRef.current?.kill();
         };
     }, []);
 
-    return (
-        <img
-            ref={imgRef}
-            src={TRANSPARENT_PIXEL}
-            alt=""
-            aria-hidden="true"
-            // VFX-JS は要素の boundingRect を WebGL canvas のサイズ / 位置に
-            // 反映するため、画面いっぱいに固定する。1x1 PNG を CSS で
-            // 拡大しているだけなので、テクスチャ自体は使わなくても要素として成立する。
-            style={{
-                position: 'fixed',
-                inset: 0,
-                width: '100vw',
-                height: '100vh',
-                zIndex: 9999,
-                pointerEvents: 'none',
-                opacity: 0,
-                userSelect: 'none',
-            }}
-        />
-    );
+    return <div ref={containerRef} aria-hidden="true" style={{ display: 'contents' }} />;
 };
 
 export default WebGLTransition;
