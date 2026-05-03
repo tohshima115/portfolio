@@ -12,6 +12,7 @@ docs/
 │   ├── profile.md                  ← 自己分析の中心（強み / 経歴 / 狙うポジション / 年収レンジ）
 │   ├── site-improvement-plan.md    ← サイトを「採用判断のためのフィルタ」として最適化する計画
 │   ├── about-copywriting.md        ← サイト上の About 文章を再考するワーキングドキュメント
+│   ├── casual-interview-prep.md    ← カジュアル面談で頻出する想定質問リスト
 │   └── voice-memos/                ← 音声録音から書き起こしたメモを置く場所
 │
 └── features/                       ← サイトの機能実装メモ（実装プラン / タスク / ふりかえり）
@@ -46,8 +47,9 @@ docs/
 優先度順:
 
 1. **`career/about-copywriting.md`** — 既存。サイトの About 文を狙うポジションに合わせて磨き込むワーキングドキュメント。
-2. **`career/hero-copywriting.md`** — TOP 一画面目で採用担当に刺すヒーローコピー専用の検討。
-3. **`career/interview-prep.md`** — カジュアル面談・一次面接で頻出する質問への回答台本。
-4. **`career/target-companies.md`** — Wantedly / YOUTRUST / Findy 等で見つけた候補企業リストと、各社向けに強調すべき点。
-5. **`career/scout-replies.md`** — スカウト返信・カジュアル面談リクエストの返信テンプレ集。
-6. **`career/positioning-checklist.md`** — サイトと自己紹介と職務経歴書の整合性をチェックするためのリスト。
+2. **`career/casual-interview-prep.md`** — 既存。カジュアル面談で頻出する想定質問リスト。回答メモを追記しながら使う。
+3. **`career/hero-copywriting.md`** — TOP 一画面目で採用担当に刺すヒーローコピー専用の検討。
+4. **`career/interview-prep.md`** — 一次面接 / 二次面接で深掘りされる質問への回答台本。
+5. **`career/target-companies.md`** — Wantedly / YOUTRUST / Findy 等で見つけた候補企業リストと、各社向けに強調すべき点。
+6. **`career/scout-replies.md`** — スカウト返信・カジュアル面談リクエストの返信テンプレ集。
+7. **`career/positioning-checklist.md`** — サイトと自己紹介と職務経歴書の整合性をチェックするためのリスト。
