@@ -260,7 +260,6 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // 補正: モバイル / reduced motion のときは横方向 / 奥行きの振幅を抑える
     const ampXY = isMobile || reducedMotion ? 0 : 1;
     const ampZ = isMobile || reducedMotion ? 0 : 1;
-    const ampRY = isMobile || reducedMotion ? 0 : 1;
 
     // piecewise linear interpolation helper (6 stops, equal spacing)
     const interp = (p: number, stops: number[]): number => {
@@ -288,9 +287,9 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const cameraZ = useTransform(cameraProgress, (p) =>
         interp(p, [0, 180 * ampZ, 180 * ampZ, -120 * ampZ, -100 * ampZ, 0]),
     );
-    const cameraRY = useTransform(cameraProgress, (p) =>
-        interp(p, [0, 6 * ampRY, -6 * ampRY, 6 * ampRY, -6 * ampRY, 0]),
-    );
+    // Y 軸の回転は Hero / CTA と同じ 0 に固定。中間セクションも斜めにせず
+    // 読みやすさを優先する。
+    const cameraRY = useTransform(cameraProgress, () => 0);
 
     return (
         <section
