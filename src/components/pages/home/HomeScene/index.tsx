@@ -8,6 +8,7 @@ import {
 } from 'framer-motion';
 import { ContourBackground } from '../PrtsInterface/components/ContourBackground';
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
+import { FloorPlane } from '../PrtsInterface/components/FloorPlane';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import { HeroLayer } from './layers/HeroLayer';
 import { FeaturedProjectLayer } from './layers/FeaturedProjectLayer';
@@ -231,6 +232,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(240px, 100vh, -180px)' }}
                         >
+                            <FloorPlane />
                             <FeaturedProjectLayer progress={scrollYProgress} />
                         </div>
 
@@ -239,6 +241,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(-260px, 200vh, 120px)' }}
                         >
+                            <FloorPlane />
                             <TechStackLayer progress={scrollYProgress} />
                         </div>
 
@@ -247,6 +250,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(0, 300vh, 0)' }}
                         >
+                            <FloorPlane />
                             <ContactCTALayer progress={scrollYProgress} />
                         </div>
                     </motion.div>
