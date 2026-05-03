@@ -6,6 +6,7 @@ import TableOfContents from "@/components/pages/projects/ProjectDetail/TableOfCo
 import ProjectNavigation from "@/components/pages/projects/ProjectDetail/ProjectNavigation";
 import Background from "@/components/pages/projects/ProjectDetail/Background";
 import { SystemGraph } from "@/components/common/SystemGraph";
+import { getProjectLogo } from "@/utils/projectLogos";
 
 export async function getStaticPaths() {
     const projects = await getCollection("projects");
@@ -17,13 +18,19 @@ export async function getStaticPaths() {
 
 const { entry, projects } = Astro.props;
 const { Content, headings } = await entry.render();
+const currentLogo = getProjectLogo(entry.slug);
 
-// Format projects for navigation
-const navProjects = projects.map((p: any) => ({
-    slug: p.slug,
-    title: p.data.title,
-    iconUrl: p.data.meta.icon?.src ?? p.data.meta.thumbnail?.src // Use icon if available, fallback to thumbnail
-}));
+// Format projects for navigation. ブランドマークがあればそれを最優先で使い、
+// 無ければ既存の icon / thumbnail フォールバックに任せる。
+const navProjects = projects.map((p: any) => {
+    const logo = getProjectLogo(p.slug);
+    return {
+        slug: p.slug,
+        title: p.data.title,
+        iconUrl:
+            logo?.mark ?? p.data.meta.icon?.src ?? p.data.meta.thumbnail?.src,
+    };
+});
 
 // Generate relation graph based ONLY on tags associated with this project
 const graphNodes: any[] = [];
@@ -106,6 +113,8 @@ currentTags.forEach((tech: string) => {
                         duration={entry.data.meta.duration}
                         stack={entry.data.attributes.stack}
                         projects={projects}
+                        logoMark={currentLogo?.mark}
+                        logoHorizontal={currentLogo?.horizontal}
                         client:load
                     />
                 </div>

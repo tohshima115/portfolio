@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { cn } from '@/utils/cn';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getProjectLogo } from '@/utils/projectLogos';
 
 interface Project {
     slug: string;
@@ -22,9 +23,11 @@ interface ProjectMetaPanelProps {
     stack: string[];
     className?: string; // Add className prop for flexibility
     projects: Project[]; // All projects for filtering
+    logoMark?: string;       // Square brand mark (public path)
+    logoHorizontal?: string; // Horizontal wordmark (public path) — preferred when present
 }
 
-const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, duration, stack, className, projects }) => {
+const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, duration, stack, className, projects, logoMark, logoHorizontal }) => {
     // State to track which tech stack is being hovered
     const [hoveredStack, setHoveredStack] = useState<string | null>(null);
 
@@ -33,6 +36,24 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
             {/* Top Header Section */}
             <div className="mb-8 relative group">
                 <div className="absolute -left-4 top-0 w-1 h-full bg-yellow-400 group-hover:h-1/2 transition-all duration-300" />
+
+                {/* Brand Mark / Wordmark — horizontal を優先、なければ mark */}
+                {logoHorizontal ? (
+                    <img
+                        src={logoHorizontal}
+                        alt=""
+                        aria-hidden
+                        className="h-10 w-auto mb-4 relative z-10"
+                    />
+                ) : logoMark ? (
+                    <img
+                        src={logoMark}
+                        alt=""
+                        aria-hidden
+                        className="w-12 h-12 rounded-lg mb-4 relative z-10 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.2)]"
+                    />
+                ) : null}
+
                 <h1 className="text-5xl font-black tracking-tighter uppercase leading-none mb-2 relative z-10">
                     {title}
                 </h1>
@@ -132,20 +153,24 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
                                                                     title={p.data.title}
                                                                     onClick={(e) => isCurrent && e.preventDefault()}
                                                                 >
-                                                                    {p.data.meta.thumbnail ? (
-                                                                        <img
-                                                                            src={p.data.meta.thumbnail.src}
-                                                                            alt={p.data.title}
-                                                                            className={cn(
-                                                                                "w-full h-full object-cover transition-opacity duration-200",
-                                                                                isCurrent ? "opacity-100" : "opacity-90 group-hover/icon:opacity-100"
-                                                                            )}
-                                                                        />
-                                                                    ) : (
-                                                                        <span className="text-xs font-bold font-mono">
-                                                                            {p.data.title.substring(0, 2).toUpperCase()}
-                                                                        </span>
-                                                                    )}
+                                                                    {(() => {
+                                                                        const popoverLogo = getProjectLogo(p.slug);
+                                                                        const iconSrc = popoverLogo?.mark ?? p.data.meta.thumbnail?.src;
+                                                                        return iconSrc ? (
+                                                                            <img
+                                                                                src={iconSrc}
+                                                                                alt={p.data.title}
+                                                                                className={cn(
+                                                                                    "w-full h-full object-cover transition-opacity duration-200",
+                                                                                    isCurrent ? "opacity-100" : "opacity-90 group-hover/icon:opacity-100"
+                                                                                )}
+                                                                            />
+                                                                        ) : (
+                                                                            <span className="text-xs font-bold font-mono">
+                                                                                {p.data.title.substring(0, 2).toUpperCase()}
+                                                                            </span>
+                                                                        );
+                                                                    })()}
 
                                                                     {/* 'NOW' Overlay for Current Project */}
                                                                     {isCurrent && (
