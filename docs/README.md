@@ -13,7 +13,19 @@ docs/
 │   ├── site-improvement-plan.md    ← サイトを「採用判断のためのフィルタ」として最適化する計画
 │   ├── about-copywriting.md        ← サイト上の About 文章を再考するワーキングドキュメント
 │   ├── casual-interview-prep.md    ← カジュアル面談で頻出する想定質問リスト
-│   └── voice-memos/                ← 音声録音から書き起こしたメモを置く場所
+│   ├── projects/                   ← プロジェクトごとの質問リスト + 音声メモ置き場
+│   │   ├── README.md
+│   │   ├── aichatclip.md
+│   │   ├── swept.md
+│   │   ├── portfolio-v4.md
+│   │   ├── stack-modernization.md
+│   │   ├── pl-dashboard.md
+│   │   ├── expense-automation.md
+│   │   ├── schedule-distributor.md
+│   │   ├── design-works.md
+│   │   ├── hobby-lab.md
+│   │   └── voice-memos/
+│   └── voice-memos/                ← About 全体・キャリア軸の音声書き起こし置き場
 │
 └── features/                       ← サイトの機能実装メモ（実装プラン / タスク / ふりかえり）
     ├── blog_tags_and_layout/
@@ -30,9 +42,11 @@ docs/
 |---|---|---|
 | 自分自身の戦略・自己分析・対外メッセージ | `career/` | profile.md, About 文章ドラフト |
 | サイト上のテキスト・コピーの検討 | `career/` | about-copywriting.md, hero-copywriting.md（将来） |
-| 採用面接・カジュアル面談の準備メモ | `career/` | interview-prep.md（将来） |
+| 採用面接・カジュアル面談の準備メモ | `career/` | casual-interview-prep.md, interview-prep.md（将来） |
 | 応募候補企業のリストや評価 | `career/` | target-companies.md（将来） |
-| 音声録音 → 書き起こしの一時メモ | `career/voice-memos/` | YYYY-MM-DD_topic.md |
+| プロジェクトごとの質問リスト・反映待ちの素材 | `career/projects/<slug>.md` | aichatclip.md, swept.md ほか |
+| プロジェクト関連の音声書き起こし | `career/projects/voice-memos/` | aichatclip-1.md, swept-1.md ほか |
+| About / キャリア軸の音声書き起こし | `career/voice-memos/` | about-interview.md, about-interview-v2.md |
 | サイトの機能実装プラン・タスク・ふりかえり | `features/` | blog_tags_and_layout/ |
 
 ## 運用の前提
