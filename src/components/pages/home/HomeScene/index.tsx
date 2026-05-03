@@ -12,17 +12,19 @@ import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { FloorPlane } from '../PrtsInterface/components/FloorPlane';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import { HeroLayer } from './layers/HeroLayer';
+import { TrackRecordLayer } from './layers/TrackRecordLayer';
 import { FeaturedProjectLayer } from './layers/FeaturedProjectLayer';
 import { TechStackLayer } from './layers/TechStackLayer';
+import { StanceLayer } from './layers/StanceLayer';
 import { ContactCTALayer } from './layers/ContactCTALayer';
 import type { UpdateItem } from './types';
 
 export type { UpdateItem };
 
-// Hero / Featured / Tech / CTA の 4 セクション。
+// Hero / TrackRecord / Featured / Stack / Stance / CTA の 6 セクション。
 // ネイティブスクロールは止め、wheel/touch で蓄積した量が閾値を越えると
 // camera をアニメーション付きで次セクションへ進める "snap" 方式。
-const SECTION_COUNT = 4;
+const SECTION_COUNT = 6;
 // セクション間移動を発火する累積スクロール量 (px 相当)
 const SNAP_THRESHOLD = 600;
 // 入力が止まったら蓄積をリセットするまでの時間 (ms)
@@ -260,9 +262,9 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const ampZ = isMobile || reducedMotion ? 0 : 1;
     const ampRY = isMobile || reducedMotion ? 0 : 1;
 
-    // piecewise linear interpolation helper
+    // piecewise linear interpolation helper (6 stops, equal spacing)
     const interp = (p: number, stops: number[]): number => {
-        const breaks = [0, 0.33, 0.66, 1];
+        const breaks = [0, 0.2, 0.4, 0.6, 0.8, 1];
         if (p <= breaks[0]) return stops[0];
         for (let i = 0; i < breaks.length - 1; i++) {
             if (p <= breaks[i + 1]) {
@@ -275,18 +277,19 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
 
     // 各レイヤーは scene 空間で +X / +Y / +Z にずらして配置する。
     // カメラはその逆方向に動いて該当レイヤーを正面に持ってくる。
+    // セクション順: Hero / TrackRecord / Featured / Stack / Stance / CTA
     const cameraX = useTransform(cameraProgress, (p) =>
-        interp(p, [0, -240 * ampXY, 260 * ampXY, 0]),
+        interp(p, [0, 260 * ampXY, -260 * ampXY, 260 * ampXY, -260 * ampXY, 0]),
     );
     const cameraY = useTransform(cameraProgress, (p) => {
         const vh = vhRef.current;
-        return interp(p, [0, -1 * vh, -2 * vh, -3 * vh]);
+        return interp(p, [0, -1 * vh, -2 * vh, -3 * vh, -4 * vh, -5 * vh]);
     });
     const cameraZ = useTransform(cameraProgress, (p) =>
-        interp(p, [0, 180 * ampZ, -120 * ampZ, 0]),
+        interp(p, [0, 180 * ampZ, 180 * ampZ, -120 * ampZ, -100 * ampZ, 0]),
     );
     const cameraRY = useTransform(cameraProgress, (p) =>
-        interp(p, [0, 6 * ampRY, -6 * ampRY, 0]),
+        interp(p, [0, 6 * ampRY, -6 * ampRY, 6 * ampRY, -6 * ampRY, 0]),
     );
 
     return (
@@ -344,10 +347,19 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             />
                         </div>
 
+                        {/* Track Record: 左奥 */}
+                        <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ transform: 'translate3d(-260px, 100vh, -180px)' }}
+                        >
+                            <FloorPlane />
+                            <TrackRecordLayer progress={cameraProgress} />
+                        </div>
+
                         {/* Featured: 右奥 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(240px, 100vh, -180px)' }}
+                            style={{ transform: 'translate3d(260px, 200vh, -180px)' }}
                         >
                             <FloorPlane />
                             <FeaturedProjectLayer progress={cameraProgress} />
@@ -356,16 +368,25 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                         {/* Tech: 左手前 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(-260px, 200vh, 120px)' }}
+                            style={{ transform: 'translate3d(-260px, 300vh, 120px)' }}
                         >
                             <FloorPlane />
                             <TechStackLayer progress={cameraProgress} />
                         </div>
 
+                        {/* Stance: 右手前 */}
+                        <div
+                            className="absolute inset-0 flex items-center justify-center"
+                            style={{ transform: 'translate3d(260px, 400vh, 100px)' }}
+                        >
+                            <FloorPlane />
+                            <StanceLayer progress={cameraProgress} />
+                        </div>
+
                         {/* CTA: 中央奥 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(0, 300vh, 0)' }}
+                            style={{ transform: 'translate3d(0, 500vh, 0)' }}
                         >
                             <FloorPlane />
                             <ContactCTALayer progress={cameraProgress} />

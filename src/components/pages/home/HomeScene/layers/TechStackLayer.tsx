@@ -5,12 +5,36 @@ interface Props {
 }
 
 const PROD = [
-    { name: 'Workers', sub: 'Edge runtime' },
-    { name: 'D1', sub: 'SQLite at edge' },
-    { name: 'R2', sub: 'Object storage' },
-    { name: 'Durable Objects', sub: 'WebSocket realtime' },
-    { name: 'Workers AI', sub: '@cf/baai/bge-m3' },
-    { name: 'Zero Trust', sub: 'Access control' },
+    {
+        name: 'Workers',
+        sub: 'Edge runtime',
+        usedIn: 'AIChatClip · PL Dashboard',
+    },
+    {
+        name: 'D1',
+        sub: 'SQLite at edge',
+        usedIn: 'AIChatClip · PL Dashboard',
+    },
+    {
+        name: 'R2',
+        sub: 'Object storage',
+        usedIn: 'AIChatClip',
+    },
+    {
+        name: 'Durable Objects',
+        sub: 'WebSocket realtime',
+        usedIn: 'AIChatClip',
+    },
+    {
+        name: 'Workers AI',
+        sub: '@cf/baai/bge-m3',
+        usedIn: 'AIChatClip',
+    },
+    {
+        name: 'Zero Trust',
+        sub: 'Access control',
+        usedIn: 'PL Dashboard',
+    },
 ];
 
 const APP = [
@@ -28,8 +52,9 @@ const APP = [
 ];
 
 export const TechStackLayer = ({ progress }: Props) => {
-    const opacity = useTransform(progress, [0.45, 0.58, 0.75, 0.88], [0, 1, 1, 0]);
-    const yOffset = useTransform(progress, [0.45, 0.66, 0.88], [40, 0, -40]);
+    // セクション 3 (Stack) は progress 0.6 中心。
+    const opacity = useTransform(progress, [0.46, 0.56, 0.66, 0.76], [0, 1, 1, 0]);
+    const yOffset = useTransform(progress, [0.46, 0.6, 0.76], [40, 0, -40]);
 
     return (
         <motion.div
@@ -39,7 +64,7 @@ export const TechStackLayer = ({ progress }: Props) => {
             <div className="border border-foreground/15 bg-background/70 backdrop-blur-xl px-6 sm:px-10 py-8 sm:py-10">
                 <div className="flex items-center gap-3 mb-6">
                     <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent">
-                        + STACK / 02
+                        + STACK / 03
                     </span>
                     <span className="h-px flex-1 bg-border" />
                     <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
@@ -69,8 +94,11 @@ export const TechStackLayer = ({ progress }: Props) => {
                                 <div className="font-mono text-[11px] tracking-[0.15em] text-foreground font-bold mb-1">
                                     {item.name}
                                 </div>
-                                <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-muted-foreground">
+                                <div className="font-mono text-[9px] tracking-[0.1em] uppercase text-muted-foreground mb-2">
                                     {item.sub}
+                                </div>
+                                <div className="font-mono text-[9px] tracking-[0.05em] text-accent/80 leading-snug">
+                                    Used in {item.usedIn}
                                 </div>
                             </div>
                         ))}

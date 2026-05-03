@@ -5,8 +5,9 @@ interface Props {
 }
 
 export const ContactCTALayer = ({ progress }: Props) => {
-    const opacity = useTransform(progress, [0.78, 0.9, 1], [0, 1, 1]);
-    const yOffset = useTransform(progress, [0.78, 1], [40, 0]);
+    // セクション 5 (CTA) は progress 1.0 終端。
+    const opacity = useTransform(progress, [0.86, 0.95, 1], [0, 1, 1]);
+    const yOffset = useTransform(progress, [0.86, 1], [40, 0]);
 
     return (
         <motion.div
@@ -15,7 +16,7 @@ export const ContactCTALayer = ({ progress }: Props) => {
         >
             <div className="border border-accent/40 bg-background/70 backdrop-blur-xl px-6 sm:px-12 py-10 sm:py-14 text-center">
                 <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent mb-4">
-                    + STATUS / 03
+                    + STATUS / 05
                 </div>
 
                 <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-[1] mb-5">

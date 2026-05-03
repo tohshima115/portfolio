@@ -13,9 +13,9 @@ const tldr = [
 ];
 
 export const FeaturedProjectLayer = ({ progress }: Props) => {
-    // 0..1 のセクション内進捗 (0.16 〜 0.50 を 0..1 に正規化、前後でフェード)
-    const opacity = useTransform(progress, [0.12, 0.25, 0.42, 0.55], [0, 1, 1, 0]);
-    const yOffset = useTransform(progress, [0.12, 0.33, 0.55], [40, 0, -40]);
+    // セクション 2 (Featured) は progress 0.4 中心。前後にフェード。
+    const opacity = useTransform(progress, [0.26, 0.36, 0.46, 0.56], [0, 1, 1, 0]);
+    const yOffset = useTransform(progress, [0.26, 0.4, 0.56], [40, 0, -40]);
 
     return (
         <motion.div
@@ -25,7 +25,7 @@ export const FeaturedProjectLayer = ({ progress }: Props) => {
             <div className="border border-foreground/15 bg-background/70 backdrop-blur-xl px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]">
                 <div className="flex items-center gap-3 mb-5">
                     <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent">
-                        + FLAGSHIP / 01
+                        + FLAGSHIP / 02
                     </span>
                     <span className="h-px flex-1 bg-border" />
                     <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
