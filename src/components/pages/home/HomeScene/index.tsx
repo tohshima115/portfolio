@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+    animate,
+    AnimatePresence,
     motion,
     useMotionValue,
-    useScroll,
     useSpring,
     useTransform,
 } from 'framer-motion';
@@ -18,9 +19,17 @@ import type { UpdateItem } from './types';
 
 export type { UpdateItem };
 
-// Hero / Featured / Tech / CTA の 4 セクション。各 100vh ぶんスクロール領域を取る。
+// Hero / Featured / Tech / CTA の 4 セクション。
+// ネイティブスクロールは止め、wheel/touch で蓄積した量が閾値を越えると
+// camera をアニメーション付きで次セクションへ進める "snap" 方式。
 const SECTION_COUNT = 4;
-const TOTAL_VH = SECTION_COUNT * 100;
+// セクション間移動を発火する累積スクロール量 (px 相当)
+const SNAP_THRESHOLD = 600;
+// 入力が止まったら蓄積をリセットするまでの時間 (ms)
+const ACCUM_DECAY_MS = 700;
+// セクション間カメラ移動のアニメーション (強めの加減速)
+const SNAP_DURATION_S = 1.05;
+const SNAP_EASE = [0.83, 0, 0.17, 1] as const; // ease-in-out-quint
 
 const readSkipIntroFlag = (): boolean => {
     if (typeof window === 'undefined') return false;
@@ -115,11 +124,120 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         }
     };
 
-    // ----- Scroll progress -----
-    const { scrollYProgress } = useScroll({
-        target: scrollRef,
-        offset: ['start start', 'end end'],
-    });
+    // ----- Section index → cameraProgress (0..1) -----
+    // ネイティブスクロールを止め、wheel/touch を蓄積。閾値で次セクションへ animate。
+    const cameraProgress = useMotionValue(0);
+    const sectionIndexRef = useRef(0);
+    const accumRef = useRef(0);
+    const isAnimatingRef = useRef(false);
+    const decayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [sectionIndex, setSectionIndex] = useState(0);
+    const [gauge, setGauge] = useState(0); // -1..1 (-1=上方向満タン, +1=下方向満タン)
+
+    const transitionTo = (next: number) => {
+        const clamped = Math.max(0, Math.min(SECTION_COUNT - 1, next));
+        if (clamped === sectionIndexRef.current) {
+            // 端で空打ちした場合: 累積をクリアしてゲージも消す
+            accumRef.current = 0;
+            setGauge(0);
+            return;
+        }
+        sectionIndexRef.current = clamped;
+        setSectionIndex(clamped);
+        accumRef.current = 0;
+        setGauge(0);
+        isAnimatingRef.current = true;
+        if (decayTimerRef.current) {
+            clearTimeout(decayTimerRef.current);
+            decayTimerRef.current = null;
+        }
+        const target = clamped / (SECTION_COUNT - 1);
+        animate(cameraProgress, target, {
+            duration: reducedMotion ? 0 : SNAP_DURATION_S,
+            ease: [SNAP_EASE[0], SNAP_EASE[1], SNAP_EASE[2], SNAP_EASE[3]],
+            onComplete: () => {
+                isAnimatingRef.current = false;
+            },
+        });
+    };
+
+    const handleDelta = (deltaY: number) => {
+        if (isAnimatingRef.current) return;
+        accumRef.current += deltaY;
+        const idx = sectionIndexRef.current;
+        // 端での過剰蓄積はクランプ
+        if (idx === 0 && accumRef.current < 0) accumRef.current = 0;
+        if (idx === SECTION_COUNT - 1 && accumRef.current > 0) accumRef.current = 0;
+
+        // しきい値到達 → 次へ
+        if (accumRef.current >= SNAP_THRESHOLD) {
+            transitionTo(idx + 1);
+            return;
+        }
+        if (accumRef.current <= -SNAP_THRESHOLD) {
+            transitionTo(idx - 1);
+            return;
+        }
+
+        // ゲージ更新 (-1..1)
+        setGauge(Math.max(-1, Math.min(1, accumRef.current / SNAP_THRESHOLD)));
+
+        // 入力が途切れたら蓄積を 0 に戻す
+        if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
+        decayTimerRef.current = setTimeout(() => {
+            accumRef.current = 0;
+            setGauge(0);
+        }, ACCUM_DECAY_MS);
+    };
+
+    useEffect(() => {
+        const onWheel = (e: WheelEvent) => {
+            // ネイティブスクロールを完全に止めて自前蓄積へ
+            e.preventDefault();
+            handleDelta(e.deltaY);
+        };
+        let lastTouchY: number | null = null;
+        const onTouchStart = (e: TouchEvent) => {
+            lastTouchY = e.touches[0].clientY;
+        };
+        const onTouchMove = (e: TouchEvent) => {
+            if (lastTouchY === null) return;
+            const y = e.touches[0].clientY;
+            const dy = (lastTouchY - y) * 2; // 指 1px ≒ ホイール 2px 換算
+            lastTouchY = y;
+            e.preventDefault();
+            handleDelta(dy);
+        };
+        const onKey = (e: KeyboardEvent) => {
+            // ヘッダーや CTA 内部の入力欄からのキーは透過させたい
+            const tag = (e.target as HTMLElement | null)?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+                e.preventDefault();
+                transitionTo(sectionIndexRef.current + 1);
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                transitionTo(sectionIndexRef.current - 1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                transitionTo(0);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                transitionTo(SECTION_COUNT - 1);
+            }
+        };
+        window.addEventListener('wheel', onWheel, { passive: false });
+        window.addEventListener('touchstart', onTouchStart, { passive: true });
+        window.addEventListener('touchmove', onTouchMove, { passive: false });
+        window.addEventListener('keydown', onKey);
+        return () => {
+            window.removeEventListener('wheel', onWheel);
+            window.removeEventListener('touchstart', onTouchStart);
+            window.removeEventListener('touchmove', onTouchMove);
+            window.removeEventListener('keydown', onKey);
+            if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
+        };
+    }, [reducedMotion]);
 
     // ContourBackground (R3F canvas) は親 DOM に CSS transform を当てると
     // framebuffer サイズが post-projection AABB で計測されて崩れる既知の制約があり、
@@ -157,32 +275,31 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
 
     // 各レイヤーは scene 空間で +X / +Y / +Z にずらして配置する。
     // カメラはその逆方向に動いて該当レイヤーを正面に持ってくる。
-    const cameraX = useTransform(scrollYProgress, (p) =>
+    const cameraX = useTransform(cameraProgress, (p) =>
         interp(p, [0, -240 * ampXY, 260 * ampXY, 0]),
     );
-    const cameraY = useTransform(scrollYProgress, (p) => {
+    const cameraY = useTransform(cameraProgress, (p) => {
         const vh = vhRef.current;
         return interp(p, [0, -1 * vh, -2 * vh, -3 * vh]);
     });
-    const cameraZ = useTransform(scrollYProgress, (p) =>
+    const cameraZ = useTransform(cameraProgress, (p) =>
         interp(p, [0, 180 * ampZ, -120 * ampZ, 0]),
     );
-    const cameraRY = useTransform(scrollYProgress, (p) =>
+    const cameraRY = useTransform(cameraProgress, (p) =>
         interp(p, [0, 6 * ampRY, -6 * ampRY, 0]),
     );
 
     return (
         <section
             ref={scrollRef}
-            style={{ height: `${TOTAL_VH}vh` }}
-            className="relative w-full"
+            className="relative w-full h-screen overflow-hidden"
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             onClickCapture={handleLinkClick}
         >
             <div
                 ref={viewportRef}
-                className="sticky top-0 w-full h-screen bg-background overflow-hidden flex items-center justify-center shadow-inner"
+                className="absolute inset-0 w-full h-full bg-background overflow-hidden flex items-center justify-center shadow-inner"
                 style={{ perspective: '1000px' }}
             >
                 <ContourBackground
@@ -233,7 +350,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             style={{ transform: 'translate3d(240px, 100vh, -180px)' }}
                         >
                             <FloorPlane />
-                            <FeaturedProjectLayer progress={scrollYProgress} />
+                            <FeaturedProjectLayer progress={cameraProgress} />
                         </div>
 
                         {/* Tech: 左手前 */}
@@ -242,7 +359,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             style={{ transform: 'translate3d(-260px, 200vh, 120px)' }}
                         >
                             <FloorPlane />
-                            <TechStackLayer progress={scrollYProgress} />
+                            <TechStackLayer progress={cameraProgress} />
                         </div>
 
                         {/* CTA: 中央奥 */}
@@ -251,33 +368,119 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             style={{ transform: 'translate3d(0, 300vh, 0)' }}
                         >
                             <FloorPlane />
-                            <ContactCTALayer progress={scrollYProgress} />
+                            <ContactCTALayer progress={cameraProgress} />
                         </div>
                     </motion.div>
                 </motion.div>
 
-                {/* スクロール導線 (画面下中央のヒント) */}
-                <ScrollHint progress={scrollYProgress} />
+                {/* セクション間スナップ用ゲージ + 現在位置ドット */}
+                <SnapHud
+                    gauge={gauge}
+                    sectionIndex={sectionIndex}
+                    sectionCount={SECTION_COUNT}
+                    onJump={transitionTo}
+                />
             </div>
         </section>
     );
 };
 
-const ScrollHint = ({ progress }: { progress: ReturnType<typeof useMotionValue<number>> | any }) => {
-    const opacity = useTransform(progress, [0, 0.05, 0.12], [1, 1, 0]);
+interface SnapHudProps {
+    gauge: number; // -1..1
+    sectionIndex: number;
+    sectionCount: number;
+    onJump: (i: number) => void;
+}
+
+const CIRCLE_R = 18;
+const CIRCLE_C = 2 * Math.PI * CIRCLE_R;
+
+const SnapHud = ({ gauge, sectionIndex, sectionCount, onJump }: SnapHudProps) => {
+    const abs = Math.min(1, Math.abs(gauge));
+    const dashOffset = CIRCLE_C - abs * CIRCLE_C;
+    const active = abs > 0.02;
+
     return (
-        <motion.div
-            style={{ opacity }}
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none flex flex-col items-center gap-2"
-        >
-            <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
-                Scroll
-            </span>
-            <motion.span
-                animate={{ y: [0, 6, 0] }}
-                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-                className="block w-px h-6 bg-foreground/40"
-            />
-        </motion.div>
+        <>
+            {/* 蓄積ゲージ (画面下中央) */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none flex flex-col items-center gap-2">
+                <div className="relative w-12 h-12 flex items-center justify-center">
+                    <svg className="absolute w-full h-full -rotate-90" viewBox="0 0 50 50">
+                        <circle
+                            cx="25"
+                            cy="25"
+                            r={CIRCLE_R}
+                            fill="none"
+                            stroke="var(--color-foreground)"
+                            strokeOpacity="0.15"
+                            strokeWidth="1.5"
+                        />
+                        <circle
+                            cx="25"
+                            cy="25"
+                            r={CIRCLE_R}
+                            fill="none"
+                            stroke="var(--color-accent)"
+                            strokeWidth="1.5"
+                            strokeDasharray={CIRCLE_C}
+                            strokeDashoffset={dashOffset}
+                            strokeLinecap="round"
+                            style={{ transition: 'stroke-dashoffset 120ms linear' }}
+                        />
+                    </svg>
+                    <motion.span
+                        animate={active ? { y: 0 } : { y: [0, 5, 0] }}
+                        transition={
+                            active
+                                ? { duration: 0 }
+                                : { duration: 1.6, repeat: Infinity, ease: 'easeInOut' }
+                        }
+                        className={`block w-px h-3 ${active ? 'bg-accent' : 'bg-foreground/50'}`}
+                    />
+                </div>
+                <AnimatePresence mode="wait">
+                    <motion.span
+                        key={active ? 'snap' : 'idle'}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground"
+                    >
+                        {active
+                            ? gauge > 0
+                                ? 'Hold ▼'
+                                : 'Hold ▲'
+                            : sectionIndex === sectionCount - 1
+                              ? '— End —'
+                              : 'Scroll'}
+                    </motion.span>
+                </AnimatePresence>
+            </div>
+
+            {/* セクションインジケータ (右端中央) */}
+            <div className="absolute right-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3 pointer-events-auto">
+                {Array.from({ length: sectionCount }).map((_, i) => {
+                    const isActive = i === sectionIndex;
+                    return (
+                        <button
+                            key={i}
+                            type="button"
+                            onClick={() => onJump(i)}
+                            aria-label={`Section ${i + 1}`}
+                            className="group flex items-center gap-2"
+                        >
+                            <span
+                                className={`block h-px transition-all duration-300 ${
+                                    isActive
+                                        ? 'w-6 bg-accent'
+                                        : 'w-3 bg-foreground/30 group-hover:bg-foreground/60'
+                                }`}
+                            />
+                        </button>
+                    );
+                })}
+            </div>
+        </>
     );
 };
