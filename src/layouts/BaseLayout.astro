@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import WebGLTransition from "../components/common/WebGLTransition";
+import SiteHeader from "../components/common/SiteHeader.astro";
 
 interface Props {
     title: string;
@@ -100,6 +101,7 @@ const personSchema = {
     <body
         class="min-h-screen relative overflow-x-hidden selection:bg-accent selection:text-accent-foreground font-sans antialiased"
     >
+        <SiteHeader />
         <slot />
         <WebGLTransition
             client:only="react"

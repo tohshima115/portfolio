@@ -1,0 +1,102 @@
+---
+const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/projects", label: "Projects" },
+    { href: "/blog", label: "Blog" },
+    { href: "/updates", label: "Updates" },
+];
+
+const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+};
+---
+
+<header
+    transition:persist="site-header"
+    class="site-header fixed top-0 inset-x-0 z-[100] pointer-events-none"
+>
+    <div class="px-4 sm:px-6 lg:px-10 pt-3 sm:pt-4">
+        <div
+            class="site-header__glass pointer-events-auto mx-auto max-w-[1600px] flex items-center justify-between gap-4 px-4 sm:px-6 h-14 rounded-full border border-white/30 bg-white/30 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)]"
+        >
+            <a
+                href="/"
+                class="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] uppercase text-foreground hover:text-accent transition-colors"
+                aria-label="Home"
+            >
+                <span class="inline-block w-2 h-2 rounded-full bg-accent shadow-[0_0_10px_currentColor]"></span>
+                <span class="hidden sm:inline">Shogo Toyoshima</span>
+                <span class="sm:hidden">S.T.</span>
+            </a>
+
+            <nav class="flex items-center gap-1 sm:gap-2" aria-label="Primary">
+                {
+                    navItems.map((item) => (
+                        <a
+                            href={item.href}
+                            data-active={isActive(item.href)}
+                            class="site-header__link relative font-mono text-[10px] sm:text-[11px] tracking-[0.2em] uppercase px-2.5 sm:px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors data-[active=true]:text-foreground"
+                        >
+                            {item.label}
+                        </a>
+                    ))
+                }
+            </nav>
+
+            <a
+                href="/contact"
+                data-active={isActive("/contact")}
+                class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-mono text-[10px] tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+                Contact
+                <svg
+                    class="w-3 h-3"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
+            </a>
+        </div>
+    </div>
+</header>
+
+<style>
+    .site-header__link[data-active="true"]::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 4px;
+        width: 4px;
+        height: 4px;
+        background: var(--color-accent);
+        border-radius: 9999px;
+        transform: translateX(-50%);
+    }
+
+    /* Dark backgrounds (e.g. ProjectLayout) — invert the glass tint */
+    :global(body.bg-neutral-950) .site-header__glass,
+    :global(.dark) .site-header__glass {
+        background-color: rgba(20, 20, 20, 0.45);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #fff;
+    }
+    :global(body.bg-neutral-950) .site-header__glass a,
+    :global(.dark) .site-header__glass a {
+        color: rgba(255, 255, 255, 0.85);
+    }
+    :global(body.bg-neutral-950) .site-header__cta,
+    :global(.dark) .site-header__cta {
+        background-color: #fff;
+        color: #000;
+    }
+</style>
