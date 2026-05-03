@@ -17,6 +17,15 @@ interface Props {
      * 親側で transform を巻くのは禁止。
      */
     rotateX?: MotionValue<number>;
+    /**
+     * シーン内の camera 位置 (= シーン全体に当てる逆方向 translate / rotateY)。
+     * 上記の制約で ContourBackground を camera div の子に置けないため、
+     * 同じ値を canvas DOM に直接当てて Hero アンカー位置を再現する。
+     */
+    cameraX?: MotionValue<number>;
+    cameraY?: MotionValue<number>;
+    cameraZ?: MotionValue<number>;
+    cameraRY?: MotionValue<number>;
 }
 
 const TARGET_OPACITY = 0.26;
@@ -130,7 +139,14 @@ const ContourScene: React.FC<{ reducedMotion: boolean; inView: boolean }> = ({
     );
 };
 
-export const ContourBackground: React.FC<Props> = ({ skipIntro = false, rotateX }) => {
+export const ContourBackground: React.FC<Props> = ({
+    skipIntro = false,
+    rotateX,
+    cameraX,
+    cameraY,
+    cameraZ,
+    cameraRY,
+}) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const introProgressRef = useRef<number>(skipIntro ? 1 : 0); // 0 = 初期状態, 1 = 終端
@@ -148,25 +164,39 @@ export const ContourBackground: React.FC<Props> = ({ skipIntro = false, rotateX 
         const c = canvasRef.current;
         if (!c) return;
         const mouseX = rotateX?.get() ?? 0;
+        const cx = cameraX?.get() ?? 0;
+        const cy = cameraY?.get() ?? 0;
+        const cz = cameraZ?.get() ?? 0;
+        const cry = cameraRY?.get() ?? 0;
         const p = introProgressRef.current;
         // p=0 で initial, p=1 で identity。線形補間。
         const introX = INTRO_INITIAL.rotateX * (1 - p);
         const introY = INTRO_INITIAL.rotateY * (1 - p);
         const introS = INTRO_INITIAL.scale + (1 - INTRO_INITIAL.scale) * p;
+        // カメラの translate / rotateY は外側 (= world) に当て、その内側で
+        // intro と mouse 連動を当てる。
         c.style.transform =
             `perspective(${CANVAS_PERSPECTIVE_PX}px) ` +
+            `translate3d(${cx}px, ${cy}px, ${cz}px) ` +
+            `rotateY(${cry}deg) ` +
             `rotateX(${mouseX + introX}deg) ` +
             `rotateY(${introY}deg) ` +
             `scale(${introS})`;
-    }, [rotateX]);
+    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY]);
 
-    // マウス連動 rotateX の購読
+    // マウス連動 rotateX + camera motion values の購読
     useEffect(() => {
-        if (!rotateX) return;
         applyTransform();
-        const unsub = rotateX.on('change', applyTransform);
-        return () => unsub();
-    }, [rotateX, applyTransform]);
+        const unsubs: Array<() => void> = [];
+        if (rotateX) unsubs.push(rotateX.on('change', applyTransform));
+        if (cameraX) unsubs.push(cameraX.on('change', applyTransform));
+        if (cameraY) unsubs.push(cameraY.on('change', applyTransform));
+        if (cameraZ) unsubs.push(cameraZ.on('change', applyTransform));
+        if (cameraRY) unsubs.push(cameraRY.on('change', applyTransform));
+        return () => {
+            for (const u of unsubs) u();
+        };
+    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, applyTransform]);
 
     // イントロアニメ (3D シーンの inner intro container と同じタイミングで進行)
     useEffect(() => {

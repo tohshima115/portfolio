@@ -120,32 +120,54 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         offset: ['start start', 'end end'],
     });
 
+    // ContourBackground (R3F canvas) は親 DOM に CSS transform を当てると
+    // framebuffer サイズが post-projection AABB で計測されて崩れる既知の制約があり、
+    // カメラ div の子に置けない。そのため camera の motion value を ContourBackground に
+    // 直接渡し、canvas DOM 自身の transform に組み込んで他のレイヤーと同じ位置に
+    // anchor させる (= 構造上スクロールで他のレイヤーと一緒に流れる)。
+    // カメラ Y は vh 文字列だと canvas の transform に渡せないので px に揃える。
+    const vhRef = useRef<number>(typeof window !== 'undefined' ? window.innerHeight : 800);
+    useEffect(() => {
+        const u = () => {
+            vhRef.current = window.innerHeight;
+        };
+        u();
+        window.addEventListener('resize', u);
+        return () => window.removeEventListener('resize', u);
+    }, []);
+
     // 補正: モバイル / reduced motion のときは横方向 / 奥行きの振幅を抑える
     const ampXY = isMobile || reducedMotion ? 0 : 1;
     const ampZ = isMobile || reducedMotion ? 0 : 1;
     const ampRY = isMobile || reducedMotion ? 0 : 1;
 
+    // piecewise linear interpolation helper
+    const interp = (p: number, stops: number[]): number => {
+        const breaks = [0, 0.33, 0.66, 1];
+        if (p <= breaks[0]) return stops[0];
+        for (let i = 0; i < breaks.length - 1; i++) {
+            if (p <= breaks[i + 1]) {
+                const t = (p - breaks[i]) / (breaks[i + 1] - breaks[i]);
+                return stops[i] + (stops[i + 1] - stops[i]) * t;
+            }
+        }
+        return stops[stops.length - 1];
+    };
+
     // 各レイヤーは scene 空間で +X / +Y / +Z にずらして配置する。
     // カメラはその逆方向に動いて該当レイヤーを正面に持ってくる。
-    const cameraX = useTransform(
-        scrollYProgress,
-        [0, 0.33, 0.66, 1],
-        [0, -240 * ampXY, 260 * ampXY, 0],
+    const cameraX = useTransform(scrollYProgress, (p) =>
+        interp(p, [0, -240 * ampXY, 260 * ampXY, 0]),
     );
-    const cameraY = useTransform(
-        scrollYProgress,
-        [0, 0.33, 0.66, 1],
-        ['0vh', '-100vh', '-200vh', '-300vh'],
+    const cameraY = useTransform(scrollYProgress, (p) => {
+        const vh = vhRef.current;
+        return interp(p, [0, -1 * vh, -2 * vh, -3 * vh]);
+    });
+    const cameraZ = useTransform(scrollYProgress, (p) =>
+        interp(p, [0, 180 * ampZ, -120 * ampZ, 0]),
     );
-    const cameraZ = useTransform(
-        scrollYProgress,
-        [0, 0.33, 0.66, 1],
-        [0, 180 * ampZ, -120 * ampZ, 0],
-    );
-    const cameraRY = useTransform(
-        scrollYProgress,
-        [0, 0.33, 0.66, 1],
-        [0, 6 * ampRY, -6 * ampRY, 0],
+    const cameraRY = useTransform(scrollYProgress, (p) =>
+        interp(p, [0, 6 * ampRY, -6 * ampRY, 0]),
     );
 
     return (
@@ -162,7 +184,14 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 className="sticky top-0 w-full h-screen bg-background overflow-hidden flex items-center justify-center shadow-inner"
                 style={{ perspective: '1000px' }}
             >
-                <ContourBackground skipIntro={skipIntro} rotateX={rotateX} />
+                <ContourBackground
+                    skipIntro={skipIntro}
+                    rotateX={rotateX}
+                    cameraX={cameraX}
+                    cameraY={cameraY}
+                    cameraZ={cameraZ}
+                    cameraRY={cameraRY}
+                />
                 <HoverBackground hoveredItem={hoveredItem} />
 
                 {/* 鳥瞰角 (mouse Y 連動) を当てる外側 3D ラッパ */}
