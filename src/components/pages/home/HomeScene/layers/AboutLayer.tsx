@@ -5,10 +5,10 @@ interface Props {
 }
 
 const facts = [
-    { k: 'Background', v: '東京理科大学 経営学部卒 / 元デザイナー' },
-    { k: 'Stack', v: 'Cloudflare 主戦場 · TypeScript · React Router v7 · Astro · Hono' },
-    { k: 'Stance', v: 'Cloudflare を使い倒す · まず触る · 流行で入れない' },
-    { k: 'Currently', v: 'AIChatClip 個人開発 + デザイン事務所バイト（退職予定）' },
+    { k: 'Background', v: '東京理科大学 経営学部卒 → デザイナー → 個人開発' },
+    { k: 'Stack', v: 'Cloudflare · TypeScript · React Router v7 · Astro · Hono' },
+    { k: 'Stance', v: '個人開発・スタートアップに優しい Cloudflare を主戦場に / 新しいものはまず触る / 流行では入れない' },
+    { k: 'Currently', v: 'AIChatClip 運用 + デザイン事務所（2026 夏退職予定 / 9 月以降入社可能）' },
 ];
 
 export const AboutLayer = ({ progress }: Props) => {
@@ -33,13 +33,13 @@ export const AboutLayer = ({ progress }: Props) => {
                 </div>
 
                 <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-[1.05] mb-4">
-                    Find → Solve → Use の
+                    Product を最後まで出荷する。
                     <br />
-                    サイクルで動く Product Engineer。
+                    設計から運用まで 1 人で完結する Product Engineer。
                 </h2>
 
                 <p className="text-sm sm:text-base text-foreground/80 leading-relaxed max-w-2xl mb-6">
-                    経営学部出身、デザイナー起点で実装まで自走。<strong className="text-foreground">レンジが広く実行力がある、ただし個々の技術の深さはこれから</strong>が正確な自己像。9 割理詰め + 1 割感覚で意思決定。プロダクトを 1 人で出荷する立ち位置で、AI を「自分が判断したことの実装速度を上げる道具」として使う。
+                    個人開発 SaaS<strong className="text-foreground">「AIChatClip」</strong>を Cloudflare スタックで運用中。Chrome / Firefox 拡張・Web・API・Obsidian Plugin のマルチサーフェスを 1 人で出荷し、有料ユーザーも獲得しています。経営学部とデザインの経験を、プロダクトの判断軸に持ち込むタイプ。
                 </p>
 
                 <dl className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-x-6 gap-y-3 text-sm mb-8">
