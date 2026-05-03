@@ -12,16 +12,16 @@ import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { FloorPlane } from '../PrtsInterface/components/FloorPlane';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import { HeroLayer } from './layers/HeroLayer';
-import { TrackRecordLayer } from './layers/TrackRecordLayer';
-import { FeaturedProjectLayer } from './layers/FeaturedProjectLayer';
-import { TechStackLayer } from './layers/TechStackLayer';
-import { StanceLayer } from './layers/StanceLayer';
+import { AIChatClipLayer } from './layers/AIChatClipLayer';
+import { PLDashboardLayer } from './layers/PLDashboardLayer';
+import { SweptLayer } from './layers/SweptLayer';
+import { AboutLayer } from './layers/AboutLayer';
 import { ContactCTALayer } from './layers/ContactCTALayer';
 import type { UpdateItem } from './types';
 
 export type { UpdateItem };
 
-// Hero / TrackRecord / Featured / Stack / Stance / CTA の 6 セクション。
+// Hero / AIChatClip / PL Dashboard / Swept / About / CTA の 6 セクション。
 // ネイティブスクロールは止め、wheel/touch で蓄積した量が閾値を越えると
 // camera をアニメーション付きで次セクションへ進める "snap" 方式。
 const SECTION_COUNT = 6;
@@ -346,40 +346,40 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             />
                         </div>
 
-                        {/* Track Record: 左奥 */}
+                        {/* AIChatClip: 左奥 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(-260px, 100vh, -180px)' }}
                         >
                             <FloorPlane />
-                            <TrackRecordLayer progress={cameraProgress} />
+                            <AIChatClipLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Featured: 右奥 */}
+                        {/* PL Dashboard: 右奥 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(260px, 200vh, -180px)' }}
                         >
                             <FloorPlane />
-                            <FeaturedProjectLayer progress={cameraProgress} />
+                            <PLDashboardLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Tech: 左手前 */}
+                        {/* Swept: 左手前 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(-260px, 300vh, 120px)' }}
                         >
                             <FloorPlane />
-                            <TechStackLayer progress={cameraProgress} />
+                            <SweptLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Stance: 右手前 */}
+                        {/* About: 右手前 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{ transform: 'translate3d(260px, 400vh, 100px)' }}
                         >
                             <FloorPlane />
-                            <StanceLayer progress={cameraProgress} />
+                            <AboutLayer progress={cameraProgress} />
                         </div>
 
                         {/* CTA: 中央奥 */}
