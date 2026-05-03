@@ -2,7 +2,7 @@
 import { getCollection } from "astro:content";
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
-import { PrtsInterface } from "../components/pages/home/PrtsInterface";
+import { HomeScene } from "../components/pages/home/HomeScene";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
 
@@ -110,7 +110,7 @@ const personSchema = {
 	</head>
 	<body class="min-h-screen">
 		<SiteHeader />
-		<PrtsInterface client:only="react" updates={latestUpdates} />
+		<HomeScene client:only="react" updates={latestUpdates} />
 		<WebGLTransition
 			client:only="react"
 			transition:persist="webgl-transition"
