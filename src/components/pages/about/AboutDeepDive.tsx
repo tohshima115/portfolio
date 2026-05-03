@@ -202,7 +202,7 @@ const ModalShell: React.FC<ModalShellProps> = ({
 const HistoryContent: React.FC = () => {
     const history = [
         {
-            period: "2025.07 — 2026.06 (退職予定)",
+            period: "2025.07 — 2026.07〜08 (退職予定)",
             role: "デザイン事務所 (アルバイト・バイトリーダー)",
             body: "Web サイト制作のクライアントワーク約20件をデザインから実装まで並行管理。社内では「Photoshop で Web デザイン → HTML + jQuery → FTP 公開」だった運用を経営陣と段階的に合意しながら Figma + Astro + Cloudflare の構成へ刷新。デザイナーと実装者の橋渡し（環境構築・Cloudflare デプロイ伴走、デザイン⇄コードの相互翻訳）と、業務改善（PL ダッシュボード / 金額入力自動化 / Schedule Distributor）も並行して自発的に実施。",
             active: true,

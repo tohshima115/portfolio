@@ -20,9 +20,9 @@ export const ContactCTALayer = ({ progress }: Props) => {
                 </div>
 
                 <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-[1] mb-5">
-                    2026.06 退職予定。
+                    2026 年 7〜8 月退職予定。
                     <br />
-                    7 月以降の入社が可能です。
+                    9 月以降の入社が可能です。
                 </h2>
 
                 <p className="text-sm sm:text-base text-foreground/80 leading-relaxed max-w-xl mx-auto mb-10">
