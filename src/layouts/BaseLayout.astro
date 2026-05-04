@@ -3,6 +3,7 @@ import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
+import { MarkdownActions } from "../components/common/MarkdownActions";
 
 interface Props {
     title: string;
@@ -17,6 +18,9 @@ const {
 } = Astro.props;
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
+
+const trimmedPath = Astro.url.pathname.replace(/\/+$/, "");
+const mdHref = trimmedPath === "" ? "/index.md" : `${trimmedPath}.md`;
 const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -71,6 +75,18 @@ const personSchema = {
             title="Portfolio Updates (RSS)"
             href="/rss.xml"
         />
+        <link
+            rel="alternate"
+            type="text/markdown"
+            title="View as Markdown"
+            href={mdHref}
+        />
+        <link
+            rel="alternate"
+            type="text/plain"
+            title="LLM-friendly index"
+            href="/llms.txt"
+        />
 
         <!-- Structured Data: Person Schema (SEO for name search) -->
         <script
@@ -103,6 +119,7 @@ const personSchema = {
     >
         <SiteHeader />
         <slot />
+        <MarkdownActions client:load transition:persist="md-actions" />
         <WebGLTransition
             client:only="react"
             transition:persist="webgl-transition"

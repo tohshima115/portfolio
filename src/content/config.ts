@@ -32,7 +32,31 @@ const blog = defineCollection({
     }),
 });
 
+const _pages = defineCollection({
+    type: 'content',
+    schema: z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        order: z.number().optional(),
+        // about.mdx 専用の構造化データ (他の _pages では undefined)
+        headline: z.tuple([z.string(), z.string()]).optional(),
+        roleLabel: z.string().optional(),
+        consistencyTable: z
+            .array(
+                z.object({
+                    title: z.string(),
+                    type: z.string(),
+                    body: z.string(),
+                }),
+            )
+            .optional(),
+        statusText: z.string().optional(),
+        statusNote: z.string().optional(),
+    }),
+});
+
 export const collections = {
     projects,
     blog,
+    _pages,
 };

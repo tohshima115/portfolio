@@ -5,6 +5,7 @@ import "../styles/global.css";
 import { HomeScene } from "../components/pages/home/HomeScene";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
+import { MarkdownActions } from "../components/common/MarkdownActions";
 
 const projects = await getCollection("projects");
 const blogPosts = await getCollection("blog");
@@ -74,6 +75,18 @@ const personSchema = {
 			name="description"
 			content="Product Engineer / Designer ポートフォリオサイト。Cloudflareスタックで個人プロダクトを出荷。"
 		/>
+		<link
+			rel="alternate"
+			type="text/markdown"
+			title="View as Markdown"
+			href="/index.md"
+		/>
+		<link
+			rel="alternate"
+			type="text/plain"
+			title="LLM-friendly index"
+			href="/llms.txt"
+		/>
 		<script
 			type="application/ld+json"
 			set:html={JSON.stringify(personSchema)}
@@ -111,6 +124,7 @@ const personSchema = {
 	<body class="min-h-screen">
 		<SiteHeader />
 		<HomeScene client:only="react" updates={latestUpdates} />
+		<MarkdownActions client:load transition:persist="md-actions" />
 		<WebGLTransition
 			client:only="react"
 			transition:persist="webgl-transition"

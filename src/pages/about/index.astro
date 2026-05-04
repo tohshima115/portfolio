@@ -1,34 +1,28 @@
 ---
+import { getEntry } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { AboutDeepDive } from "@/components/pages/about/AboutDeepDive";
 
-const consistencyTable = [
-    {
-        title: "AIChatClip",
-        type: "0→1 個人プロダクト",
-        body: "自分の課題を起点に、企画から運用まで1人で完結させた SaaS。Cloudflare スタックで本番運用中。",
-    },
-    {
-        title: "金額入力の自動化",
-        type: "定型業務の改善",
-        body: "週3時間 → 週20分。年間約130時間削減。ヒューマンエラーリスクの低減も同時に実現。",
-    },
-    {
-        title: "カレンダー / LINE 自動化",
-        type: "チーム支援",
-        body: "同僚が予定登録できていない状況を観察し、音声入力 × AI で自発的に解決。頼まれずに作るタイプの動き。",
-    },
-    {
-        title: "PL ダッシュボード",
-        type: "既存ツールのリプレイス",
-        body: "見にくい Excel 製 PL シートを Cloudflare D1 + OOUI のダッシュボードに置き換え。Zero Trust でアクセス制御。",
-    },
-];
+const entry = await getEntry("_pages", "about");
+if (!entry) {
+    throw new Error("about entry not found in _pages collection");
+}
+const { Content } = await entry.render();
+const {
+    title,
+    description,
+    headline,
+    roleLabel,
+    consistencyTable,
+    statusText,
+    statusNote,
+} = entry.data;
+const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
 ---
 
 <BaseLayout
-    title="About | Shogo Toyoshima"
-    description="Product Engineer / Designer. Cloudflare スタックで個人プロダクトを出荷している26歳。"
+    title={`${title} | Shogo Toyoshima`}
+    description={description}
 >
     <main class="relative min-h-screen">
         <!-- Background Grid -->
@@ -64,53 +58,43 @@ const consistencyTable = [
                 <h1
                     class="text-5xl md:text-7xl font-black mb-6 tracking-tighter leading-[0.9]"
                 >
-                    Shogo<br />Toyoshima
+                    {givenName}<br />{familyName}
                 </h1>
-                <div class="flex items-center gap-4">
-                    <div class="h-[2px] w-12 bg-accent"></div>
-                    <p
-                        class="font-mono text-sm tracking-[0.25em] text-foreground font-bold uppercase"
-                    >
-                        Product Engineer / Designer
-                    </p>
-                </div>
+                {roleLabel && (
+                    <div class="flex items-center gap-4">
+                        <div class="h-[2px] w-12 bg-accent"></div>
+                        <p
+                            class="font-mono text-sm tracking-[0.25em] text-foreground font-bold uppercase"
+                        >
+                            {roleLabel}
+                        </p>
+                    </div>
+                )}
             </header>
 
-            <!-- Short About (1 paragraph) -->
-            <section class="mb-20">
-                <div class="max-w-3xl">
-                    <p class="text-base md:text-lg text-foreground/90 leading-relaxed">
-                        プロダクトの全体設計から運用まで一気通貫で担う Product Engineer。<strong
-                            class="text-foreground"
-                            >Cloudflare のエッジプラットフォーム</strong
-                        >
-                        を主戦場に、個人開発 SaaS「AIChatClip」を<strong
-                            class="text-foreground"
-                            >企画から運用まで1人で出荷</strong
-                        >しています。
-                    </p>
-                    <p class="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed">
-                        経営学部 → 起業準備 → デザイン → 個人開発、と歩いてきましたが、それぞれを切り捨てて移ってきた感覚はなく、経営学部で身についた事業視点・起業準備 2 年で身についた検証の習慣・デザインで身についた設計の理論が、いまの個人開発のなかに道具として積み上がっています。軸はずっと <strong
-                            class="text-foreground"
-                            >「続けてきたものが、次のステージでどこまで自分の武器になるかを試す」</strong
-                        > こと。AIChatClip では、開発に入る前に 1,000 円の課金意思を実際に確認してから着手しました。
-                    </p>
-                </div>
+            <!-- MDX-driven content (Bio + 一貫した行動パターン intro) -->
+            <section class="mb-12">
+                <article
+                    class="prose prose-invert max-w-3xl
+                        prose-p:text-base md:prose-p:text-lg
+                        prose-p:text-foreground/90 prose-p:leading-relaxed
+                        prose-strong:text-foreground prose-strong:font-bold
+                        prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:font-bold
+                        prose-h2:border-l-4 prose-h2:border-accent prose-h2:pl-4
+                        prose-h2:tracking-tight prose-h2:mb-3 prose-h2:mt-16
+                        prose-ul:hidden prose-h2:[&+p]:text-muted-foreground
+                        prose-h2:[&+p]:pl-5 prose-h2:[&+p]:leading-relaxed
+                        prose-h2:[&+p]:mb-8"
+                >
+                    <Content />
+                </article>
             </section>
 
-            <!-- 一貫した行動パターン -->
-            <section class="mb-16">
-                <h2
-                    class="text-2xl md:text-3xl font-bold mb-3 border-l-4 border-accent pl-4"
-                >
-                    一貫した行動パターン
-                </h2>
-                <p class="text-muted-foreground mb-8 pl-5 leading-relaxed">
-                    課題を見つける → 技術で解決する → 実際に使われる、というサイクルを規模や文脈を変えながら繰り返してきました。
-                </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {
-                        consistencyTable.map((item) => (
+            <!-- 一貫した行動パターン (cards) -->
+            {consistencyTable && consistencyTable.length > 0 && (
+                <section class="mb-16 -mt-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {consistencyTable.map((item) => (
                             <div class="group relative border border-border bg-background/60 backdrop-blur-sm p-6 hover:border-accent/60 transition-colors duration-300">
                                 <div class="font-mono text-[10px] text-accent tracking-widest uppercase mb-3">
                                     {item.type}
@@ -125,10 +109,10 @@ const consistencyTable = [
                                     ◇
                                 </div>
                             </div>
-                        ))
-                    }
-                </div>
-            </section>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             <!-- Deep Dive (Modals) -->
             <section class="mb-16">
@@ -144,42 +128,46 @@ const consistencyTable = [
             </section>
 
             <!-- Status -->
-            <section class="mb-12">
-                <div
-                    class="border border-accent/40 bg-accent/5 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-                >
-                    <div>
-                        <p
-                            class="font-mono text-[10px] text-accent tracking-[0.3em] uppercase mb-2"
-                        >
-                            + STATUS
-                        </p>
-                        <p class="text-base md:text-lg font-bold">
-                            2026年7〜8月に現職退職予定 / 9月以降の入社可能
-                        </p>
-                        <p class="text-sm text-muted-foreground mt-1">
-                            カジュアル面談・スカウト歓迎です。
-                        </p>
-                    </div>
-                    <a
-                        href="/contact"
-                        class="group inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background font-mono text-xs tracking-widest uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+            {statusText && (
+                <section class="mb-12">
+                    <div
+                        class="border border-accent/40 bg-accent/5 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
                     >
-                        Open Channel
-                        <svg
-                            class="w-3 h-3 group-hover:translate-x-1 transition-transform"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            ><path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg
+                        <div>
+                            <p
+                                class="font-mono text-[10px] text-accent tracking-[0.3em] uppercase mb-2"
+                            >
+                                + STATUS
+                            </p>
+                            <p class="text-base md:text-lg font-bold">
+                                {statusText}
+                            </p>
+                            {statusNote && (
+                                <p class="text-sm text-muted-foreground mt-1">
+                                    {statusNote}
+                                </p>
+                            )}
+                        </div>
+                        <a
+                            href="/contact"
+                            class="group inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background font-mono text-xs tracking-widest uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
-                    </a>
-                </div>
-            </section>
+                            Open Channel
+                            <svg
+                                class="w-3 h-3 group-hover:translate-x-1 transition-transform"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                ><path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg
+                            >
+                        </a>
+                    </div>
+                </section>
+            )}
 
             <!-- Footer Decor -->
             <div class="mt-20 flex items-center gap-4">
