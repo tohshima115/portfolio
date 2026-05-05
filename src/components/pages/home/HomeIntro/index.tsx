@@ -3,25 +3,26 @@ import { playWebGLTransition } from '@/components/common/WebGLTransition/control
 import type { UpdateItem } from '../HomeScene/types';
 import { HardCutOverlay, type CutPhase } from './HardCutOverlay';
 import { HeroSection } from './HeroSection';
-import { useFirstScrollTrigger } from './useFirstScrollTrigger';
+import { IntroDissolveOverlay } from './IntroDissolveOverlay';
+import { useIntroProgress } from './useIntroProgress';
 
 export type { UpdateItem };
 
-// HomeIntro: Hero (常駐) + Hero→次セクションへの「1 回限りハードカット」担当。
-// 旧 HomeFlat の 6 セクション排他マウント / useSnapInput 蓄積式は廃止。
-// ハードカット完了後は html.overflow を解放し、Hero は display:none で消えて
-// 通常フローの <HomeStack /> が viewport 上端から見えるようになる。
+// HomeIntro: Hero (常駐) + Hero→Statement への progressive ハードカット担当。
 //
-// outer は position:fixed (z-[5]) なので Astro レイアウトに高さを取らない →
-// HomeStack が body 直下から始まり、HomeIntro 退場後に位置調整なしで
-// HomeStack 先頭セクションが viewport 上端に表示される。
+// 案 F (ホログラム剥離) を採用:
+//   - useIntroProgress が wheel/touch/key/scrollbar drag を蓄積し、
+//     0..1 の progress を吐く (SNAP_THRESHOLD_PX 蓄積で確定)
+//   - IntroDissolveOverlay が progress に連動して Hero に被せる
+//     (chromatic aberration / vertical strips drop / HUD カウンタ)
+//   - progress 1.0 到達で短い白フラッシュ → Statement へ
+//   - 入力が止まると蓄積が緩やかに 0 へ減衰 (= 誤操作で Hero に戻れる)
 //
-// HardCutOverlay は createPortal で document.body に直接マウントされるため、
-// HomeIntro が display:none になっても reveal フラッシュの opacity 1→0 が
-// 最後まで再生される。
+// outer は position:fixed (z-[5]) なので Astro レイアウトに高さを取らない。
+// HardCutOverlay は createPortal で document.body 直下にマウントされる。
 
-const COVER_MS = 120;
-const REVEAL_MS = 120;
+const COVER_MS = 90;
+const REVEAL_MS = 110;
 
 const readSkipIntroFlag = (): boolean => {
     if (typeof window === 'undefined') return false;
@@ -73,10 +74,8 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     phaseRef.current = phase;
 
     // intro マウント時:
-    //   ・html/body の overflow は触らない (scrollbar は常時表示したい)
-    //   ・wheel/touch/key だけ useFirstScrollTrigger で捕食し、ネイティブ scroll は起きない
-    //   ・scrollbar の drag だけは捕食できないので、scroll イベントを検知して
-    //     scrollY > 0 になったら triggerHardCut (= Statement へ進む) を発火する
+    //   ・html/body の overflow は触らない (scrollbar は常時表示)
+    //   ・wheel/touch/key/scrollbar drag は useIntroProgress が捕食 / 検知
     useEffect(() => {
         document.body.dataset.homePhase = 'intro';
         window.scrollTo(0, 0);
@@ -94,6 +93,29 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         window.scrollTo(0, 0);
     }, []);
 
+    // === progress 状態 (rAF throttle で setState 頻度抑制) ===
+    const [progress, setProgress] = useState(0);
+    const progressRef = useRef(0);
+    const setProgressRafRef = useRef<number | null>(null);
+
+    const handleProgress = useCallback((p: number) => {
+        progressRef.current = p;
+        if (setProgressRafRef.current !== null) return;
+        setProgressRafRef.current = requestAnimationFrame(() => {
+            setProgressRafRef.current = null;
+            setProgress(progressRef.current);
+        });
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            if (setProgressRafRef.current !== null) {
+                cancelAnimationFrame(setProgressRafRef.current);
+            }
+        };
+    }, []);
+
+    // === 進捗 1.0 で発火する短いハードカット (Hero → Statement) ===
     const triggerHardCut = useCallback(() => {
         if (phaseRef.current !== 'intro') return;
         if (reducedMotion) {
@@ -103,7 +125,6 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         }
         setPhase('cover');
         window.setTimeout(() => {
-            // peak: Hero を退場 + scroll 解禁
             setPhase('reveal');
             releaseScroll();
             window.setTimeout(() => {
@@ -112,10 +133,13 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         }, COVER_MS);
     }, [reducedMotion, releaseScroll]);
 
-    // HomeStack 側で「window.scrollY === 0 + 上方向 wheel/swipe」を検知すると
-    // CustomEvent 'home:return-to-hero' が来る。それを受けて逆ハードカットで Hero に戻す。
+    // === Hero に戻る (HomeStack 上端からの上方向 wheel/swipe で発火) ===
     const triggerToHero = useCallback(() => {
         if (phaseRef.current !== 'scroll') return;
+        // 戻る時は progress を 0 に戻す
+        progressRef.current = 0;
+        setProgress(0);
+
         if (reducedMotion) {
             lockScroll();
             setPhase('intro');
@@ -123,7 +147,6 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         }
         setPhase('cover');
         window.setTimeout(() => {
-            // peak: scroll を再ロック + Hero 再表示
             lockScroll();
             setPhase('reveal');
             window.setTimeout(() => {
@@ -138,22 +161,9 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return () => window.removeEventListener('home:return-to-hero', onReturn);
     }, [triggerToHero]);
 
-    // intro 中の scrollbar drag を検知して Statement へ進める。
-    // wheel/touch/key は useFirstScrollTrigger が preventDefault で捕食しているため、
-    // ここで検知される scrollY 変動は実質 scrollbar drag のみ。
-    useEffect(() => {
-        const onScroll = () => {
-            if (phaseRef.current !== 'intro') return;
-            if (window.scrollY > 4) {
-                triggerHardCut();
-            }
-        };
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
-    }, [triggerHardCut]);
-
-    useFirstScrollTrigger({
-        onTrigger: triggerHardCut,
+    useIntroProgress({
+        onProgress: handleProgress,
+        onComplete: triggerHardCut,
         disabled: phase !== 'intro',
     });
 
@@ -179,6 +189,12 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                     updates={updates}
                     active={heroVisible}
                 />
+                {phase === 'intro' && (
+                    <IntroDissolveOverlay
+                        progress={progress}
+                        reducedMotion={reducedMotion}
+                    />
+                )}
             </section>
             <HardCutOverlay phase={cutPhase} reducedMotion={reducedMotion} />
         </>
