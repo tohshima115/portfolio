@@ -1,17 +1,21 @@
 import { useSectionProgress } from '../hooks/useSectionProgress';
 
+// 右上ラベル用の辞書 (works-ops = 横スクロール部) も含めて全 active id を網羅する。
 const SECTION_LABELS: Record<string, string> = {
     statement: 'STATEMENT',
-    works: 'WORKS',
+    works: 'WORKS · FLAGSHIP',
+    'works-ops': 'WORKS · OPS',
     about: 'ABOUT',
     cta: 'CTA',
 };
 const SECTION_IDS: Record<string, string> = {
     statement: '01',
     works: '02',
+    'works-ops': '02·OPS',
     about: '03',
     cta: '04',
 };
+// 右端インジケータは 4 行に絞る (works-ops は除外、works ドットでまとめて指す)
 const ORDERED = ['statement', 'works', 'about', 'cta'] as const;
 
 // 常駐 HUD: 右上 = active section + ID、左下 = scroll progress、
@@ -52,7 +56,10 @@ export const HudOverlay: React.FC = () => {
                 className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto"
             >
                 {ORDERED.map((sid) => {
-                    const isActive = sid === activeId;
+                    // works ドットは works / works-ops どちらでも active 扱い
+                    const isActive =
+                        sid === activeId ||
+                        (sid === 'works' && activeId === 'works-ops');
                     return (
                         <button
                             key={sid}

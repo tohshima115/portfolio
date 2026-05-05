@@ -1,16 +1,17 @@
-// Phase 1 placeholder. Phase 3 で本実装に差し替える。
-// AIChatClip pin 250vh + 業務改善 3 本横スクロール pin 300vh。
-// docs/career/projects/{aichatclip,pl-dashboard,expense-automation,schedule-distributor}.md 反映。
+import { WorksFlagshipPart } from './WorksFlagshipPart';
+import { WorksOpsCarousel } from './WorksOpsCarousel';
+import { DividerMarker } from '../visuals/DividerMarker';
+
+// Works = AIChatClip pin (FLAGSHIP) + 業務改善 3 本横スクロール (OPS) を縦に並べる。
+// 同じ section にまとめると HudOverlay の active section が混ざるため、
+// 子は内部で data-section="works" / data-section="works-ops" を別々に持つ。
 
 export const WorksSection: React.FC = () => {
     return (
-        <section
-            data-section="works"
-            className="relative w-full min-h-screen flex items-center justify-center bg-background"
-        >
-            <div className="font-mono text-xs uppercase tracking-[0.4em] text-muted-foreground">
-                + WORKS / 02 — placeholder
-            </div>
-        </section>
+        <>
+            <WorksFlagshipPart />
+            <DividerMarker py={48} />
+            <WorksOpsCarousel />
+        </>
     );
 };
