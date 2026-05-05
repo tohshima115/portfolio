@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
 
 // Hero フェーズで「初回の下方向入力」を捕捉して onTrigger を 1 度だけ呼ぶ。
-// 旧 useSnapInput の「6 セクション間で蓄積→閾値到達でジャンプ」は捨て、
-// Hero → Statement への 1 回限りハードカット用に縮退した。
 //
-// intro 中は wheel/touchmove を preventDefault して捕食 (window スクロールしない)。
-// disabled=true (= phase が 'intro' を抜けた) になったらリスナーを解除し、
-// 以後は通常のネイティブ縦スクロールが流れる。
+// 設計上のポイント:
+// - intro 中は wheel/touchmove を preventDefault して捕食 (window スクロールしない)。
+// - disabled=true (= phase が 'intro' を抜けた) の間はリスナー解除 → ネイティブ縦スクロール。
+// - disabled が true → false に戻った場合 (Hero 復帰時) は firedRef を reset し、
+//   再びリスナーを張って新しい初回入力で再発火できるようにする。
 
 export interface FirstScrollTriggerOptions {
     onTrigger: () => void;
@@ -17,22 +17,23 @@ const TRIGGER_THRESHOLD_PX = 12;
 
 export function useFirstScrollTrigger(opts: FirstScrollTriggerOptions): void {
     const optsRef = useRef(opts);
-    useEffect(() => {
-        optsRef.current = opts;
-    });
+    optsRef.current = opts;
 
     const firedRef = useRef(false);
+    const disabled = opts.disabled ?? false;
 
     useEffect(() => {
+        if (disabled) return;
+        // disabled が解除されるたびに「未発火」状態に戻す
+        firedRef.current = false;
+
         const fire = () => {
             if (firedRef.current) return;
-            if (optsRef.current.disabled) return;
             firedRef.current = true;
             optsRef.current.onTrigger();
         };
 
         const onWheel = (e: WheelEvent) => {
-            if (optsRef.current.disabled) return;
             // intro 中は wheel 全部捕食 (背景スクロールさせない)
             e.preventDefault();
             if (firedRef.current) return;
@@ -44,7 +45,6 @@ export function useFirstScrollTrigger(opts: FirstScrollTriggerOptions): void {
             lastTouchY = e.touches[0]?.clientY ?? null;
         };
         const onTouchMove = (e: TouchEvent) => {
-            if (optsRef.current.disabled) return;
             e.preventDefault();
             if (firedRef.current) return;
             if (lastTouchY === null) return;
@@ -56,7 +56,6 @@ export function useFirstScrollTrigger(opts: FirstScrollTriggerOptions): void {
         };
 
         const onKey = (e: KeyboardEvent) => {
-            if (optsRef.current.disabled) return;
             if (firedRef.current) return;
             const tag = (e.target as HTMLElement | null)?.tagName;
             if (tag === 'INPUT' || tag === 'TEXTAREA') return;
@@ -84,5 +83,5 @@ export function useFirstScrollTrigger(opts: FirstScrollTriggerOptions): void {
             window.removeEventListener('touchend', onTouchEnd);
             window.removeEventListener('keydown', onKey);
         };
-    }, []);
+    }, [disabled]);
 }

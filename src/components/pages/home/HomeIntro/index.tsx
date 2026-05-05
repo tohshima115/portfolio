@@ -94,6 +94,13 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         document.body.dataset.homePhase = 'scroll';
     }, []);
 
+    const lockScroll = useCallback(() => {
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
+        document.body.dataset.homePhase = 'intro';
+        window.scrollTo(0, 0);
+    }, []);
+
     const triggerHardCut = useCallback(() => {
         if (phaseRef.current !== 'intro') return;
         if (reducedMotion) {
@@ -111,6 +118,32 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             }, REVEAL_MS);
         }, COVER_MS);
     }, [reducedMotion, releaseScroll]);
+
+    // HomeStack 側で「window.scrollY === 0 + 上方向 wheel/swipe」を検知すると
+    // CustomEvent 'home:return-to-hero' が来る。それを受けて逆ハードカットで Hero に戻す。
+    const triggerToHero = useCallback(() => {
+        if (phaseRef.current !== 'scroll') return;
+        if (reducedMotion) {
+            lockScroll();
+            setPhase('intro');
+            return;
+        }
+        setPhase('cover');
+        window.setTimeout(() => {
+            // peak: scroll を再ロック + Hero 再表示
+            lockScroll();
+            setPhase('reveal');
+            window.setTimeout(() => {
+                setPhase('intro');
+            }, REVEAL_MS);
+        }, COVER_MS);
+    }, [reducedMotion, lockScroll]);
+
+    useEffect(() => {
+        const onReturn = () => triggerToHero();
+        window.addEventListener('home:return-to-hero', onReturn);
+        return () => window.removeEventListener('home:return-to-hero', onReturn);
+    }, [triggerToHero]);
 
     useFirstScrollTrigger({
         onTrigger: triggerHardCut,
