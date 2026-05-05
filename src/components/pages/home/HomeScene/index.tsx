@@ -292,25 +292,31 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     //   index 2  PLDashboard (-460,  40vh,  18deg)  左下 (1 から続けて左側)
     //   index 3  Swept       ( 590, -52vh,  32deg)  右上、ぐるっと反対側へ
     //   index 4  About       ( 130, -58vh,  -8deg)  上中央寄り (3 から近め)
-    //   index 5  CTA         ( 460,  48vh, -22deg)  右下
+    //   index 5  CTA         ( 0,   -120vh,   0deg)  Hero 真上、正面 (締め)
     //
-    // X 符号:  0, -, -, +, +, +  (2 連続左 → 3 連続右、alternation を崩す)
-    // Y 符号:  0, -, +, -, -, +  (見るたびに変わる)
-    // RZ 符号: 0, -, +, +, -, -  (規則的な ± 反復にしない)
+    // 中間 4 セクション (1〜4) は X / Y / RZ の符号も magnitude もランダム
+    // っぽく散らす。CTA だけは Blender 視点で言うところの "Hero と同じ XZ
+    // 座標 (= 横位置 / 奥行きはそのまま) で Y だけ持ち上げた位置" に配置:
+    // CSS 的には X=0 / Z=0 のまま CSS Y を大きく負方向 (= 画面上方向) に
+    // 振って、camera が最後にぐっと上を見上げて締めの CTA カードを映す。
+    // CTA は地面を持たない (= FloorPlane なし) ので "上空に浮かんでいる"
+    // 見え方になる。
     //
-    // (0, 0) からの距離は 130〜660 px (1vh ≒ 8px 換算で雑に同列評価して
-    // およそ 480〜720 相当) と、近いものと遠いものを混在させて画面サイズの
-    // "ある半径の円の中" にきれいに収まりすぎないようにしてある。
+    // 中間セクションについては:
+    //   X 符号:  0, -, -, +, +    (2 連続左 → 連続右、alternation を崩す)
+    //   Y 符号:  0, -, +, -, -    (見るたびに変わる)
+    //   RZ 符号: 0, -, +, +, -    (規則的な ± 反復にしない)
     //
     // モバイル / reduced motion (ampXY = 0) のときは中心散布の意味が
     // なくなる + 横ジャンプが視覚的にうるさいので、X を潰し Y を 80vh
     // 等間隔の単調増加に切り替えて素直な縦スクロールに退化させる。
+    // (mobile の CTA は単純な縦並びの最終位置 = 400vh)
     const SECTION_X =
-        ampXY > 0 ? [0, -660, -460, 590, 130, 460] : [0, 0, 0, 0, 0, 0];
+        ampXY > 0 ? [0, -660, -460, 590, 130, 0] : [0, 0, 0, 0, 0, 0];
     const SECTION_Y_VH =
-        ampXY > 0 ? [0, -30, 40, -52, -58, 48] : [0, 80, 160, 240, 320, 400];
+        ampXY > 0 ? [0, -30, 40, -52, -58, -120] : [0, 80, 160, 240, 320, 400];
     const SECTION_RZ =
-        ampXY > 0 ? [0, -25, 18, 32, -8, -22] : [0, 0, 0, 0, 0, 0];
+        ampXY > 0 ? [0, -25, 18, 32, -8, 0] : [0, 0, 0, 0, 0, 0];
 
     const cameraX = useTransform(cameraProgress, (p) =>
         -interp(p, SECTION_X),
@@ -459,14 +465,13 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: 右下 (CCW)、原点には戻らず締め */}
+                        {/* CTA: Hero 真上、正面 (締め)。地面なしで上空に浮かぶ印象 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
                                 transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, 0) rotateZ(${SECTION_RZ[5]}deg)`,
                             }}
                         >
-                            <FloorPlane />
                             <ContactCTALayer progress={cameraProgress} />
                         </div>
                     </motion.div>
