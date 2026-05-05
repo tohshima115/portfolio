@@ -1,29 +1,30 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useMotionValue } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { HardCutOverlay, type CutPhase } from './HardCutOverlay';
 import { HeroSection } from './HeroSection';
-import { IntroDistortOverlay } from './IntroDistortOverlay';
+import { IntroShutterOverlay } from './IntroShutterOverlay';
 import { useIntroProgress } from './useIntroProgress';
 
 export type { UpdateItem };
 
 // HomeIntro: Hero (常駐) + Hero→Statement への progressive ハードカット担当。
 //
-// 案 A (等高線シェーダの乱れ + HUD) を採用:
+// 案 B (アイリス・シャッター) を採用:
 //   - useIntroProgress が wheel/touch/key/scrollbar drag を蓄積し、
 //     0..1 の progress を吐く (SNAP_THRESHOLD_PX 蓄積で確定)
-//   - progress を MotionValue として HeroSection→ContourBackground の
-//     uChaos uniform にバイパスし、shader 自体が乱れる
-//   - IntroDistortOverlay が HUD (上端 progress bar / [TRANSFER NN%] /
-//     四隅 WARN / 下端 SCROLL·HOLD·JUMP) を被せる
-//   - progress 1.0 到達で短い白フラッシュ → Statement
-//   - 入力が止まると蓄積が緩やかに 0 へ減衰 (誤操作で Hero に戻れる)
+//   - IntroShutterOverlay が上下から背景色のシャッターを progress * 50vh まで
+//     閉じてくる。境界に accent ラインが光る
+//   - progress 1.0 = 画面全体が背景色 → 即時 phase='scroll' (シャッター越しに
+//     Statement が現れる演出。白フラッシュは不要)
+//   - 入力が止まると蓄積が緩やかに 0 へ減衰 (= 誤操作でシャッターが開いて Hero に戻る)
+//   - Hero に戻る時 (triggerToHero) は 既存 white flash (HardCutOverlay) を維持
 //
 // outer は position:fixed (z-[5]) なので Astro レイアウトに高さを取らない。
 // HardCutOverlay は createPortal で document.body 直下にマウントされる。
 
+// triggerToHero (Hero 復帰) 時の white flash 用。
+// triggerHardCut (Statement へ) は shutter が閉じきっているので flash 不要。
 const COVER_MS = 90;
 const REVEAL_MS = 110;
 
@@ -96,28 +97,21 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         window.scrollTo(0, 0);
     }, []);
 
-    // === progress 管理 ===
-    //   - chaos 用の MotionValue (R3F へ subscriber 経由で値伝達 / re-render 不要)
-    //   - HUD 表示用の React state (rAF throttle)
-    const progressMv = useMotionValue(0);
+    // === progress 状態 (rAF throttle で setState 頻度抑制) ===
+    // 案 B では shader 連動 (chaos) は使わないので MotionValue は不要、
+    // shutter overlay 用の React state だけで完結する。
     const [progress, setProgress] = useState(0);
     const progressRef = useRef(0);
     const setProgressRafRef = useRef<number | null>(null);
 
-    const handleProgress = useCallback(
-        (p: number) => {
-            progressRef.current = p;
-            // shader へは即時反映 (毎入力で MotionValue.set → ContourBackground 購読 → uniform 更新)
-            progressMv.set(p);
-            // HUD 数値表示は rAF throttle で 1 フレ 1 回まで
-            if (setProgressRafRef.current !== null) return;
-            setProgressRafRef.current = requestAnimationFrame(() => {
-                setProgressRafRef.current = null;
-                setProgress(progressRef.current);
-            });
-        },
-        [progressMv],
-    );
+    const handleProgress = useCallback((p: number) => {
+        progressRef.current = p;
+        if (setProgressRafRef.current !== null) return;
+        setProgressRafRef.current = requestAnimationFrame(() => {
+            setProgressRafRef.current = null;
+            setProgress(progressRef.current);
+        });
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -127,30 +121,19 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         };
     }, []);
 
-    // === 進捗 1.0 で発火する短いハードカット (Hero → Statement) ===
+    // === 進捗 1.0 で発火する遷移 (Hero → Statement) ===
+    // shutter が閉じきった瞬間 (画面 = 背景色) → 即時 phase='scroll' で OK
     const triggerHardCut = useCallback(() => {
         if (phaseRef.current !== 'intro') return;
-        if (reducedMotion) {
-            setPhase('scroll');
-            releaseScroll();
-            return;
-        }
-        setPhase('cover');
-        window.setTimeout(() => {
-            setPhase('reveal');
-            releaseScroll();
-            window.setTimeout(() => {
-                setPhase('scroll');
-            }, REVEAL_MS);
-        }, COVER_MS);
-    }, [reducedMotion, releaseScroll]);
+        setPhase('scroll');
+        releaseScroll();
+    }, [releaseScroll]);
 
     // === Hero に戻る (HomeStack 上端からの上方向 wheel/swipe で発火) ===
+    // 戻る時は white flash (HardCutOverlay) で切替: shutter は閉じてないため
     const triggerToHero = useCallback(() => {
         if (phaseRef.current !== 'scroll') return;
-        // 戻る時は progress を 0 に戻す (shader chaos も 0 へ)
         progressRef.current = 0;
-        progressMv.set(0);
         setProgress(0);
 
         if (reducedMotion) {
@@ -166,7 +149,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 setPhase('intro');
             }, REVEAL_MS);
         }, COVER_MS);
-    }, [reducedMotion, lockScroll, progressMv]);
+    }, [reducedMotion, lockScroll]);
 
     useEffect(() => {
         const onReturn = () => triggerToHero();
@@ -201,10 +184,9 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                     skipIntro={skipIntro}
                     updates={updates}
                     active={heroVisible}
-                    chaos={progressMv}
                 />
                 {phase === 'intro' && (
-                    <IntroDistortOverlay
+                    <IntroShutterOverlay
                         progress={progress}
                         reducedMotion={reducedMotion}
                     />
