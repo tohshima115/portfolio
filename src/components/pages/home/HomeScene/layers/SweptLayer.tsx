@@ -13,8 +13,10 @@ const tldr = [
 
 export const SweptLayer = ({ progress }: Props) => {
     // セクション 3 (Swept) は progress 0.6 中心。
-    const opacity = useTransform(progress, [0.46, 0.56, 0.66, 0.76], [0, 1, 1, 0]);
-    const yOffset = useTransform(progress, [0.46, 0.6, 0.76], [40, 0, -40]);
+    // 一度 fade in したら progress が増えても消えないように出し切りで止める
+    // (上 scroll で 0.46 を下回ると再フェード → 再進入で再発火)。
+    const opacity = useTransform(progress, [0.46, 0.56], [0, 1]);
+    const yOffset = useTransform(progress, [0.46, 0.6], [40, 0]);
 
     return (
         <motion.div

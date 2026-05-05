@@ -13,8 +13,10 @@ const facts = [
 
 export const AboutLayer = ({ progress }: Props) => {
     // セクション 4 (About) は progress 0.8 中心。
-    const opacity = useTransform(progress, [0.66, 0.76, 0.86, 0.93], [0, 1, 1, 0]);
-    const yOffset = useTransform(progress, [0.66, 0.8, 0.93], [40, 0, -40]);
+    // 一度 fade in したら progress が増えても消えないように出し切りで止める
+    // (上 scroll で 0.66 を下回ると再フェード → 再進入で再発火)。
+    const opacity = useTransform(progress, [0.66, 0.76], [0, 1]);
+    const yOffset = useTransform(progress, [0.66, 0.8], [40, 0]);
 
     return (
         <motion.div

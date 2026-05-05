@@ -13,8 +13,11 @@ const tldr = [
 
 export const AIChatClipLayer = ({ progress }: Props) => {
     // セクション 1 (AIChatClip) は progress 0.2 中心。
-    const opacity = useTransform(progress, [0.06, 0.16, 0.26, 0.36], [0, 1, 1, 0]);
-    const yOffset = useTransform(progress, [0.06, 0.2, 0.36], [40, 0, -40]);
+    // 一度 fade in したら progress が増えても消えないように出し切りで止める
+    // (useTransform は input が範囲外でも端の output 値で clamp する)。
+    // scroll を戻して 0.06 を下回ると再びフェードアウトし、再進入で再発火する。
+    const opacity = useTransform(progress, [0.06, 0.16], [0, 1]);
+    const yOffset = useTransform(progress, [0.06, 0.2], [40, 0]);
 
     return (
         <motion.div

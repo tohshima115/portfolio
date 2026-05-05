@@ -13,8 +13,10 @@ const tldr = [
 
 export const PLDashboardLayer = ({ progress }: Props) => {
     // セクション 2 (PL Dashboard) は progress 0.4 中心。
-    const opacity = useTransform(progress, [0.26, 0.36, 0.46, 0.56], [0, 1, 1, 0]);
-    const yOffset = useTransform(progress, [0.26, 0.4, 0.56], [40, 0, -40]);
+    // 一度 fade in したら progress が増えても消えないように出し切りで止める
+    // (上 scroll で 0.26 を下回ると再フェード → 再進入で再発火)。
+    const opacity = useTransform(progress, [0.26, 0.36], [0, 1]);
+    const yOffset = useTransform(progress, [0.26, 0.4], [40, 0]);
 
     return (
         <motion.div
