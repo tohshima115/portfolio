@@ -279,23 +279,30 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // 動作上は問題ない (世界全体が画面上を流れるだけ)。
     //
     // 配置の意図 (X は px、Y は vh で表記、原点は Hero):
-    //   index 0  Hero        ( 0,    0vh )  原点
-    //   index 1  AIChatClip  (-380, -22vh)  左上
-    //   index 2  PLDashboard ( 340, -28vh)  右上 (Hero 真上を斜めに横断)
-    //   index 3  Swept       (-300,  30vh)  左下 (大きく対角ジャンプ)
-    //   index 4  About       ( 360,  25vh)  右下 (右に大きく振り戻す)
-    //   index 5  CTA         ( -40, -38vh)  左上付近 (中央寄りで原点近くに帰る)
+    //   index 0  Hero        ( 0,     0vh )  原点
+    //   index 1  AIChatClip  (-560, -38vh)  左上、遠目
+    //   index 2  PLDashboard ( 540, -36vh)  右上 (Hero 上を大きく対角横断)
+    //   index 3  Swept       (-480,  40vh)  左下、遠目
+    //   index 4  About       ( 560,  38vh)  右下、遠目
+    //   index 5  CTA         (-120, -52vh)  上、中央寄り (Y は最も上)
     //
-    // (0, 0) からの距離はおよそ 38〜52vh の範囲に収まるよう調整してあり、
-    // どのセクションも画面サイズの "ある半径の円の中" に納まる。
+    // (0, 0) からの距離はおよそ 45〜65vh 相当 (px と vh を 1vh ≒ 8px 換算で
+    // ざっくり同列に評価) の範囲で、画面サイズの "ある半径の円の中" に納まる。
     //
     // モバイル / reduced motion (ampXY = 0) のときは中心散布の意味が
     // なくなる + 横ジャンプが視覚的にうるさいので、X を潰し Y を 80vh
     // 等間隔の単調増加に切り替えて素直な縦スクロールに退化させる。
     const SECTION_X =
-        ampXY > 0 ? [0, -380, 340, -300, 360, -40] : [0, 0, 0, 0, 0, 0];
+        ampXY > 0 ? [0, -560, 540, -480, 560, -120] : [0, 0, 0, 0, 0, 0];
     const SECTION_Y_VH =
-        ampXY > 0 ? [0, -22, -28, 30, 25, -38] : [0, 80, 160, 240, 320, 400];
+        ampXY > 0 ? [0, -38, -36, 40, 38, -52] : [0, 80, 160, 240, 320, 400];
+    // 各セクションの "天地" (画面平面内 = Z 軸まわりの回転)。Hero は 0 で
+    // 据え置き、他のセクションは ±15〜20° と強めに傾けて付箋がランダムに
+    // 貼ってある雰囲気にする。camera 側で逆方向に回すので停止時は必ず
+    // 正面に揃う = 読みやすさ維持。
+    // モバイル / reduced motion (ampXY=0) のときは全 0 にして傾きを消す。
+    const SECTION_RZ =
+        ampXY > 0 ? [0, -18, 16, -14, 17, -10] : [0, 0, 0, 0, 0, 0];
 
     const cameraX = useTransform(cameraProgress, (p) =>
         -interp(p, SECTION_X),
@@ -307,7 +314,13 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             SECTION_Y_VH.map((vhFrac) => (vhFrac * vh) / 100),
         );
     });
-    // Z / Y 軸回転は使わない (XY 平面上の散らし + 正面のままで運ぶ方針)。
+    // camera RZ は section の rotateZ を逆回転で打ち消すので "停止時は section
+    // の天地が画面の天地に揃う" = 常に正面読み。間にある 1.05s の transition では
+    // 「次の天地に向かって」必要最小限の Z 軸回転が自然に発生する。
+    const cameraRZ = useTransform(cameraProgress, (p) =>
+        -interp(p, SECTION_RZ),
+    );
+    // Z / Y 軸回転は使わない (XY 平面上の散らし + Z 軸回転だけで充分)。
     // ContourBackground 側の transform 互換のため motion value としては残す。
     const cameraZ = useTransform(cameraProgress, () => 0);
     const cameraRY = useTransform(cameraProgress, () => 0);
@@ -332,12 +345,27 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                     cameraY={cameraY}
                     cameraZ={cameraZ}
                     cameraRY={cameraRY}
+                    cameraRZ={cameraRZ}
                 />
                 <HoverBackground hoveredItem={hoveredItem} />
 
-                {/* 鳥瞰角 (mouse Y 連動) を当てる外側 3D ラッパ */}
+                {/*
+                  外側ラッパ:
+                  - rotateX = mouse Y 連動の鳥瞰角 (parallax)
+                  - rotateZ = cameraRZ (= 各 section の rotateZ を打ち消す逆回転)
+                  framer-motion は style の rotateX → rotateZ をこの順で
+                  transform string `rotateX(...) rotateZ(...)` に展開する。
+                  行列上 R_x * R_z * (内側 translate) となり、point に対しては
+                  T → R_z → R_x の順で適用される。section transform が T*R_z
+                  なので、camera の R_z(-θ) * T(-x,-y) で完全に打ち消し可能 =
+                  停止時は section の天地が画面の天地に揃う。
+                */}
                 <motion.div
-                    style={{ rotateX, rotateZ: 0, transformStyle: 'preserve-3d' }}
+                    style={{
+                        rotateX,
+                        rotateZ: cameraRZ,
+                        transformStyle: 'preserve-3d',
+                    }}
                     className="relative w-[150vw] h-[150vh] flex items-center justify-center origin-center"
                 >
                     {/* "カメラ" = scroll 進捗に応じてシーン全体を逆方向へ動かす */}
@@ -379,55 +407,55 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             />
                         </div>
 
-                        {/* AIChatClip: 左上 */}
+                        {/* AIChatClip: 左上 (CCW に少し傾ける) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${SECTION_X[1]}px, ${SECTION_Y_VH[1]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[1]}px, ${SECTION_Y_VH[1]}vh, 0) rotateZ(${SECTION_RZ[1]}deg)`,
                             }}
                         >
                             <FloorPlane />
                             <AIChatClipLayer progress={cameraProgress} />
                         </div>
 
-                        {/* PL Dashboard: 右上 (Hero の上を横切る) */}
+                        {/* PL Dashboard: 右上 (CW に傾ける) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${SECTION_X[2]}px, ${SECTION_Y_VH[2]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[2]}px, ${SECTION_Y_VH[2]}vh, 0) rotateZ(${SECTION_RZ[2]}deg)`,
                             }}
                         >
                             <FloorPlane />
                             <PLDashboardLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Swept: 左下 (右上から対角ジャンプ) */}
+                        {/* Swept: 左下 (CCW) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${SECTION_X[3]}px, ${SECTION_Y_VH[3]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[3]}px, ${SECTION_Y_VH[3]}vh, 0) rotateZ(${SECTION_RZ[3]}deg)`,
                             }}
                         >
                             <FloorPlane />
                             <SweptLayer progress={cameraProgress} />
                         </div>
 
-                        {/* About: 右下 */}
+                        {/* About: 右下 (CW) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${SECTION_X[4]}px, ${SECTION_Y_VH[4]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[4]}px, ${SECTION_Y_VH[4]}vh, 0) rotateZ(${SECTION_RZ[4]}deg)`,
                             }}
                         >
                             <FloorPlane />
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: 中央寄り、原点近くへ帰る */}
+                        {/* CTA: 中央寄り、原点近くへ帰る (CCW) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, 0) rotateZ(${SECTION_RZ[5]}deg)`,
                             }}
                         >
                             <FloorPlane />

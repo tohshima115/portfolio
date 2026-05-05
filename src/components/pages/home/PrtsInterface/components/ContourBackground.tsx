@@ -26,6 +26,12 @@ interface Props {
     cameraY?: MotionValue<number>;
     cameraZ?: MotionValue<number>;
     cameraRY?: MotionValue<number>;
+    /**
+     * camera Z 軸回転 (deg)。各セクションが画面平面内で異なる "天地" を
+     * 持つ場合、camera が逆回転で打ち消す。Hero アンカーの contour も
+     * 同じだけ回転させてシーンと位相を揃える。
+     */
+    cameraRZ?: MotionValue<number>;
 }
 
 const TARGET_OPACITY = 0.26;
@@ -146,6 +152,7 @@ export const ContourBackground: React.FC<Props> = ({
     cameraY,
     cameraZ,
     cameraRY,
+    cameraRZ,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -168,21 +175,29 @@ export const ContourBackground: React.FC<Props> = ({
         const cy = cameraY?.get() ?? 0;
         const cz = cameraZ?.get() ?? 0;
         const cry = cameraRY?.get() ?? 0;
+        const crz = cameraRZ?.get() ?? 0;
         const p = introProgressRef.current;
         // p=0 で initial, p=1 で identity。線形補間。
         const introX = INTRO_INITIAL.rotateX * (1 - p);
         const introY = INTRO_INITIAL.rotateY * (1 - p);
         const introS = INTRO_INITIAL.scale + (1 - INTRO_INITIAL.scale) * p;
-        // カメラの translate / rotateY は外側 (= world) に当て、その内側で
-        // intro と mouse 連動を当てる。
+        // シーン階層 (HomeScene) と同じ順番:
+        //   外側 wrapper: rotateZ(cameraRZ)
+        //     内側 wrapper: translate3d(camera)
+        //       Hero local: intro 群
+        // CSS は左から並べた transform が行列の左から並ぶので、point に
+        // 適用される順は右側 (intro) → translate → rotateZ → ... となる。
+        // mouseX 連動の rotateX は実装簡略化のため intro X と合算して
+        // 同位置に当てる (Hero アンカー時は cameraRZ=0 で角度差は出ない)。
         c.style.transform =
             `perspective(${CANVAS_PERSPECTIVE_PX}px) ` +
+            `rotateZ(${crz}deg) ` +
             `translate3d(${cx}px, ${cy}px, ${cz}px) ` +
             `rotateY(${cry}deg) ` +
             `rotateX(${mouseX + introX}deg) ` +
             `rotateY(${introY}deg) ` +
             `scale(${introS})`;
-    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY]);
+    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ]);
 
     // マウス連動 rotateX + camera motion values の購読
     useEffect(() => {
@@ -193,10 +208,11 @@ export const ContourBackground: React.FC<Props> = ({
         if (cameraY) unsubs.push(cameraY.on('change', applyTransform));
         if (cameraZ) unsubs.push(cameraZ.on('change', applyTransform));
         if (cameraRY) unsubs.push(cameraRY.on('change', applyTransform));
+        if (cameraRZ) unsubs.push(cameraRZ.on('change', applyTransform));
         return () => {
             for (const u of unsubs) u();
         };
-    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, applyTransform]);
+    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, applyTransform]);
 
     // イントロアニメ (3D シーンの inner intro container と同じタイミングで進行)
     useEffect(() => {
