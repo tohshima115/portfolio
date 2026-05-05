@@ -292,17 +292,18 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     //   index 2  PLDashboard (-460,  40vh,  18deg)  左下 (1 から続けて左側)
     //   index 3  Swept       ( 590, -52vh,  32deg)  右上、ぐるっと反対側へ
     //   index 4  About       ( 130, -58vh,  -8deg)  上中央寄り (3 から近め)
-    //   index 5  CTA         ( 0,   -120vh,   0deg)  Hero 真上、正面 (締め)
+    //   index 5  CTA         ( 0,    0vh, Z=+500,  0deg)  Hero 真正面、Z 持ち上げ
     //
     // 中間 4 セクション (1〜4) は X / Y / RZ の符号も magnitude もランダム
-    // っぽく散らす。CTA だけは Blender 視点で言うところの "Hero と同じ XZ
-    // 座標 (= 横位置 / 奥行きはそのまま) で Y だけ持ち上げた位置" に配置:
-    // CSS 的には X=0 / Z=0 のまま CSS Y を大きく負方向 (= 画面上方向) に
-    // 振って、camera が最後にぐっと上を見上げて締めの CTA カードを映す。
-    // CTA は地面を持たない (= FloorPlane なし) ので "上空に浮かんでいる"
-    // 見え方になる。
+    // っぽく散らす。CTA だけは "Hero と同じ X / Y 座標 (= 横位置 / 縦位置は
+    // そのまま) で Z 軸 (奥行き) だけ視点側に持ち上げた位置" に配置:
+    // 他のセクションは全部 Z=0 だが CTA だけ Z=+500px。camera は section
+    // を 1 つずつ正面に持ってくるよう動くので、最後の transition で camera Z が
+    // 0 → -500 に動き、CTA を奥から手前に引き寄せた末に正面で締める形になる。
+    // CTA は地面 (FloorPlane) を持たないため、最後だけ "雑然と置かれた地続きの
+    // 世界" から離れて空中にせり上がる印象を強める。
     //
-    // 中間セクションについては:
+    // 中間セクションの符号:
     //   X 符号:  0, -, -, +, +    (2 連続左 → 連続右、alternation を崩す)
     //   Y 符号:  0, -, +, -, -    (見るたびに変わる)
     //   RZ 符号: 0, -, +, +, -    (規則的な ± 反復にしない)
@@ -310,11 +311,16 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // モバイル / reduced motion (ampXY = 0) のときは中心散布の意味が
     // なくなる + 横ジャンプが視覚的にうるさいので、X を潰し Y を 80vh
     // 等間隔の単調増加に切り替えて素直な縦スクロールに退化させる。
-    // (mobile の CTA は単純な縦並びの最終位置 = 400vh)
+    // (mobile の CTA は単純な縦並びの最終位置 = 400vh、Z=0)
     const SECTION_X =
         ampXY > 0 ? [0, -660, -460, 590, 130, 0] : [0, 0, 0, 0, 0, 0];
     const SECTION_Y_VH =
-        ampXY > 0 ? [0, -30, 40, -52, -58, -120] : [0, 80, 160, 240, 320, 400];
+        ampXY > 0 ? [0, -30, 40, -52, -58, 0] : [0, 80, 160, 240, 320, 400];
+    // CTA だけ Z 軸 (奥行き) を視点側 (+500px) に持ち上げる。perspective:
+    // 1000px に対して +500 は scale 換算でおよそ 2x で、最後にぐっと
+    // 手前に出てくる演出 + 周囲の世界が遠ざかる効果になる。
+    const SECTION_Z =
+        ampXY > 0 ? [0, 0, 0, 0, 0, 500] : [0, 0, 0, 0, 0, 0];
     const SECTION_RZ =
         ampXY > 0 ? [0, -25, 18, 32, -8, 0] : [0, 0, 0, 0, 0, 0];
 
@@ -328,15 +334,17 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
             SECTION_Y_VH.map((vhFrac) => (vhFrac * vh) / 100),
         );
     });
+    const cameraZ = useTransform(cameraProgress, (p) =>
+        -interp(p, SECTION_Z),
+    );
     // camera RZ は section の rotateZ を逆回転で打ち消すので "停止時は section
     // の天地が画面の天地に揃う" = 常に正面読み。間にある 1.05s の transition では
     // 「次の天地に向かって」必要最小限の Z 軸回転が自然に発生する。
     const cameraRZ = useTransform(cameraProgress, (p) =>
         -interp(p, SECTION_RZ),
     );
-    // Z / Y 軸回転は使わない (XY 平面上の散らし + Z 軸回転だけで充分)。
+    // Y 軸回転は使わない (XY 平面上の散らし + Z 軸回転だけで充分)。
     // ContourBackground 側の transform 互換のため motion value としては残す。
-    const cameraZ = useTransform(cameraProgress, () => 0);
     const cameraRY = useTransform(cameraProgress, () => 0);
 
     return (
@@ -465,11 +473,11 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: Hero 真上、正面 (締め)。地面なしで上空に浮かぶ印象 */}
+                        {/* CTA: Hero と同じ X / Y のまま Z (奥行き) だけ視点側に持ち上げ。地面なし */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, 0) rotateZ(${SECTION_RZ[5]}deg)`,
+                                transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, ${SECTION_Z[5]}px) rotateZ(${SECTION_RZ[5]}deg)`,
                             }}
                         >
                             <ContactCTALayer progress={cameraProgress} />
