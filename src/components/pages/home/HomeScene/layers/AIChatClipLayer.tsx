@@ -18,13 +18,23 @@ export const AIChatClipLayer = ({ progress }: Props) => {
     // scroll を戻して 0.06 を下回ると再びフェードアウトし、再進入で再発火する。
     const opacity = useTransform(progress, [0.06, 0.16], [0, 1]);
     const yOffset = useTransform(progress, [0.06, 0.2], [40, 0]);
+    // backdrop-filter (= glassmorphism のぼかし) は opacity がほぼ 0 の間も
+    // GPU レイヤーごと毎フレーム計算され続けるため、card が見えていない
+    // 区間では filter 自体を none にして合成コストを削る。閾値 0.05 は
+    // 視覚的に効果が分からない程度に十分小さい。
+    const cardBackdrop = useTransform(opacity, (o) =>
+        o > 0.05 ? 'blur(24px)' : 'none',
+    );
 
     return (
         <motion.div
             style={{ opacity, y: yOffset }}
             className="relative w-[min(92vw,920px)] pointer-events-auto"
         >
-            <div className="border border-foreground/15 bg-background/70 backdrop-blur-xl px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]">
+            <motion.div
+                style={{ backdropFilter: cardBackdrop, WebkitBackdropFilter: cardBackdrop }}
+                className="border border-foreground/15 bg-background/70 px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]"
+            >
                 <div className="flex items-center gap-3 mb-6">
                     <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent">
                         + FLAGSHIP / 01
@@ -100,7 +110,7 @@ export const AIChatClipLayer = ({ progress }: Props) => {
                         Visit Site ↗
                     </a>
                 </div>
-            </div>
+            </motion.div>
         </motion.div>
     );
 };

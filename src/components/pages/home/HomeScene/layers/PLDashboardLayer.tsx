@@ -17,13 +17,20 @@ export const PLDashboardLayer = ({ progress }: Props) => {
     // (上 scroll で 0.26 を下回ると再フェード → 再進入で再発火)。
     const opacity = useTransform(progress, [0.26, 0.36], [0, 1]);
     const yOffset = useTransform(progress, [0.26, 0.4], [40, 0]);
+    // backdrop-filter は見えていない区間で none にして合成コストを抑える。
+    const cardBackdrop = useTransform(opacity, (o) =>
+        o > 0.05 ? 'blur(24px)' : 'none',
+    );
 
     return (
         <motion.div
             style={{ opacity, y: yOffset }}
             className="relative w-[min(92vw,920px)] pointer-events-auto"
         >
-            <div className="border border-foreground/15 bg-background/70 backdrop-blur-xl px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]">
+            <motion.div
+                style={{ backdropFilter: cardBackdrop, WebkitBackdropFilter: cardBackdrop }}
+                className="border border-foreground/15 bg-background/70 px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]"
+            >
                 <div className="flex items-center gap-3 mb-6">
                     <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent">
                         + INTERNAL TOOL / 02
@@ -96,7 +103,7 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                         All Projects →
                     </a>
                 </div>
-            </div>
+            </motion.div>
         </motion.div>
     );
 };

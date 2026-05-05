@@ -19,12 +19,13 @@ export const ContactCTALayer = ({ progress }: Props) => {
             className="relative w-[min(92vw,860px)]"
         >
             {/*
-              Card: グラスモーフィズム (薄い白 + ぼかし + 細い白枠)。
-              親 (HomeScene) では本コンポーネントを 3D シーンの外側に置いて
-              レンダリングしているので、ここの backdrop-blur はちゃんと効く。
-              (3D 配下では preserve-3d の合成制約で backdrop-filter が無視される)
+              Card: 真っ白寄りの半透明パネル + 細い白枠。
+              背後の \"空気遠近法パネル\" 側で全画面の backdrop-blur が
+              すでにかかっているので、card 自身は backdrop-filter を持たず
+              単なる translucent box にして合成コストを削る (= 体験上の
+              見え方は変わらず、blur のレイヤー数を減らせる)。
             */}
-            <div className="relative border border-white/50 bg-white/30 backdrop-blur-2xl px-6 sm:px-12 py-10 sm:py-14 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18)]">
+            <div className="relative border border-white/60 bg-white/45 px-6 sm:px-12 py-10 sm:py-14 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18)]">
                 <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent mb-4">
                     + STATUS / 05
                 </div>

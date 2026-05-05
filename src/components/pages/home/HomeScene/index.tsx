@@ -359,6 +359,12 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         [0.85, 0.97],
         [0, 1],
     );
+    // backdrop-filter は viewport 全体に対して 40px blur を毎フレーム計算
+    // し続ける、TOP の中で一番重い処理。opacity がほぼ 0 の区間は GPU
+    // 合成も無駄なので filter 自体を none に切り替える。
+    const atmosphericBackdrop = useTransform(atmosphericOpacity, (o) =>
+        o > 0.02 ? 'blur(40px)' : 'none',
+    );
 
     return (
         <section
@@ -508,8 +514,12 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                   沈んでいく "進むほど空気の層が増える" 表現に。
                 */}
                 <motion.div
-                    style={{ opacity: atmosphericOpacity }}
-                    className="absolute inset-0 pointer-events-none bg-white/70 backdrop-blur-2xl"
+                    style={{
+                        opacity: atmosphericOpacity,
+                        backdropFilter: atmosphericBackdrop,
+                        WebkitBackdropFilter: atmosphericBackdrop,
+                    }}
+                    className="absolute inset-0 pointer-events-none bg-white/70"
                     aria-hidden
                 />
 
