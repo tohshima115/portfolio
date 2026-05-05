@@ -14,7 +14,22 @@ export const ContactCTALayer = ({ progress }: Props) => {
             style={{ opacity, y: yOffset }}
             className="relative w-[min(92vw,860px)] pointer-events-auto"
         >
-            <div className="border border-accent/40 bg-background/70 backdrop-blur-xl px-6 sm:px-12 py-10 sm:py-14 text-center">
+            {/*
+              背景: 白ベースの全画面 frosted パネル。
+              CTA 表示時に背後の "雑然と置かれた中間セクション" を白で覆い隠して、
+              視線を CTA カードに集中させる。card より十分大きなサイズ
+              (200vmax 角) を card 中心に被せる形にして、camera が CTA 位置に
+              到達したときにビューポート全体が白く染まるようにする。
+              backdrop-blur で背後の世界が滲むので "世界がぼやけて白の静寂に
+              切り替わる" 締めの演出として機能する。
+            */}
+            <div
+                aria-hidden
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vmax] h-[200vmax] bg-white/75 backdrop-blur-2xl pointer-events-none"
+            />
+
+            {/* Card: グラスモーフィズム (薄い白 + ぼかし + 細い白枠) */}
+            <div className="relative border border-white/50 bg-white/30 backdrop-blur-2xl px-6 sm:px-12 py-10 sm:py-14 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18)]">
                 <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent mb-4">
                     + STATUS / 05
                 </div>
