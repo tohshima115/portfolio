@@ -1,22 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useMotionValue } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { HardCutOverlay, type CutPhase } from './HardCutOverlay';
 import { HeroSection } from './HeroSection';
-import { IntroDissolveOverlay } from './IntroDissolveOverlay';
+import { IntroDistortOverlay } from './IntroDistortOverlay';
 import { useIntroProgress } from './useIntroProgress';
 
 export type { UpdateItem };
 
 // HomeIntro: Hero (常駐) + Hero→Statement への progressive ハードカット担当。
 //
-// 案 F (ホログラム剥離) を採用:
+// 案 A (等高線シェーダの乱れ + HUD) を採用:
 //   - useIntroProgress が wheel/touch/key/scrollbar drag を蓄積し、
 //     0..1 の progress を吐く (SNAP_THRESHOLD_PX 蓄積で確定)
-//   - IntroDissolveOverlay が progress に連動して Hero に被せる
-//     (chromatic aberration / vertical strips drop / HUD カウンタ)
-//   - progress 1.0 到達で短い白フラッシュ → Statement へ
-//   - 入力が止まると蓄積が緩やかに 0 へ減衰 (= 誤操作で Hero に戻れる)
+//   - progress を MotionValue として HeroSection→ContourBackground の
+//     uChaos uniform にバイパスし、shader 自体が乱れる
+//   - IntroDistortOverlay が HUD (上端 progress bar / [TRANSFER NN%] /
+//     四隅 WARN / 下端 SCROLL·HOLD·JUMP) を被せる
+//   - progress 1.0 到達で短い白フラッシュ → Statement
+//   - 入力が止まると蓄積が緩やかに 0 へ減衰 (誤操作で Hero に戻れる)
 //
 // outer は position:fixed (z-[5]) なので Astro レイアウトに高さを取らない。
 // HardCutOverlay は createPortal で document.body 直下にマウントされる。
@@ -93,19 +96,28 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         window.scrollTo(0, 0);
     }, []);
 
-    // === progress 状態 (rAF throttle で setState 頻度抑制) ===
+    // === progress 管理 ===
+    //   - chaos 用の MotionValue (R3F へ subscriber 経由で値伝達 / re-render 不要)
+    //   - HUD 表示用の React state (rAF throttle)
+    const progressMv = useMotionValue(0);
     const [progress, setProgress] = useState(0);
     const progressRef = useRef(0);
     const setProgressRafRef = useRef<number | null>(null);
 
-    const handleProgress = useCallback((p: number) => {
-        progressRef.current = p;
-        if (setProgressRafRef.current !== null) return;
-        setProgressRafRef.current = requestAnimationFrame(() => {
-            setProgressRafRef.current = null;
-            setProgress(progressRef.current);
-        });
-    }, []);
+    const handleProgress = useCallback(
+        (p: number) => {
+            progressRef.current = p;
+            // shader へは即時反映 (毎入力で MotionValue.set → ContourBackground 購読 → uniform 更新)
+            progressMv.set(p);
+            // HUD 数値表示は rAF throttle で 1 フレ 1 回まで
+            if (setProgressRafRef.current !== null) return;
+            setProgressRafRef.current = requestAnimationFrame(() => {
+                setProgressRafRef.current = null;
+                setProgress(progressRef.current);
+            });
+        },
+        [progressMv],
+    );
 
     useEffect(() => {
         return () => {
@@ -136,8 +148,9 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // === Hero に戻る (HomeStack 上端からの上方向 wheel/swipe で発火) ===
     const triggerToHero = useCallback(() => {
         if (phaseRef.current !== 'scroll') return;
-        // 戻る時は progress を 0 に戻す
+        // 戻る時は progress を 0 に戻す (shader chaos も 0 へ)
         progressRef.current = 0;
+        progressMv.set(0);
         setProgress(0);
 
         if (reducedMotion) {
@@ -153,7 +166,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 setPhase('intro');
             }, REVEAL_MS);
         }, COVER_MS);
-    }, [reducedMotion, lockScroll]);
+    }, [reducedMotion, lockScroll, progressMv]);
 
     useEffect(() => {
         const onReturn = () => triggerToHero();
@@ -188,9 +201,10 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                     skipIntro={skipIntro}
                     updates={updates}
                     active={heroVisible}
+                    chaos={progressMv}
                 />
                 {phase === 'intro' && (
-                    <IntroDissolveOverlay
+                    <IntroDistortOverlay
                         progress={progress}
                         reducedMotion={reducedMotion}
                     />

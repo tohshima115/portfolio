@@ -32,6 +32,14 @@ interface Props {
      * 同じだけ回転させてシーンと位相を揃える。
      */
     cameraRZ?: MotionValue<number>;
+    /**
+     * 0..1 の「乱れ」係数。Hero→Statement 遷移演出 (案 A) で進捗連動して
+     * shader の uChaos uniform を動かす。
+     * MotionValue を渡せば購読 + invalidate で frameloop="demand" に乗る。
+     * 数値で渡せば mount 時に固定値として set。
+     * 渡さないと 0 (= 現状の Hero 単体表示) で完全に既存挙動を維持。
+     */
+    chaos?: MotionValue<number> | number;
 }
 
 const TARGET_OPACITY = 0.26;
@@ -67,10 +75,11 @@ const readForegroundColor = (): THREE.Color => {
     }
 };
 
-const ContourScene: React.FC<{ reducedMotion: boolean; inView: boolean }> = ({
-    reducedMotion,
-    inView,
-}) => {
+const ContourScene: React.FC<{
+    reducedMotion: boolean;
+    inView: boolean;
+    chaos?: MotionValue<number> | number;
+}> = ({ reducedMotion, inView, chaos }) => {
     const materialRef = useRef<THREE.ShaderMaterial | null>(null);
     const { size, viewport, invalidate } = useThree();
 
@@ -109,11 +118,37 @@ const ContourScene: React.FC<{ reducedMotion: boolean; inView: boolean }> = ({
             uBands: { value: 28 },
             uScale: { value: 2.4 },
             uSpeed: { value: reducedMotion ? 0 : 0.006 },
+            uChaos: { value: 0 },
         }),
         // 初期化のみで上書き不要
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [],
     );
+
+    // chaos: MotionValue または数値を受け取り uChaos uniform に反映。
+    // frameloop="demand" なので変化のたびに明示的に invalidate() で再描画。
+    useEffect(() => {
+        const mat = materialRef.current;
+        if (!mat) return;
+        if (chaos === undefined) {
+            mat.uniforms.uChaos.value = 0;
+            invalidate();
+            return;
+        }
+        if (typeof chaos === 'number') {
+            mat.uniforms.uChaos.value = chaos;
+            invalidate();
+            return;
+        }
+        // MotionValue
+        mat.uniforms.uChaos.value = chaos.get();
+        invalidate();
+        const unsub = chaos.on('change', (v: number) => {
+            mat.uniforms.uChaos.value = v;
+            invalidate();
+        });
+        return () => unsub();
+    }, [chaos, invalidate]);
 
     useEffect(() => {
         const mat = materialRef.current;
@@ -153,6 +188,7 @@ export const ContourBackground: React.FC<Props> = ({
     cameraZ,
     cameraRY,
     cameraRZ,
+    chaos,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -284,7 +320,11 @@ export const ContourBackground: React.FC<Props> = ({
                     canvas.addEventListener('webglcontextlost', handleLost, { once: true });
                 }}
             >
-                <ContourScene reducedMotion={reducedMotion} inView={inView} />
+                <ContourScene
+                    reducedMotion={reducedMotion}
+                    inView={inView}
+                    chaos={chaos}
+                />
             </Canvas>
         </div>
     );

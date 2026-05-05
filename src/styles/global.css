@@ -188,6 +188,17 @@
   }
 }
 
+/* HomeIntro 案 A: 四隅 WARN マーカーの点滅 */
+@keyframes warn-blink {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 /* HomeStack: About の Available 行ハイライト (accent パルス) */
 @keyframes available-pulse {
   0%,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { ContourBackground } from '../PrtsInterface/components/ContourBackground';
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
@@ -9,6 +9,8 @@ interface Props {
     skipIntro: boolean;
     updates?: UpdateItem[];
     active: boolean;
+    /** 0..1 の遷移進捗。ContourBackground の uChaos uniform にバイパスする */
+    chaos?: MotionValue<number> | number;
 }
 
 // Hero 専用のフルスクリーンセクション。
@@ -20,7 +22,7 @@ interface Props {
 // ContourBackground の IntersectionObserver が inView=false を観測し、
 // frameloop="demand" の rAF ループ自体が止まる。
 
-export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active }) => {
+export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     const mouseX = useMotionValue(0.5);
@@ -70,7 +72,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active }) => 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} />
+            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} chaos={chaos} />
             <HoverBackground hoveredItem={hoveredItem} />
 
             {/*
