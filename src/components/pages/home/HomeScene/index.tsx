@@ -257,9 +257,8 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return () => window.removeEventListener('resize', u);
     }, []);
 
-    // 補正: モバイル / reduced motion のときは横方向 / 奥行きの振幅を抑える
+    // 補正: モバイル / reduced motion のときは横方向の振幅を抑える
     const ampXY = isMobile || reducedMotion ? 0 : 1;
-    const ampZ = isMobile || reducedMotion ? 0 : 1;
 
     // piecewise linear interpolation helper (6 stops, equal spacing)
     const interp = (p: number, stops: number[]): number => {
@@ -274,21 +273,39 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return stops[stops.length - 1];
     };
 
-    // 各レイヤーは scene 空間で +X / +Y / +Z にずらして配置する。
-    // カメラはその逆方向に動いて該当レイヤーを正面に持ってくる。
-    // セクション順: Hero / TrackRecord / Featured / Stack / Stance / CTA
+    // 各セクションを XY 平面の上にバラ撒く。Hero (0,0) を原点として、
+    //   X: 横方向に ±約 460px の範囲で左右に振る (規則的な ±一定 にしない)
+    //   Y: 縦方向に 0〜約 430vh の範囲で、間隔を一定にせずバラつかせる
+    //      (scroll で先送りする UX を保つため、Y は単調増加にしている)
+    // Z 軸 / Y 軸回転は使わず camera は単純に -X / -Y で追従するので、
+    // セクションは常に正面のまま画面中央に運ばれる (= 読みやすさを担保)。
+    // ampXY=0 (mobile / reduced motion) のとき X を 0 にして縦一列に潰す。
+    //
+    // 配置の意図:
+    //   index 0  Hero        ( 0,    0vh)  原点
+    //   index 1  AIChatClip  (-440,  70vh) 左寄り、近い
+    //   index 2  PLDashboard ( 460, 170vh) 右に大きく振る
+    //   index 3  Swept       (-360, 240vh) 左戻し、間隔は短め
+    //   index 4  About       ( 320, 340vh) 右、やや内寄り
+    //   index 5  CTA         ( -60, 430vh) ほぼ中央寄りに着地
+    const SECTION_X = [0, -440, 460, -360, 320, -60] as const;
+    const SECTION_Y_VH = [0, 70, 170, 240, 340, 430] as const;
+
+    const sectionXAt = (idx: number) => SECTION_X[idx] * ampXY;
+
     const cameraX = useTransform(cameraProgress, (p) =>
-        interp(p, [0, 260 * ampXY, -260 * ampXY, 260 * ampXY, -260 * ampXY, 0]),
+        -interp(p, SECTION_X.map((x) => x * ampXY)),
     );
     const cameraY = useTransform(cameraProgress, (p) => {
         const vh = vhRef.current;
-        return interp(p, [0, -1 * vh, -2 * vh, -3 * vh, -4 * vh, -5 * vh]);
+        return -interp(
+            p,
+            SECTION_Y_VH.map((vhFrac) => (vhFrac * vh) / 100),
+        );
     });
-    const cameraZ = useTransform(cameraProgress, (p) =>
-        interp(p, [0, 180 * ampZ, 180 * ampZ, -120 * ampZ, -100 * ampZ, 0]),
-    );
-    // Y 軸の回転は Hero / CTA と同じ 0 に固定。中間セクションも斜めにせず
-    // 読みやすさを優先する。
+    // Z / Y 軸回転は使わない (XY 平面上の散らし + 正面のままで運ぶ方針)。
+    // ContourBackground 側の transform 互換のため motion value としては残す。
+    const cameraZ = useTransform(cameraProgress, () => 0);
     const cameraRY = useTransform(cameraProgress, () => 0);
 
     return (
@@ -358,46 +375,56 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             />
                         </div>
 
-                        {/* AIChatClip: 左奥 */}
+                        {/* AIChatClip: 左寄り、近い */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(-260px, 100vh, -180px)' }}
+                            style={{
+                                transform: `translate3d(${sectionXAt(1)}px, ${SECTION_Y_VH[1]}vh, 0)`,
+                            }}
                         >
                             <FloorPlane />
                             <AIChatClipLayer progress={cameraProgress} />
                         </div>
 
-                        {/* PL Dashboard: 右奥 */}
+                        {/* PL Dashboard: 右に大きく振る */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(260px, 200vh, -180px)' }}
+                            style={{
+                                transform: `translate3d(${sectionXAt(2)}px, ${SECTION_Y_VH[2]}vh, 0)`,
+                            }}
                         >
                             <FloorPlane />
                             <PLDashboardLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Swept: 左手前 */}
+                        {/* Swept: 左戻し、間隔は短め */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(-260px, 300vh, 120px)' }}
+                            style={{
+                                transform: `translate3d(${sectionXAt(3)}px, ${SECTION_Y_VH[3]}vh, 0)`,
+                            }}
                         >
                             <FloorPlane />
                             <SweptLayer progress={cameraProgress} />
                         </div>
 
-                        {/* About: 右手前 */}
+                        {/* About: 右、やや内寄り */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(260px, 400vh, 100px)' }}
+                            style={{
+                                transform: `translate3d(${sectionXAt(4)}px, ${SECTION_Y_VH[4]}vh, 0)`,
+                            }}
                         >
                             <FloorPlane />
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: 中央奥 */}
+                        {/* CTA: ほぼ中央寄りに着地 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(0, 500vh, 0)' }}
+                            style={{
+                                transform: `translate3d(${sectionXAt(5)}px, ${SECTION_Y_VH[5]}vh, 0)`,
+                            }}
                         >
                             <FloorPlane />
                             <ContactCTALayer progress={cameraProgress} />
