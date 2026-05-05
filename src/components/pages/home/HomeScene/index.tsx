@@ -273,28 +273,32 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return stops[stops.length - 1];
     };
 
-    // 各セクションを XY 平面の上にバラ撒く。Hero (0,0) を原点として、
-    //   X: 横方向に ±約 460px の範囲で左右に振る (規則的な ±一定 にしない)
-    //   Y: 縦方向に 0〜約 430vh の範囲で、間隔を一定にせずバラつかせる
-    //      (scroll で先送りする UX を保つため、Y は単調増加にしている)
-    // Z 軸 / Y 軸回転は使わず camera は単純に -X / -Y で追従するので、
-    // セクションは常に正面のまま画面中央に運ばれる (= 読みやすさを担保)。
-    // ampXY=0 (mobile / reduced motion) のとき X を 0 にして縦一列に潰す。
+    // 各セクションを (0, 0) を中心にした円の "中" にバラ撒く。
+    // Y を単調増加にせず、負値 (= Hero より上) も取らせる。scroll は
+    // snap 方式で「次に進む」トリガにすぎないので、camera が上に飛んでも
+    // 動作上は問題ない (世界全体が画面上を流れるだけ)。
     //
-    // 配置の意図:
-    //   index 0  Hero        ( 0,    0vh)  原点
-    //   index 1  AIChatClip  (-440,  70vh) 左寄り、近い
-    //   index 2  PLDashboard ( 460, 170vh) 右に大きく振る
-    //   index 3  Swept       (-360, 240vh) 左戻し、間隔は短め
-    //   index 4  About       ( 320, 340vh) 右、やや内寄り
-    //   index 5  CTA         ( -60, 430vh) ほぼ中央寄りに着地
-    const SECTION_X = [0, -440, 460, -360, 320, -60] as const;
-    const SECTION_Y_VH = [0, 70, 170, 240, 340, 430] as const;
-
-    const sectionXAt = (idx: number) => SECTION_X[idx] * ampXY;
+    // 配置の意図 (X は px、Y は vh で表記、原点は Hero):
+    //   index 0  Hero        ( 0,    0vh )  原点
+    //   index 1  AIChatClip  (-380, -22vh)  左上
+    //   index 2  PLDashboard ( 340, -28vh)  右上 (Hero 真上を斜めに横断)
+    //   index 3  Swept       (-300,  30vh)  左下 (大きく対角ジャンプ)
+    //   index 4  About       ( 360,  25vh)  右下 (右に大きく振り戻す)
+    //   index 5  CTA         ( -40, -38vh)  左上付近 (中央寄りで原点近くに帰る)
+    //
+    // (0, 0) からの距離はおよそ 38〜52vh の範囲に収まるよう調整してあり、
+    // どのセクションも画面サイズの "ある半径の円の中" に納まる。
+    //
+    // モバイル / reduced motion (ampXY = 0) のときは中心散布の意味が
+    // なくなる + 横ジャンプが視覚的にうるさいので、X を潰し Y を 80vh
+    // 等間隔の単調増加に切り替えて素直な縦スクロールに退化させる。
+    const SECTION_X =
+        ampXY > 0 ? [0, -380, 340, -300, 360, -40] : [0, 0, 0, 0, 0, 0];
+    const SECTION_Y_VH =
+        ampXY > 0 ? [0, -22, -28, 30, 25, -38] : [0, 80, 160, 240, 320, 400];
 
     const cameraX = useTransform(cameraProgress, (p) =>
-        -interp(p, SECTION_X.map((x) => x * ampXY)),
+        -interp(p, SECTION_X),
     );
     const cameraY = useTransform(cameraProgress, (p) => {
         const vh = vhRef.current;
@@ -375,55 +379,55 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             />
                         </div>
 
-                        {/* AIChatClip: 左寄り、近い */}
+                        {/* AIChatClip: 左上 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${sectionXAt(1)}px, ${SECTION_Y_VH[1]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[1]}px, ${SECTION_Y_VH[1]}vh, 0)`,
                             }}
                         >
                             <FloorPlane />
                             <AIChatClipLayer progress={cameraProgress} />
                         </div>
 
-                        {/* PL Dashboard: 右に大きく振る */}
+                        {/* PL Dashboard: 右上 (Hero の上を横切る) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${sectionXAt(2)}px, ${SECTION_Y_VH[2]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[2]}px, ${SECTION_Y_VH[2]}vh, 0)`,
                             }}
                         >
                             <FloorPlane />
                             <PLDashboardLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Swept: 左戻し、間隔は短め */}
+                        {/* Swept: 左下 (右上から対角ジャンプ) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${sectionXAt(3)}px, ${SECTION_Y_VH[3]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[3]}px, ${SECTION_Y_VH[3]}vh, 0)`,
                             }}
                         >
                             <FloorPlane />
                             <SweptLayer progress={cameraProgress} />
                         </div>
 
-                        {/* About: 右、やや内寄り */}
+                        {/* About: 右下 */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${sectionXAt(4)}px, ${SECTION_Y_VH[4]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[4]}px, ${SECTION_Y_VH[4]}vh, 0)`,
                             }}
                         >
                             <FloorPlane />
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: ほぼ中央寄りに着地 */}
+                        {/* CTA: 中央寄り、原点近くへ帰る */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
-                                transform: `translate3d(${sectionXAt(5)}px, ${SECTION_Y_VH[5]}vh, 0)`,
+                                transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, 0)`,
                             }}
                         >
                             <FloorPlane />
