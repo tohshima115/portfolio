@@ -9,7 +9,6 @@ import {
 } from 'framer-motion';
 import { ContourBackground } from '../PrtsInterface/components/ContourBackground';
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
-import { FloorPlane } from '../PrtsInterface/components/FloorPlane';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import { HeroLayer } from './layers/HeroLayer';
 import { AIChatClipLayer } from './layers/AIChatClipLayer';
@@ -455,7 +454,6 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                                 transform: `translate3d(${SECTION_X[1]}px, ${SECTION_Y_VH[1]}vh, 0) rotateZ(${SECTION_RZ[1]}deg)`,
                             }}
                         >
-                            <FloorPlane />
                             <AIChatClipLayer progress={cameraProgress} />
                         </div>
 
@@ -466,7 +464,6 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                                 transform: `translate3d(${SECTION_X[2]}px, ${SECTION_Y_VH[2]}vh, 0) rotateZ(${SECTION_RZ[2]}deg)`,
                             }}
                         >
-                            <FloorPlane />
                             <PLDashboardLayer progress={cameraProgress} />
                         </div>
 
@@ -477,7 +474,6 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                                 transform: `translate3d(${SECTION_X[3]}px, ${SECTION_Y_VH[3]}vh, 0) rotateZ(${SECTION_RZ[3]}deg)`,
                             }}
                         >
-                            <FloorPlane />
                             <SweptLayer progress={cameraProgress} />
                         </div>
 
@@ -488,7 +484,6 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                                 transform: `translate3d(${SECTION_X[4]}px, ${SECTION_Y_VH[4]}vh, 0) rotateZ(${SECTION_RZ[4]}deg)`,
                             }}
                         >
-                            <FloorPlane />
                             <AboutLayer progress={cameraProgress} />
                         </div>
 

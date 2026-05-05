@@ -1,5 +1,4 @@
 import { motion, type MotionValue } from 'framer-motion';
-import { FloorPlane } from '../../PrtsInterface/components/FloorPlane';
 import { ShadowLayer } from '../../PrtsInterface/components/ShadowLayer';
 import { MainTitle } from '../../PrtsInterface/components/MainTitle';
 import { NavigationLayer } from '../../PrtsInterface/components/NavigationLayer';
@@ -42,7 +41,6 @@ export const HeroLayer = ({
             style={{ transformStyle: 'preserve-3d' }}
             className="w-full h-full absolute inset-0 flex items-center justify-center origin-center"
         >
-            <FloorPlane />
             <ShadowLayer contentX={contentX} contentY={contentY} />
             <MainTitle skipIntro={skipIntro} />
             <NavigationLayer
