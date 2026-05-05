@@ -350,11 +350,13 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // 空気遠近法レイヤー: 3D シーンの外側に置いて backdrop-blur を効かせる。
     // (preserve-3d 配下では backdrop-filter が無視されるため、frosted glass を
     // ちゃんと出すには 2D レイヤーで合成する必要がある)
-    // cameraProgress 後半 (Swept 抜け 〜 CTA 到達) でじわっと不透明度を上げて、
-    // 「進むほど世界に空気の層が増えていく」アンビエントなフェードに。
+    //
+    // About (progress 0.8) 停止時はまだ 0、About → CTA 遷移中 (0.85〜0.97)
+    // にじわっと不透明度を上げる。CTA カード本体の fade-in (0.86〜0.95) より
+    // ほんのわずか先行させて、空気が満ちてからカードが浮かぶ順にする。
     const atmosphericOpacity = useTransform(
         cameraProgress,
-        [0.55, 0.95],
+        [0.85, 0.97],
         [0, 1],
     );
 
