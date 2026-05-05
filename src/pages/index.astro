@@ -2,7 +2,7 @@
 import { getCollection } from "astro:content";
 import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
-import { HomeScene } from "../components/pages/home/HomeScene";
+import { HomeFlat } from "../components/pages/home/HomeFlat";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
@@ -123,7 +123,7 @@ const personSchema = {
 	</head>
 	<body class="min-h-screen">
 		<SiteHeader />
-		<HomeScene client:only="react" updates={latestUpdates} />
+		<HomeFlat client:only="react" updates={latestUpdates} />
 		<MarkdownActions client:load transition:persist="md-actions" />
 		<WebGLTransition
 			client:only="react"
