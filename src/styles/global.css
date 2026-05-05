@@ -200,6 +200,35 @@
 }
 
 /* -----------------------------------------------------------------------------
+   HomeStack: scroll-driven reveal の初期状態
+   GSAP ScrollTrigger で opacity / transform をアニメするまで隠しておく。
+   reduced-motion 環境では JS scene 自体が組まれないので、CSS で最終状態に戻す。
+   ----------------------------------------------------------------------------- */
+[data-home-stack] [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  will-change: opacity, transform;
+}
+[data-home-stack] [data-reveal-x] {
+  opacity: 0;
+  transform: translateX(-12px);
+  will-change: opacity, transform;
+}
+[data-home-stack] [data-split-chars][data-anim] > span {
+  opacity: 0;
+  transform: translateY(-110%);
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-home-stack] [data-reveal],
+  [data-home-stack] [data-reveal-x],
+  [data-home-stack] [data-split-chars][data-anim] > span {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
    Intro skip overrides
    2 回目以降の訪問では <html> に .prts-skip-intro が付与される (index.astro 参照)。
    SSR HTML の inline style に焼き付いた CSS animation を !important で上書きし、
