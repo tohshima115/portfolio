@@ -331,9 +331,21 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                         className="absolute inset-0 origin-center"
                     >
                         {/* Hero (centered) */}
+                        {/*
+                          NavigationLayer (translateZ 160) / MainTitle (80) など
+                          HeroLayer 内の 3D 子要素を camera の 3D 空間に正しく
+                          載せるため preserve-3d を維持する。flat にすると
+                          HeroLayer 全体が 1 枚の 2D タイルに焼かれ、camera の
+                          rotateX (マウス連動 spring) で毎フレーム射影が微小に
+                          変わるたびに RSS / 各 NAV ボタンのテキスト/枠が
+                          subpixel rounding でチラついて見える。
+                        */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
-                            style={{ transform: 'translate3d(0, 0, 0)' }}
+                            style={{
+                                transform: 'translate3d(0, 0, 0)',
+                                transformStyle: 'preserve-3d',
+                            }}
                         >
                             <HeroLayer
                                 skipIntro={skipIntro}
