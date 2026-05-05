@@ -347,6 +347,17 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // ContourBackground 側の transform 互換のため motion value としては残す。
     const cameraRY = useTransform(cameraProgress, () => 0);
 
+    // 空気遠近法レイヤー: 3D シーンの外側に置いて backdrop-blur を効かせる。
+    // (preserve-3d 配下では backdrop-filter が無視されるため、frosted glass を
+    // ちゃんと出すには 2D レイヤーで合成する必要がある)
+    // cameraProgress 後半 (Swept 抜け 〜 CTA 到達) でじわっと不透明度を上げて、
+    // 「進むほど世界に空気の層が増えていく」アンビエントなフェードに。
+    const atmosphericOpacity = useTransform(
+        cameraProgress,
+        [0.55, 0.95],
+        [0, 1],
+    );
+
     return (
         <section
             ref={scrollRef}
@@ -473,17 +484,41 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: Hero と同じ X / Y のまま Z (奥行き) だけ視点側に持ち上げ。地面なし */}
-                        <div
-                            className="absolute inset-0 flex items-center justify-center"
-                            style={{
-                                transform: `translate3d(${SECTION_X[5]}px, ${SECTION_Y_VH[5]}vh, ${SECTION_Z[5]}px) rotateZ(${SECTION_RZ[5]}deg)`,
-                            }}
-                        >
-                            <ContactCTALayer progress={cameraProgress} />
-                        </div>
+                        {/*
+                          CTA は 3D シーン上に物体を持たない。ContactCTALayer は
+                          backdrop-filter (= glassmorphism のぼかし) を使うが、
+                          preserve-3d 配下では backdrop-filter が無視されるブラウザ
+                          実装の制約 (Chrome / Safari) があるため、CTA カードと
+                          周囲の frosted パネルは 3D シーンの外側に出して 2D
+                          レイヤーとして合成する。
+                          SECTION_*[5] の値は camera のアニメーション目標として
+                          残してあるので、camera は progress 1.0 で (0, 0, -500) に
+                          動き、世界が奥に引いていく演出はそのまま生きる。
+                        */}
                     </motion.div>
                 </motion.div>
+
+                {/*
+                  空気遠近法 (atmospheric perspective) パネル:
+                  3D シーンの外に置いた 2D レイヤーなので backdrop-blur がちゃんと
+                  効く。Swept 後半 (cameraProgress 0.55) から CTA 到達 (0.95) に
+                  かけてじわっと不透明度を上げ、世界が白い frosted glass の向こうに
+                  沈んでいく "進むほど空気の層が増える" 表現に。
+                */}
+                <motion.div
+                    style={{ opacity: atmosphericOpacity }}
+                    className="absolute inset-0 pointer-events-none bg-white/70 backdrop-blur-2xl"
+                    aria-hidden
+                />
+
+                {/*
+                  CTA カードも 3D シーンの外側 2D オーバーレイ。
+                  glassmorphism (backdrop-blur-2xl) がここでは効くようになる。
+                  内部で cameraProgress を見て opacity / pointerEvents を制御。
+                */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <ContactCTALayer progress={cameraProgress} />
+                </div>
 
                 {/* セクション間スナップ用ゲージ + 現在位置ドット */}
                 <SnapHud
