@@ -273,36 +273,44 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return stops[stops.length - 1];
     };
 
-    // 各セクションを (0, 0) を中心にした円の "中" にバラ撒く。
-    // Y を単調増加にせず、負値 (= Hero より上) も取らせる。scroll は
-    // snap 方式で「次に進む」トリガにすぎないので、camera が上に飛んでも
-    // 動作上は問題ない (世界全体が画面上を流れるだけ)。
+    // 各セクションを (0, 0) を中心にした円の "中" にランダムにバラ撒く。
+    // Y は単調増加にせず負値も取らせる (= Hero より上にも置く)。scroll は
+    // snap 方式で「次に進む」トリガにすぎないので、camera が上下どちらに
+    // 飛んでも動作上は問題ない (世界全体が画面上を流れるだけ)。
     //
-    // 配置の意図 (X は px、Y は vh で表記、原点は Hero):
-    //   index 0  Hero        ( 0,     0vh )  原点
-    //   index 1  AIChatClip  (-560, -38vh)  左上、遠目
-    //   index 2  PLDashboard ( 540, -36vh)  右上 (Hero 上を大きく対角横断)
-    //   index 3  Swept       (-480,  40vh)  左下、遠目
-    //   index 4  About       ( 560,  38vh)  右下、遠目
-    //   index 5  CTA         (-120, -52vh)  上、中央寄り (Y は最も上)
+    // 配置の狙い:
+    //   - X / Y / rotateZ それぞれ符号の規則性 (左→右→左 みたいな alternation)
+    //     を意識して崩す。連続する 2 セクションが同じ側 (両方とも左) に
+    //     並ぶケースもわざと混ぜる。
+    //   - 原点からの距離もバラつかせる (近い 1 つ + 遠い 4 つ など)。
+    //   - rotateZ の magnitude も ±8°〜±32° と幅広くして、強い回転と
+    //     ほぼ正立を混在させる。
     //
-    // (0, 0) からの距離はおよそ 45〜65vh 相当 (px と vh を 1vh ≒ 8px 換算で
-    // ざっくり同列に評価) の範囲で、画面サイズの "ある半径の円の中" に納まる。
+    // 配置 (X は px、Y は vh、rotateZ は deg、原点は Hero):
+    //   index 0  Hero        ( 0,     0vh,   0deg)  原点
+    //   index 1  AIChatClip  (-660, -30vh, -25deg)  左やや上
+    //   index 2  PLDashboard (-460,  40vh,  18deg)  左下 (1 から続けて左側)
+    //   index 3  Swept       ( 590, -52vh,  32deg)  右上、ぐるっと反対側へ
+    //   index 4  About       ( 130, -58vh,  -8deg)  上中央寄り (3 から近め)
+    //   index 5  CTA         ( 460,  48vh, -22deg)  右下
+    //
+    // X 符号:  0, -, -, +, +, +  (2 連続左 → 3 連続右、alternation を崩す)
+    // Y 符号:  0, -, +, -, -, +  (見るたびに変わる)
+    // RZ 符号: 0, -, +, +, -, -  (規則的な ± 反復にしない)
+    //
+    // (0, 0) からの距離は 130〜660 px (1vh ≒ 8px 換算で雑に同列評価して
+    // およそ 480〜720 相当) と、近いものと遠いものを混在させて画面サイズの
+    // "ある半径の円の中" にきれいに収まりすぎないようにしてある。
     //
     // モバイル / reduced motion (ampXY = 0) のときは中心散布の意味が
     // なくなる + 横ジャンプが視覚的にうるさいので、X を潰し Y を 80vh
     // 等間隔の単調増加に切り替えて素直な縦スクロールに退化させる。
     const SECTION_X =
-        ampXY > 0 ? [0, -560, 540, -480, 560, -120] : [0, 0, 0, 0, 0, 0];
+        ampXY > 0 ? [0, -660, -460, 590, 130, 460] : [0, 0, 0, 0, 0, 0];
     const SECTION_Y_VH =
-        ampXY > 0 ? [0, -38, -36, 40, 38, -52] : [0, 80, 160, 240, 320, 400];
-    // 各セクションの "天地" (画面平面内 = Z 軸まわりの回転)。Hero は 0 で
-    // 据え置き、他のセクションは ±15〜20° と強めに傾けて付箋がランダムに
-    // 貼ってある雰囲気にする。camera 側で逆方向に回すので停止時は必ず
-    // 正面に揃う = 読みやすさ維持。
-    // モバイル / reduced motion (ampXY=0) のときは全 0 にして傾きを消す。
+        ampXY > 0 ? [0, -30, 40, -52, -58, 48] : [0, 80, 160, 240, 320, 400];
     const SECTION_RZ =
-        ampXY > 0 ? [0, -18, 16, -14, 17, -10] : [0, 0, 0, 0, 0, 0];
+        ampXY > 0 ? [0, -25, 18, 32, -8, -22] : [0, 0, 0, 0, 0, 0];
 
     const cameraX = useTransform(cameraProgress, (p) =>
         -interp(p, SECTION_X),
@@ -407,7 +415,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             />
                         </div>
 
-                        {/* AIChatClip: 左上 (CCW に少し傾ける) */}
+                        {/* AIChatClip: 左やや上、強めの CCW */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
@@ -418,7 +426,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <AIChatClipLayer progress={cameraProgress} />
                         </div>
 
-                        {/* PL Dashboard: 右上 (CW に傾ける) */}
+                        {/* PL Dashboard: 左下 (1 から連続して左側に置く / CW) */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
@@ -429,7 +437,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <PLDashboardLayer progress={cameraProgress} />
                         </div>
 
-                        {/* Swept: 左下 (CCW) */}
+                        {/* Swept: 右上、画面を斜めに大横断 + 強い CW */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
@@ -440,7 +448,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <SweptLayer progress={cameraProgress} />
                         </div>
 
-                        {/* About: 右下 (CW) */}
+                        {/* About: 上中央寄り (Swept から近距離) / 弱い CCW */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
@@ -451,7 +459,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                             <AboutLayer progress={cameraProgress} />
                         </div>
 
-                        {/* CTA: 中央寄り、原点近くへ帰る (CCW) */}
+                        {/* CTA: 右下 (CCW)、原点には戻らず締め */}
                         <div
                             className="absolute inset-0 flex items-center justify-center"
                             style={{
