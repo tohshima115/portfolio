@@ -72,31 +72,24 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const phaseRef = useRef<IntroPhase>('intro');
     phaseRef.current = phase;
 
-    // intro マウント時に window スクロールを禁止し、フェーズ完了で解放
+    // intro マウント時:
+    //   ・html/body の overflow は触らない (scrollbar は常時表示したい)
+    //   ・wheel/touch/key だけ useFirstScrollTrigger で捕食し、ネイティブ scroll は起きない
+    //   ・scrollbar の drag だけは捕食できないので、scroll イベントを検知して
+    //     scrollY > 0 になったら triggerHardCut (= Statement へ進む) を発火する
     useEffect(() => {
-        const html = document.documentElement;
-        const prevHtmlOverflow = html.style.overflow;
-        const prevBodyOverflow = document.body.style.overflow;
-        html.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
         document.body.dataset.homePhase = 'intro';
         window.scrollTo(0, 0);
         return () => {
-            html.style.overflow = prevHtmlOverflow;
-            document.body.style.overflow = prevBodyOverflow;
             delete document.body.dataset.homePhase;
         };
     }, []);
 
     const releaseScroll = useCallback(() => {
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
         document.body.dataset.homePhase = 'scroll';
     }, []);
 
     const lockScroll = useCallback(() => {
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
         document.body.dataset.homePhase = 'intro';
         window.scrollTo(0, 0);
     }, []);
@@ -144,6 +137,20 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         window.addEventListener('home:return-to-hero', onReturn);
         return () => window.removeEventListener('home:return-to-hero', onReturn);
     }, [triggerToHero]);
+
+    // intro 中の scrollbar drag を検知して Statement へ進める。
+    // wheel/touch/key は useFirstScrollTrigger が preventDefault で捕食しているため、
+    // ここで検知される scrollY 変動は実質 scrollbar drag のみ。
+    useEffect(() => {
+        const onScroll = () => {
+            if (phaseRef.current !== 'intro') return;
+            if (window.scrollY > 4) {
+                triggerHardCut();
+            }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, [triggerHardCut]);
 
     useFirstScrollTrigger({
         onTrigger: triggerHardCut,
