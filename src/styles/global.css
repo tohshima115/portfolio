@@ -167,6 +167,38 @@
   }
 }
 
+/* HomeStack: ScanLines 走査エフェクト (画面上→下を 1 本の細いラインが移動) */
+@keyframes scan-down {
+  from {
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    transform: translate3d(0, 100vh, 0);
+  }
+}
+
+/* HomeStack: CTA 等で使うリングパルス (同心円の opacity 振幅) */
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.12;
+  }
+}
+
+/* HomeStack: About の Available 行ハイライト (accent パルス) */
+@keyframes available-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb, 218 178 64), 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(var(--color-accent-rgb, 218 178 64), 0.18);
+  }
+}
+
 /* -----------------------------------------------------------------------------
    Intro skip overrides
    2 回目以降の訪問では <html> に .prts-skip-intro が付与される (index.astro 参照)。
