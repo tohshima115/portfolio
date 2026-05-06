@@ -1,141 +1,116 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { CornerLabel } from '../primitives/CornerLabel';
 import { SplitChars } from '../primitives/SplitChars';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
 
 // WorksLead (Cloudflare Product Engineer) と WorksFlagshipPart (AIChatClip)
-// の間に挟むトランジション。File-folder シルエットが上下からザーッとスイープイン
-// → 中央が水平スリットとして残り、そこに WORKS ヒーローが立ち上がる。
+// の間に挟むトランジション。public/folder.svg を mask-image で並べ、上下から
+// ザーッと zip in → 中央スリットに WORKS ヒーロー + プロジェクト 3 件が立ち上がる。
 //
-// 構造:
-//   - top row / bottom row が各 18 カラムずつ。各カラムは「本体 (高さ可変)」と
-//     「タブ (内側に突き出す凸)」で 1 枚のフォルダシルエットを形成
-//   - GSAP ScrollTrigger pin (+=160vh) で scrub
-//     0.00 — 0.05 : 余白 (Hero 完全消失を見届ける)
-//     0.05 — 0.50 : top/bottom カラムが画面外から zip in (stagger)
-//     0.45 — 0.70 : sublabel + meta が水平スリット内で立ち上がる
-//     0.55 — 0.85 : 巨大 WORKS ヘッダの char stagger
-//     0.80 — 1.00 : プロジェクトリスト (3 件) の reveal
+// アニメは GSAP ScrollTrigger pin (+=160vh) scrub:
+//   0.00 — 0.05 : 余白
+//   0.05 — 0.45 : top タイル群が上から落下 (stagger 0.025 秒、tight)
+//   0.10 — 0.50 : bottom タイル群が下からせり上がる
+//   0.50 — 0.62 : sublabel + 左右ルール
+//   0.55 — 0.85 : WORKS char stagger
+//   0.80 — 1.00 : meta + project pin 3 件
 //
 // reduced-motion: pin/timeline をスキップし最終状態の静的版を返す。
 
-interface FolderCol {
-    /** カラムの横幅 (vw) */
+// public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
+const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
+    <svg
+        viewBox="0 0 709 567"
+        preserveAspectRatio="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+        aria-hidden
+    >
+        <g transform="matrix(1,0,0,1,-1228.346457,-1086.562999)">
+            <path
+                fill="currentColor"
+                d="M1228.346,1653.543L1937.008,1653.543L1937.008,1181.102C1937.008,1181.102 1678.894,1180.896 1606.299,1181.102C1487.818,1181.44 1535.151,1086.851 1417.323,1086.614C1359.999,1086.499 1228.346,1086.614 1228.346,1086.614L1228.346,1653.543Z"
+            />
+        </g>
+    </svg>
+);
+
+interface FolderTile {
+    /** 左端 (vw 文字列、負も可) */
+    x: string;
+    /** 自身の高さに対する露出量 (% 文字列、negative inset)。-50% なら半分が枠外 */
+    inset: string;
+    /** 横幅 (vw) */
     w: number;
-    /** 本体高さ (vh)。スリット側エッジまでの距離 */
-    h: number;
-    /** 本体内インセット (vh)。0 でない場合、本体のスリット側に切り欠き段ができる */
-    notch?: number;
-    /** タブ: スリット側にさらに突出する凸 */
-    tab?: {
-        /** カラム横幅に対する開始位置 (0..1) */
-        x: number;
-        /** カラム横幅に対する幅 (0..1) */
-        w: number;
-        /** タブ追加高さ (vh) */
-        h: number;
-    };
+    /** 横方向反転で同じ SVG にバリエーション */
+    flipX?: boolean;
+    /** 個別 stagger オーバーライド (0..1) */
+    delay?: number;
 }
 
-// 上下対称ではなくバラつきを持たせる。合計 w がほぼ 100vw を超えるよう設計。
-const TOP_COLS: FolderCol[] = [
-    { w: 7, h: 22, tab: { x: 0.15, w: 0.55, h: 2.4 } },
-    { w: 4, h: 30 },
-    { w: 6.5, h: 18, tab: { x: 0.4, w: 0.45, h: 1.8 }, notch: 4 },
-    { w: 3.5, h: 33, tab: { x: 0.1, w: 0.6, h: 2.2 } },
-    { w: 8, h: 25 },
-    { w: 5, h: 32, tab: { x: 0.55, w: 0.4, h: 2.5 } },
-    { w: 6, h: 19, notch: 5 },
-    { w: 4.5, h: 28, tab: { x: 0.05, w: 0.45, h: 1.6 } },
-    { w: 7.5, h: 24, tab: { x: 0.5, w: 0.4, h: 2.2 } },
-    { w: 3, h: 35 },
-    { w: 5.5, h: 21, tab: { x: 0.2, w: 0.55, h: 2 }, notch: 3 },
-    { w: 6, h: 30, tab: { x: 0.0, w: 0.5, h: 1.4 } },
-    { w: 4, h: 26 },
-    { w: 7, h: 18, tab: { x: 0.4, w: 0.5, h: 2.6 } },
-    { w: 5, h: 33, tab: { x: 0.15, w: 0.5, h: 1.8 } },
-    { w: 6.5, h: 23, notch: 4 },
-    { w: 4.5, h: 28, tab: { x: 0.5, w: 0.45, h: 2 } },
-    { w: 7, h: 20 },
+// 上下それぞれ 8 タイル。横幅と inset でランダム感を演出。
+//
+// 配置イメージ:
+//   - TOP 行: scaleY(-1) で天地反転 → タブが「下」を向き、body が viewport の
+//     上端まで伸びる。スクショ参考の「タブが中央スリットへ向かう」レイアウト。
+//   - BOTTOM 行: 自然な向き (scaleY 1) で底辺アンカ → タブが「上」を向き、
+//     body が下端まで伸びる。
+const TOP_TILES: FolderTile[] = [
+    { x: '-3vw', inset: '0%', w: 18, delay: 0.00 },
+    { x: '11vw', inset: '0%', w: 14, flipX: true, delay: 0.18 },
+    { x: '22vw', inset: '0%', w: 20, delay: 0.06 },
+    { x: '38vw', inset: '0%', w: 16, flipX: true, delay: 0.24 },
+    { x: '50vw', inset: '0%', w: 22, delay: 0.10 },
+    { x: '68vw', inset: '0%', w: 14, flipX: true, delay: 0.28 },
+    { x: '78vw', inset: '0%', w: 18, delay: 0.04 },
+    { x: '90vw', inset: '0%', w: 16, flipX: true, delay: 0.20 },
 ];
 
-// bottom はオフセットを変えてバラつかせる
-const BOTTOM_COLS: FolderCol[] = [
-    { w: 5, h: 24, tab: { x: 0.2, w: 0.5, h: 2.2 } },
-    { w: 7, h: 30, notch: 3 },
-    { w: 4.5, h: 19, tab: { x: 0.45, w: 0.45, h: 1.6 } },
-    { w: 6, h: 27 },
-    { w: 4, h: 33, tab: { x: 0.05, w: 0.55, h: 2.4 } },
-    { w: 7.5, h: 21, tab: { x: 0.4, w: 0.4, h: 1.8 } },
-    { w: 5, h: 28, notch: 5 },
-    { w: 6.5, h: 18, tab: { x: 0.15, w: 0.55, h: 2.6 } },
-    { w: 3.5, h: 32 },
-    { w: 5.5, h: 22, tab: { x: 0.5, w: 0.4, h: 2 } },
-    { w: 4.5, h: 30, tab: { x: 0.1, w: 0.5, h: 1.4 } },
-    { w: 7, h: 24, notch: 4 },
-    { w: 3, h: 33, tab: { x: 0.2, w: 0.55, h: 2.2 } },
-    { w: 6, h: 19 },
-    { w: 5, h: 28, tab: { x: 0.5, w: 0.4, h: 2.4 } },
-    { w: 7.5, h: 22, tab: { x: 0.05, w: 0.5, h: 1.8 }, notch: 3 },
-    { w: 7, h: 31 },
-    { w: 6, h: 25, tab: { x: 0.35, w: 0.5, h: 2 } },
+const BOTTOM_TILES: FolderTile[] = [
+    { x: '-3vw', inset: '0%', w: 16, flipX: true, delay: 0.10 },
+    { x: '10vw', inset: '0%', w: 20, delay: 0.26 },
+    { x: '26vw', inset: '0%', w: 14, flipX: true, delay: 0.16 },
+    { x: '36vw', inset: '0%', w: 22, delay: 0.04 },
+    { x: '54vw', inset: '0%', w: 18, flipX: true, delay: 0.22 },
+    { x: '68vw', inset: '0%', w: 16, delay: 0.32 },
+    { x: '80vw', inset: '0%', w: 20, flipX: true, delay: 0.12 },
+    { x: '94vw', inset: '0%', w: 14, delay: 0.30 },
 ];
 
-// 1 カラム描画。row='top' で本体が上端から下に伸び、タブはさらに下 (スリット側) へ突出。
-// row='bottom' は上下反転。
-// 初期非表示は `data-row` 経由の opacity:0 + GSAP の gsap.set/fromTo で yPercent を
-// 設定する。ここで inline transform を当てると gsap が % を px に正規化して固定して
-// しまうため、transform は当てない。
-const FolderColumn: React.FC<{
-    col: FolderCol;
+// folder.svg を mask-image でフレーム描画する 1 タイル。
+// 親側で row='top' なら top:-${inset} で吊り下げ、row='bottom' なら bottom:-${inset} +
+// scaleY(-1) で底面に反転配置。scale 値は data 属性で setup に渡す。
+const FolderTileEl: React.FC<{
+    tile: FolderTile;
     row: 'top' | 'bottom';
-}> = ({ col, row }) => {
+}> = ({ tile, row }) => {
     const isTop = row === 'top';
-    const tabHeight = col.tab?.h ?? 0;
+    const sx = tile.flipX ? -1 : 1;
+    // top 行はタブが「下」(中央側) を向くよう天地反転、bottom 行は自然な向き。
+    const sy = isTop ? -1 : 1;
 
     return (
         <div
-            data-folder-col
-            className="relative shrink-0"
+            data-folder-tile
+            data-tile-delay={tile.delay ?? 0}
+            data-sx={sx}
+            data-sy={sy}
             style={{
-                width: `${col.w}vw`,
-                height: '100%',
+                position: 'absolute',
+                left: tile.x,
+                [isTop ? 'top' : 'bottom']: `-${tile.inset}`,
+                width: `${tile.w}vw`,
+                aspectRatio: '709 / 567',
+                color: 'var(--color-foreground)',
+                lineHeight: 0,
+                // reduced-motion / gsap 未ロード時の最終状態を保つための初期値。
+                // gsap setup 時に gsap.set で上書きされる。
+                transform: `scale(${sx}, ${sy})`,
                 willChange: 'transform',
             }}
         >
-            {/* 本体 */}
-            <div
-                className="absolute left-0 right-0 bg-foreground"
-                style={{
-                    [isTop ? 'top' : 'bottom']: 0,
-                    height: `${col.h}vh`,
-                }}
-            />
-            {/* notch: 本体のスリット側エッジに段差をつける (本体右半分を短くする) */}
-            {col.notch && col.notch > 0 && (
-                <div
-                    className="absolute bg-background"
-                    style={{
-                        [isTop ? 'top' : 'bottom']: `${col.h - col.notch}vh`,
-                        height: `${col.notch}vh`,
-                        left: '50%',
-                        right: 0,
-                    }}
-                />
-            )}
-            {/* tab: 本体スリット側エッジから更に突出 */}
-            {col.tab && (
-                <div
-                    className="absolute bg-foreground"
-                    style={{
-                        [isTop ? 'top' : 'bottom']: `${col.h}vh`,
-                        height: `${tabHeight}vh`,
-                        left: `${col.tab.x * 100}%`,
-                        width: `${col.tab.w * 100}%`,
-                    }}
-                />
-            )}
+            <FolderShape className="block w-full h-full" />
         </div>
     );
 };
@@ -150,23 +125,17 @@ export const WorksHeroTransition: React.FC = () => {
     const containerRef = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
 
-    // stagger で使うため、列インデックスを seed とした若干のランダム delay を持つ
-    const topDelays = useMemo(
-        () => TOP_COLS.map((_, i) => (i * 17) % 100 / 100),
-        [],
-    );
-    const bottomDelays = useMemo(
-        () => BOTTOM_COLS.map((_, i) => (i * 23 + 11) % 100 / 100),
-        [],
-    );
-
     useScrollScene(containerRef, {
         disabled: reduced,
         setup: ({ gsap, container }) => {
             const pinTarget = container.querySelector<HTMLElement>('[data-pin-inner]');
             if (!pinTarget) return;
-            const topCols = container.querySelectorAll<HTMLElement>('[data-row="top"] [data-folder-col]');
-            const bottomCols = container.querySelectorAll<HTMLElement>('[data-row="bottom"] [data-folder-col]');
+            const topTiles = container.querySelectorAll<HTMLElement>(
+                '[data-row="top"] [data-folder-tile]',
+            );
+            const bottomTiles = container.querySelectorAll<HTMLElement>(
+                '[data-row="bottom"] [data-folder-tile]',
+            );
             const sublabel = container.querySelector('[data-trans-sublabel]');
             const headingChars = container.querySelectorAll(
                 '[data-trans-heading] [data-split-chars][data-anim] > span',
@@ -188,67 +157,60 @@ export const WorksHeroTransition: React.FC = () => {
                 },
             });
 
-            // GSAP は CSS / inline の translateY(%) を px に正規化して `y` に
-            // 入れることがあり、その状態で yPercent を動かしても残った y(px) で
-            // 元の位置に戻ってしまう。setup 時点で y を 0 にリセットしつつ
-            // yPercent を明示する。
-            gsap.set(topCols, { yPercent: -110, y: 0 });
-            gsap.set(bottomCols, { yPercent: 110, y: 0 });
+            // GSAP に scale / yPercent を完全管理させる。inline transform を
+            // 持たせず data-sx / data-sy 経由で初期 scale を渡す。
+            topTiles.forEach((el) => {
+                const sx = Number(el.getAttribute('data-sx')) || 1;
+                const sy = Number(el.getAttribute('data-sy')) || -1;
+                gsap.set(el, { yPercent: -180, y: 0, scaleX: sx, scaleY: sy });
+            });
+            bottomTiles.forEach((el) => {
+                const sx = Number(el.getAttribute('data-sx')) || 1;
+                const sy = Number(el.getAttribute('data-sy')) || 1;
+                gsap.set(el, { yPercent: 180, y: 0, scaleX: sx, scaleY: sy });
+            });
             gsap.set(headingChars, { yPercent: -110, y: 0, opacity: 0 });
 
-            // 0.05 — 0.50: top/bottom カラムが画面外から zip in。shuffled delay で
-            // 「ザザッと同時に複数着地」する印象にする。
-            topCols.forEach((el, i) => {
+            // top タイルが上から落下。delay を data 属性から拾って「ザザッ」感を作る。
+            topTiles.forEach((el) => {
+                const d = Number(el.getAttribute('data-tile-delay')) || 0;
                 tl.fromTo(
                     el,
-                    { yPercent: -110, y: 0 },
+                    { yPercent: -180, y: 0 },
                     {
                         yPercent: 0,
                         y: 0,
-                        duration: 0.4,
+                        duration: 0.42,
                         ease: 'power3.out',
                     },
-                    0.05 + topDelays[i] * 0.35,
+                    0.05 + d,
                 );
             });
-            bottomCols.forEach((el, i) => {
+            bottomTiles.forEach((el) => {
+                const d = Number(el.getAttribute('data-tile-delay')) || 0;
                 tl.fromTo(
                     el,
-                    { yPercent: 110, y: 0 },
+                    { yPercent: 180, y: 0 },
                     {
                         yPercent: 0,
                         y: 0,
-                        duration: 0.4,
+                        duration: 0.42,
                         ease: 'power3.out',
                     },
-                    0.05 + bottomDelays[i] * 0.35,
+                    0.10 + d,
                 );
             });
 
-            // 0.50 — 0.65: sublabel
             tl.to(
                 sublabel,
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.3,
-                    ease: 'power2.out',
-                },
+                { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' },
                 0.5,
             );
-
-            // 0.50 — 0.62: 中央の左右ルール (水平線が中央から外側に伸びる)
             tl.to(
                 [ruleLeft, ruleRight],
-                {
-                    scaleX: 1,
-                    duration: 0.35,
-                    ease: 'power2.out',
-                },
+                { scaleX: 1, duration: 0.35, ease: 'power2.out' },
                 0.52,
             );
-
-            // 0.55 — 0.85: 巨大 WORKS char stagger (上から落ちる)。
             tl.fromTo(
                 headingChars,
                 { opacity: 0, yPercent: -110, y: 0 },
@@ -262,29 +224,14 @@ export const WorksHeroTransition: React.FC = () => {
                 },
                 0.55,
             );
-
-            // 0.80 — 0.92: meta
             tl.to(
                 meta,
-                {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.3,
-                    ease: 'power2.out',
-                },
+                { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' },
                 0.8,
             );
-
-            // 0.85 — 1.0: project pin 3 件 stagger
             tl.to(
                 pins,
-                {
-                    opacity: 1,
-                    y: 0,
-                    stagger: 0.06,
-                    duration: 0.35,
-                    ease: 'power2.out',
-                },
+                { opacity: 1, y: 0, stagger: 0.06, duration: 0.35, ease: 'power2.out' },
                 0.85,
             );
         },
@@ -309,35 +256,34 @@ export const WorksHeroTransition: React.FC = () => {
                     className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:block z-30 font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground/40"
                     style={{ writingMode: 'vertical-rl' }}
                 >
-                    SWEEP / FILE-FOLDER / 18×2
+                    SWEEP / FOLDER / 12
                 </div>
 
-                {/* top folder row: 上端 0 から 40vh ぶんを覆う領域 */}
+                {/* top tiles container: 上半分を覆う領域 */}
                 <div
                     aria-hidden
                     data-row="top"
-                    className="absolute top-0 left-0 right-0 flex h-[40vh] z-10 pointer-events-none"
+                    className="absolute top-0 left-0 right-0 h-[55vh] z-10 pointer-events-none"
                 >
-                    {TOP_COLS.map((col, i) => (
-                        <FolderColumn key={`t-${i}`} col={col} row="top" />
+                    {TOP_TILES.map((tile, i) => (
+                        <FolderTileEl key={`t-${i}`} tile={tile} row="top" />
                     ))}
                 </div>
 
-                {/* bottom folder row */}
+                {/* bottom tiles container */}
                 <div
                     aria-hidden
                     data-row="bottom"
-                    className="absolute bottom-0 left-0 right-0 flex h-[40vh] z-10 pointer-events-none"
+                    className="absolute bottom-0 left-0 right-0 h-[55vh] z-10 pointer-events-none"
                 >
-                    {BOTTOM_COLS.map((col, i) => (
-                        <FolderColumn key={`b-${i}`} col={col} row="bottom" />
+                    {BOTTOM_TILES.map((tile, i) => (
+                        <FolderTileEl key={`b-${i}`} tile={tile} row="bottom" />
                     ))}
                 </div>
 
-                {/* center slit: 上下フォルダの間に残る水平帯。z-20 で folders より手前 */}
+                {/* center slit: 上下フォルダの間に残る水平帯 */}
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-20 px-6 md:px-12">
                     <div className="max-w-7xl mx-auto">
-                        {/* sublabel + 左右に伸びるルール */}
                         <div className="flex items-center gap-4 mb-6 md:mb-8">
                             <span
                                 aria-hidden
@@ -365,7 +311,6 @@ export const WorksHeroTransition: React.FC = () => {
                             />
                         </div>
 
-                        {/* 巨大 WORKS ヘッダ */}
                         <h2
                             data-trans-heading
                             className="font-sans font-black text-foreground text-center text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]"
@@ -377,7 +322,6 @@ export const WorksHeroTransition: React.FC = () => {
                             />
                         </h2>
 
-                        {/* meta + project pin 3 件 */}
                         <div className="mt-6 md:mt-8 flex flex-col items-center gap-5">
                             <p
                                 data-trans-meta
