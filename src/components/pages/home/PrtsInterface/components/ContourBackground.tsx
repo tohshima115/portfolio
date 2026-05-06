@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { animate, type MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { contourVertex, contourFragment } from '../shaders/contour';
+import { dollyScale, dollyBlurPxBg, dollyOpacity } from '../../HomeIntro/dollyCurves';
 
 interface Props {
     /** イントロアニメをスキップするか (sessionStorage 由来) */
@@ -40,6 +41,11 @@ interface Props {
      * 渡さないと 0 (= 現状の Hero 単体表示) で完全に既存挙動を維持。
      */
     chaos?: MotionValue<number> | number;
+    /**
+     * 0..1 の Hero→Statement dolly 進捗。canvas DOM の scale + filter:blur に反映。
+     * 渡さないと scale=1 / blur=0 で完全に既存挙動を維持。
+     */
+    dolly?: MotionValue<number>;
 }
 
 const TARGET_OPACITY = 0.26;
@@ -189,6 +195,7 @@ export const ContourBackground: React.FC<Props> = ({
     cameraRY,
     cameraRZ,
     chaos,
+    dolly,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -217,6 +224,11 @@ export const ContourBackground: React.FC<Props> = ({
         const introX = INTRO_INITIAL.rotateX * (1 - p);
         const introY = INTRO_INITIAL.rotateY * (1 - p);
         const introS = INTRO_INITIAL.scale + (1 - INTRO_INITIAL.scale) * p;
+        // Hero→Statement dolly (案 G)。canvas DOM の scale に乗算で重ねる。
+        const d = dolly?.get() ?? 0;
+        const dScale = dollyScale(d);
+        const dBlur = dollyBlurPxBg(d);
+        const dOpa = dollyOpacity(d);
         // シーン階層 (HomeScene) と同じ順番:
         //   外側 wrapper: rotateZ(cameraRZ)
         //     内側 wrapper: translate3d(camera)
@@ -232,10 +244,14 @@ export const ContourBackground: React.FC<Props> = ({
             `rotateY(${cry}deg) ` +
             `rotateX(${mouseX + introX}deg) ` +
             `rotateY(${introY}deg) ` +
-            `scale(${introS})`;
-    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ]);
+            `scale(${introS * dScale})`;
+        // blur(0px) でも GPU レイヤを 1 枚作るブラウザがあるので閾値前は filter を空に。
+        c.style.filter = dBlur > 0.05 ? `blur(${dBlur.toFixed(2)}px)` : '';
+        c.style.opacity = dOpa < 0.999 ? dOpa.toFixed(3) : '';
+        c.style.willChange = d > 0.01 ? 'transform, filter, opacity' : '';
+    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly]);
 
-    // マウス連動 rotateX + camera motion values の購読
+    // マウス連動 rotateX + camera motion values + dolly の購読
     useEffect(() => {
         applyTransform();
         const unsubs: Array<() => void> = [];
@@ -245,10 +261,11 @@ export const ContourBackground: React.FC<Props> = ({
         if (cameraZ) unsubs.push(cameraZ.on('change', applyTransform));
         if (cameraRY) unsubs.push(cameraRY.on('change', applyTransform));
         if (cameraRZ) unsubs.push(cameraRZ.on('change', applyTransform));
+        if (dolly) unsubs.push(dolly.on('change', applyTransform));
         return () => {
             for (const u of unsubs) u();
         };
-    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, applyTransform]);
+    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly, applyTransform]);
 
     // イントロアニメ (3D シーンの inner intro container と同じタイミングで進行)
     useEffect(() => {

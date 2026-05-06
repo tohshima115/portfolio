@@ -4,6 +4,7 @@ import { ContourBackground } from '../PrtsInterface/components/ContourBackground
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
 import type { UpdateItem } from '../HomeScene/types';
+import { dollyScale, dollyBlurPx, dollyOpacity } from './dollyCurves';
 
 interface Props {
     skipIntro: boolean;
@@ -11,6 +12,11 @@ interface Props {
     active: boolean;
     /** 0..1 の遷移進捗。ContourBackground の uChaos uniform にバイパスする */
     chaos?: MotionValue<number> | number;
+    /**
+     * 0..1 の Hero→Statement dolly 進捗 (案 G)。motion.div に scale/filter/opacity を当てる。
+     * ContourBackground にもそのまま流して背景・前景の dolly を同期させる。
+     */
+    dolly?: MotionValue<number>;
 }
 
 // Hero 専用のフルスクリーンセクション。
@@ -22,7 +28,7 @@ interface Props {
 // ContourBackground の IntersectionObserver が inView=false を観測し、
 // frameloop="demand" の rAF ループ自体が止まる。
 
-export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos }) => {
+export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos, dolly }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     const mouseX = useMotionValue(0.5);
@@ -31,6 +37,17 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
     const rotateX = useSpring(useTransform(mouseY, [0, 1], [16, 24]), springConfig);
     const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
     const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
+
+    // dolly: 親が undefined を渡してきても hooks を呼ぶ必要があるので fallback を常に作る。
+    const dollyFallback = useMotionValue(0);
+    const dollySrc = dolly ?? dollyFallback;
+    const heroScale = useTransform(dollySrc, dollyScale);
+    const heroFilter = useTransform(dollySrc, (p: number) => {
+        const px = dollyBlurPx(p);
+        // blur(0px) でもレイヤを作るブラウザ対策。閾値前は filter を 'none' に。
+        return px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'none';
+    });
+    const heroOpacity = useTransform(dollySrc, dollyOpacity);
 
     const viewportRef = useRef<HTMLDivElement>(null);
     const rectRef = useRef<DOMRect | null>(null);
@@ -72,7 +89,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} chaos={chaos} />
+            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} chaos={chaos} dolly={dolly} />
             <HoverBackground hoveredItem={hoveredItem} />
 
             {/*
@@ -83,7 +100,14 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
               を camera の 3D 空間に正しく載せるため preserve-3d を維持する。
             */}
             <motion.div
-                style={{ rotateX, transformStyle: 'preserve-3d' }}
+                style={{
+                    rotateX,
+                    scale: heroScale,
+                    filter: heroFilter,
+                    opacity: heroOpacity,
+                    transformStyle: 'preserve-3d',
+                    willChange: 'transform, filter, opacity',
+                }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >
                 <div

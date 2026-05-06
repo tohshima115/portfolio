@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { animate, useMotionValue } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { HardCutOverlay, type CutPhase } from './HardCutOverlay';
@@ -8,25 +9,37 @@ import { useIntroProgress } from './useIntroProgress';
 
 export type { UpdateItem };
 
-// HomeIntro: Hero (常駐) + Hero→Statement への progressive ハードカット担当。
+// HomeIntro: Hero (常駐) + Hero→Statement への progressive 遷移担当。
 //
-// 案 B (アイリス・シャッター) を採用:
-//   - useIntroProgress が wheel/touch/key/scrollbar drag を蓄積し、
-//     0..1 の progress を吐く (SNAP_THRESHOLD_PX 蓄積で確定)
-//   - IntroShutterOverlay が上下から背景色のシャッターを progress * 50vh まで
-//     閉じてくる。境界に accent ラインが光る
-//   - progress 1.0 = 画面全体が背景色 → 即時 phase='scroll' (シャッター越しに
-//     Statement が現れる演出。白フラッシュは不要)
-//   - 入力が止まると蓄積が緩やかに 0 へ減衰 (= 誤操作でシャッターが開いて Hero に戻る)
-//   - Hero に戻る時 (triggerToHero) は 既存 white flash (HardCutOverlay) を維持
+// 2 つの variant を INTRO_VARIANT 定数で切替:
 //
-// outer は position:fixed (z-[5]) なので Astro レイアウトに高さを取らない。
-// HardCutOverlay は createPortal で document.body 直下にマウントされる。
+// 'dolly-blur' (案 G、現行デフォルト):
+//   - useIntroProgress の 0..1 を progressMv (MotionValue) に流す
+//   - HeroSection 側 motion.div / ContourBackground canvas に scale + filter:blur + opacity
+//   - 「カメラが引き → 閾値で強引き+ブラー → Statement に遷移」を CSS だけで実現
+//   - HUD overlay は出さない (純粋な視覚効果のみ)
+//   - 戻り (triggerToHero) は progressMv を 350ms で 0 へ tween 逆再生 (white flash 不使用)
+//
+// 'shutter' (案 B):
+//   - IntroShutterOverlay が上下から背景色のシャッターを progress * 50vh まで閉じてくる
+//   - progress 1.0 = 画面全体が背景色 → 即時 phase='scroll'
+//   - 戻り (triggerToHero) は white flash (HardCutOverlay) で切替
+//
+// 共通:
+//   - useIntroProgress が wheel/touch/key/scrollbar drag を蓄積し 0..1 progress を吐く
+//   - 入力が止まると蓄積が緩やかに 0 へ減衰
+//   - outer は position:fixed (z-[5]) で Astro レイアウトに高さを取らない
+//   - HardCutOverlay は createPortal で document.body 直下にマウント
 
-// triggerToHero (Hero 復帰) 時の white flash 用。
-// triggerHardCut (Statement へ) は shutter が閉じきっているので flash 不要。
+type IntroVariant = 'shutter' | 'dolly-blur';
+// IntroVariant 型に widening するため as でキャスト (両 variant の分岐が常に有効になるよう型を広げておく)。
+const INTRO_VARIANT = 'dolly-blur' as IntroVariant;
+
+// shutter variant の triggerToHero 時に使う white flash の duration。
 const COVER_MS = 90;
 const REVEAL_MS = 110;
+// dolly-blur variant の triggerToHero 時の dolly 逆再生 duration (ms 換算は ease 込みで体感 350ms)。
+const DOLLY_REVERSE_DURATION_S = 0.35;
 
 const readSkipIntroFlag = (): boolean => {
     if (typeof window === 'undefined') return false;
@@ -97,21 +110,23 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         window.scrollTo(0, 0);
     }, []);
 
-    // === progress 状態 (rAF throttle で setState 頻度抑制) ===
-    // 案 B では shader 連動 (chaos) は使わないので MotionValue は不要、
-    // shutter overlay 用の React state だけで完結する。
+    // === progress 状態 ===
+    // - progress (React state): shutter overlay の HUD 用 (rAF throttle で setState 頻度抑制)
+    // - progressMv (MotionValue): dolly-blur 用に 60fps 即時反映 (HeroSection / ContourBackground が購読)
     const [progress, setProgress] = useState(0);
     const progressRef = useRef(0);
+    const progressMv = useMotionValue(0);
     const setProgressRafRef = useRef<number | null>(null);
 
     const handleProgress = useCallback((p: number) => {
         progressRef.current = p;
+        progressMv.set(p);
         if (setProgressRafRef.current !== null) return;
         setProgressRafRef.current = requestAnimationFrame(() => {
             setProgressRafRef.current = null;
             setProgress(progressRef.current);
         });
-    }, []);
+    }, [progressMv]);
 
     useEffect(() => {
         return () => {
@@ -130,11 +145,34 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     }, [releaseScroll]);
 
     // === Hero に戻る (HomeStack 上端からの上方向 wheel/swipe で発火) ===
-    // 戻る時は white flash (HardCutOverlay) で切替: shutter は閉じてないため
+    // dolly-blur variant: progressMv を 0 へ tween し dolly+blur を逆再生 (white flash なし)
+    // shutter variant:    既存の cover/reveal white flash で切替
     const triggerToHero = useCallback(() => {
         if (phaseRef.current !== 'scroll') return;
+
+        if (INTRO_VARIANT === 'dolly-blur' && !reducedMotion) {
+            // 戻った瞬間 phase='intro' にして HeroSection を表示。
+            // dolly はまだ高い値なので「引いてボケた状態の Hero」が現れ、
+            // そこから 350ms かけて identity (= 元の Hero) に戻る。
+            lockScroll();
+            setPhase('intro');
+            const start = progressMv.get() || 1;
+            animate(start, 0, {
+                duration: DOLLY_REVERSE_DURATION_S,
+                ease: [0.83, 0, 0.17, 1],
+                onUpdate: (v) => {
+                    progressRef.current = v;
+                    progressMv.set(v);
+                    setProgress(v);
+                },
+            });
+            return;
+        }
+
+        // shutter variant / reduced-motion 共通の即時/フラッシュ復帰
         progressRef.current = 0;
         setProgress(0);
+        progressMv.set(0);
 
         if (reducedMotion) {
             lockScroll();
@@ -149,7 +187,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 setPhase('intro');
             }, REVEAL_MS);
         }, COVER_MS);
-    }, [reducedMotion, lockScroll]);
+    }, [reducedMotion, lockScroll, progressMv]);
 
     useEffect(() => {
         const onReturn = () => triggerToHero();
@@ -184,8 +222,9 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                     skipIntro={skipIntro}
                     updates={updates}
                     active={heroVisible}
+                    dolly={INTRO_VARIANT === 'dolly-blur' && !reducedMotion ? progressMv : undefined}
                 />
-                {phase === 'intro' && (
+                {phase === 'intro' && INTRO_VARIANT === 'shutter' && (
                     <IntroShutterOverlay
                         progress={progress}
                         reducedMotion={reducedMotion}
