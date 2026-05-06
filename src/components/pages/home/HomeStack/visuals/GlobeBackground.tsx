@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
@@ -181,7 +181,6 @@ interface GlobeProps {
 
 const Globe: React.FC<GlobeProps> = ({ reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
-    const { scene } = useThree();
 
     // 表面塗り用の solid sphere (半径 1.0) と、その外側に薄く被せる wireframe (半径 1.008)。
     // EdgesGeometry (threshold 1°) で四角格子の外枠だけ抽出し、quad 内の diagonal split を除去。
@@ -207,52 +206,6 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
         };
     }, [fillGeometry, wireBaseGeometry, wireGeometry]);
 
-    // --- DEBUG: シーン構造を window に晒して console から検証できるようにする ---
-    // `window.__globeDebug` でアクセス可能。問題の切り分けが終わったら削除する。
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const w = window as unknown as { __globeDebug?: unknown };
-        const dump = () => {
-            const groupChildren = groupRef.current?.children.map((c) => ({
-                type: c.type,
-                name: c.name,
-                visible: c.visible,
-                geometry: 'geometry' in c ? (c as THREE.Mesh).geometry?.type : undefined,
-                material:
-                    'material' in c
-                        ? (() => {
-                              const mat = (c as THREE.Mesh).material;
-                              const m = Array.isArray(mat) ? mat[0] : mat;
-                              return m
-                                  ? {
-                                        type: m.type,
-                                        color:
-                                            'color' in m
-                                                ? `#${(m as THREE.MeshBasicMaterial).color.getHexString()}`
-                                                : undefined,
-                                        wireframe:
-                                            'wireframe' in m
-                                                ? (m as THREE.MeshBasicMaterial).wireframe
-                                                : undefined,
-                                        transparent: m.transparent,
-                                        opacity: m.opacity,
-                                        depthTest: m.depthTest,
-                                        depthWrite: m.depthWrite,
-                                    }
-                                  : undefined;
-                          })()
-                        : undefined,
-            }));
-            console.log('[Globe Debug] group children:', groupChildren);
-            console.log('[Globe Debug] full scene tree:');
-            scene.traverse((o) => console.log('  ', o.type, o.name, o));
-        };
-        w.__globeDebug = { scene, group: groupRef, dump };
-        // 100ms 後に一度自動で dump (mount 直後だと group が空のことがあるため)
-        const id = window.setTimeout(dump, 200);
-        return () => window.clearTimeout(id);
-    }, [scene]);
-
     const arcStates = useMemo(() => {
         return Array.from({ length: ARC_COUNT }, () => randomArc());
     }, []);
@@ -277,15 +230,22 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* solid 塗り (白、opaque)。
+            {/* ライティング: page bg (oklch 0.97) と純白 fill の差が小さく球体シルエットが
+                認識しにくい問題を解決するため、directional + ambient で陰影をつける。
+                meshLambertMaterial は light に応答するため、shaded 側がやや暗くなり立体感が出る。 */}
+            <ambientLight intensity={1.6} />
+            <directionalLight position={[3, 2, 4]} intensity={1.6} />
+
+            {/* solid 塗り (白、opaque、Lambert で陰影あり)。
                 opaque + FrontSide (デフォルト) で裏面の triangle は culled、
                 さらに depth buffer に書き込むので arc の裏側半分も自動で隠れる。 */}
             <mesh geometry={fillGeometry}>
-                <meshBasicMaterial color="#ffffff" />
+                <meshLambertMaterial color="#ffffff" />
             </mesh>
 
-            {/* wireframe — lineSegments + WireframeGeometry で line だけを明示的に描画。
-                半径 1.008 で fill (1.0) より僅かに外、z-fighting なし。 */}
+            {/* wireframe — lineSegments + EdgesGeometry で line だけを明示的に描画。
+                半径 1.008 で fill (1.0) より僅かに外、z-fighting なし。
+                LineBasicMaterial は light の影響を受けないので一定のグレーで表示される。 */}
             <lineSegments geometry={wireGeometry}>
                 <lineBasicMaterial color="#999999" />
             </lineSegments>
