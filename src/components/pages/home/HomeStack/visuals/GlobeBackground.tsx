@@ -230,13 +230,13 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* solid 塗り (白、opaque、unlit)。
-                opaque + FrontSide (デフォルト) で裏面の triangle は culled、
-                さらに depth buffer に書き込むので arc の裏側半分も自動で隠れる。
-                Canvas に flat prop を付けて tone mapping (ACESFilmic) を切ってあるため
-                #ffffff がそのまま画面に純白として出る。 */}
+            {/* 不可視 fill: 色は描画しない (colorWrite=false) が depth buffer には書き込む。
+                これにより:
+                  - 視覚的には transparent (= 球体ボディは見えない)
+                  - 裏側の wireframe / arc は depth test で discard されて見えない
+                「透過 + 裏面非表示」を両立する standard な depth-only mask。 */}
             <mesh geometry={fillGeometry}>
-                <meshBasicMaterial color="#ffffff" />
+                <meshBasicMaterial colorWrite={false} />
             </mesh>
 
             {/* wireframe — lineSegments + EdgesGeometry で line だけを明示的に描画。
