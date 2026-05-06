@@ -5,9 +5,14 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // 「Cloudflare の TOP みたいな地球儀 + ネットワーク」を SF 工業トーンで再構成。
 // - wireframe sphere (foreground 色 / 低 opacity)
-// - PoP 候補 15 都市の小ドット (accent 色)
+// - PoP 候補 15 都市の小ドット (Cloudflare ブランドオレンジ)
 // - 同時に 5 本の arc が常時走っており、phase 0..0.5 で伸び、0.5..1.0 で消える
 // - 1 本完了したら別の都市ペアへリスポーン
+//
+// 「Cloudflare 感」を最優先するため、点と arc は theme accent ではなく
+// Cloudflare ブランドオレンジ (#F38020) を直接使う。
+
+const CLOUDFLARE_ORANGE = '#F38020';
 
 const POPS: { lat: number; lng: number }[] = [
     { lat: 35.7, lng: 139.7 },   // Tokyo
@@ -185,16 +190,12 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
 };
 
 interface GlobeProps {
-    accentColor: string;
     foreColor: string;
     reduced: boolean;
 }
 
-const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
-
-const Globe: React.FC<GlobeProps> = ({ accentColor, foreColor, reduced }) => {
+const Globe: React.FC<GlobeProps> = ({ foreColor, reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
-    const startTimeRef = useRef<number | null>(null);
 
     const popPositions = useMemo(() => {
         const arr = new Float32Array(POP_VECTORS.length * 3);
@@ -226,39 +227,27 @@ const Globe: React.FC<GlobeProps> = ({ accentColor, foreColor, reduced }) => {
         });
     }, [arcRefs]);
 
-    useFrame((state, dt) => {
+    useFrame((_, dt) => {
         if (!groupRef.current) return;
-        if (startTimeRef.current === null) {
-            startTimeRef.current = state.clock.elapsedTime;
-        }
         if (!reduced) {
-            // 連続 rotation
+            // 連続 rotation のみ。entrance は wrapper 側の opacity (GSAP 駆動) に任せる
             groupRef.current.rotation.y += dt * 0.06; // ~17 sec / rotation
-            // 立ち上がり (1.6s で 0.88 → 1.0 の dolly-in)
-            const t = Math.min(
-                1,
-                (state.clock.elapsedTime - startTimeRef.current) / 1.6,
-            );
-            const s = 0.88 + (1 - 0.88) * easeOutCubic(t);
-            groupRef.current.scale.setScalar(s);
-        } else {
-            groupRef.current.scale.setScalar(1);
         }
     });
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* wireframe sphere */}
+            {/* wireframe sphere (foreground 色のまま、opacity を bump して可読性 up) */}
             <mesh geometry={sphereGeometry}>
                 <meshBasicMaterial
                     color={foreColor}
                     wireframe
                     transparent
-                    opacity={0.14}
+                    opacity={0.22}
                 />
             </mesh>
 
-            {/* PoP points */}
+            {/* PoP points (Cloudflare orange) */}
             <points>
                 <bufferGeometry>
                     <bufferAttribute
@@ -267,18 +256,18 @@ const Globe: React.FC<GlobeProps> = ({ accentColor, foreColor, reduced }) => {
                     />
                 </bufferGeometry>
                 <pointsMaterial
-                    color={accentColor}
-                    size={0.045}
+                    color={CLOUDFLARE_ORANGE}
+                    size={0.058}
                     sizeAttenuation
                     transparent
-                    opacity={0.95}
+                    opacity={1.0}
                 />
             </points>
 
-            {/* arcs (reduced-motion ではアニメ自体を出さない) */}
+            {/* arcs (Cloudflare orange、reduced-motion ではアニメ自体を出さない) */}
             {!reduced &&
                 arcRefs.map((ref, i) => (
-                    <ArcLine key={i} stateRef={ref} color={accentColor} />
+                    <ArcLine key={i} stateRef={ref} color={CLOUDFLARE_ORANGE} />
                 ))}
         </group>
     );
@@ -291,12 +280,10 @@ interface Props {
 export const GlobeBackground: React.FC<Props> = ({ className }) => {
     const reduced = useReducedMotion();
     const [mounted, setMounted] = useState(false);
-    const [accentColor, setAccentColor] = useState('#4c8bf5');
     const [foreColor, setForeColor] = useState('#0a0a0a');
 
     useEffect(() => {
         setMounted(true);
-        setAccentColor(readCssColor('--color-accent', '#4c8bf5'));
         setForeColor(readCssColor('--color-foreground', '#0a0a0a'));
     }, []);
 
@@ -312,11 +299,7 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
                 frameloop="always"
                 gl={{ antialias: true, alpha: true }}
             >
-                <Globe
-                    accentColor={accentColor}
-                    foreColor={foreColor}
-                    reduced={reduced}
-                />
+                <Globe foreColor={foreColor} reduced={reduced} />
             </Canvas>
         </div>
     );
