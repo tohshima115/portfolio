@@ -121,11 +121,12 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
         return TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
     })();
 
-    // 中段 (row 1..N-2) × 中央 4 列 (col 2..5) は WORKS reveal 時に shrink して
-    // 消える。data-mid="1" で gsap 側から拾う。
+    // Phase D で grid 全体が +13vw 右シフトする。シフト後の中央 4 列 (新 pos 2..5)
+    // は元 col 1..4 に該当する。中段 (row 1..N-2) × 元 col 1..4 のスタックを
+    // shrink で消すと、シフト先の center に空白が出来る。
     const isMid =
-        tile.col >= 2 &&
-        tile.col <= 5 &&
+        tile.col >= 1 &&
+        tile.col <= 4 &&
         tile.row >= 1 &&
         tile.row <= FOLDER_ROWS - 2;
 
@@ -198,12 +199,19 @@ const WorksLead: React.FC = () => {
     const tiles = useMemo<FolderTile[]>(() => {
         const arr: FolderTile[] = [];
         for (let r = 0; r < FOLDER_ROWS; r++) {
+            // 左に追加される hidden col (col -1)。Phase B では左外に張り付いたまま、
+            // Phase D で全体右シフトされて新 col 0 のポジションに入る。
+            arr.push({
+                row: r,
+                col: -1,
+                fromLeft: true,
+                delay: 1.0, // waterfall 上は最後尾扱い (見た目には影響しない)
+            });
             for (let c = 0; c < FOLDER_COLS; c++) {
                 // 全 folder は左から入場。最終的に右に着地する (= col 大) ものほど
                 // 早く出発し、画面を横切って奥に積まれていく waterfall 順。
                 // col 0 (一番左の最終位置) が最後に滑り込む。
-                const colInverted = FOLDER_COLS - 1 - c; // 0 (rightmost) .. N-1 (leftmost)
-                // col 内の行で僅かにジッター: 完全な縦一列同時着地を避ける
+                const colInverted = FOLDER_COLS - 1 - c;
                 const rowJitter = (r / FOLDER_ROWS) * 0.15;
                 const delay =
                     colInverted / Math.max(1, FOLDER_COLS - 1) + rowJitter;
@@ -211,7 +219,7 @@ const WorksLead: React.FC = () => {
                     row: r,
                     col: c,
                     fromLeft: true,
-                    delay: delay / 1.15, // 0..1 に正規化
+                    delay: delay / 1.15,
                 });
             }
         }
@@ -319,9 +327,20 @@ const WorksLead: React.FC = () => {
 
             // Phase C: 全被覆ホールド (0.58 ~ 0.66) — 何もしない (タイルは to 完了後 0)
 
-            // Phase D: 中段 × 中央 4 列の folder stack を縦 0% / 横 50% に縮めて
-            // 視覚的に「消す」。同時に Cloudflare hero (z-10) を opacity フェード
-            // アウトさせ、空いた center area が背景色になるようにする。
+            // Phase D: 3 並列アニメ (0.66 ~ 0.80)
+            //   1. 全 tile を x:+13vw 右シフト → 左に col -1 が入り、右端 col 7 が退場
+            //   2. 中段 × 元 col 1..4 (= シフト後の新 center 4 列) を scaleY:0 +
+            //      scaleX:0.5 で消し、center area に空白を作る
+            //   3. Cloudflare hero (z-10) を opacity 0 にフェードアウト
+            tl.to(
+                tileEls,
+                {
+                    x: '13vw',
+                    duration: 0.14,
+                    ease: 'power3.inOut',
+                },
+                0.66,
+            );
             tl.to(
                 midTiles,
                 {
