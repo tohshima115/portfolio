@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
@@ -181,21 +181,22 @@ interface GlobeProps {
 
 const Globe: React.FC<GlobeProps> = ({ reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
+    const { scene } = useThree();
 
     // 表面塗り用の solid sphere (半径 1.0) と、その外側に薄く被せる wireframe (半径 1.008)。
-    // wireframe は lineSegments + WireframeGeometry で「明示的に line だけ」のオブジェクトに
-    // することで、meshBasicMaterial の wireframe フラグが期待通り解釈されない RT issue や
-    // 同じ深度での z-fighting を完全に避ける。
+    // EdgesGeometry (threshold 1°) で四角格子の外枠だけ抽出し、quad 内の diagonal split を除去。
+    // WireframeGeometry だと triangle ごとの全 edge (= diagonal 含む) が出て線密度が高すぎ、
+    // グレーの面に見えてしまうため。
     const fillGeometry = useMemo(
         () => new THREE.SphereGeometry(1.0, 36, 24),
         [],
     );
     const wireBaseGeometry = useMemo(
-        () => new THREE.SphereGeometry(1.008, 24, 16),
+        () => new THREE.SphereGeometry(1.008, 18, 12),
         [],
     );
     const wireGeometry = useMemo(
-        () => new THREE.WireframeGeometry(wireBaseGeometry),
+        () => new THREE.EdgesGeometry(wireBaseGeometry, 1),
         [wireBaseGeometry],
     );
     useEffect(() => {
@@ -205,6 +206,52 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
             wireGeometry.dispose();
         };
     }, [fillGeometry, wireBaseGeometry, wireGeometry]);
+
+    // --- DEBUG: シーン構造を window に晒して console から検証できるようにする ---
+    // `window.__globeDebug` でアクセス可能。問題の切り分けが終わったら削除する。
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const w = window as unknown as { __globeDebug?: unknown };
+        const dump = () => {
+            const groupChildren = groupRef.current?.children.map((c) => ({
+                type: c.type,
+                name: c.name,
+                visible: c.visible,
+                geometry: 'geometry' in c ? (c as THREE.Mesh).geometry?.type : undefined,
+                material:
+                    'material' in c
+                        ? (() => {
+                              const mat = (c as THREE.Mesh).material;
+                              const m = Array.isArray(mat) ? mat[0] : mat;
+                              return m
+                                  ? {
+                                        type: m.type,
+                                        color:
+                                            'color' in m
+                                                ? `#${(m as THREE.MeshBasicMaterial).color.getHexString()}`
+                                                : undefined,
+                                        wireframe:
+                                            'wireframe' in m
+                                                ? (m as THREE.MeshBasicMaterial).wireframe
+                                                : undefined,
+                                        transparent: m.transparent,
+                                        opacity: m.opacity,
+                                        depthTest: m.depthTest,
+                                        depthWrite: m.depthWrite,
+                                    }
+                                  : undefined;
+                          })()
+                        : undefined,
+            }));
+            console.log('[Globe Debug] group children:', groupChildren);
+            console.log('[Globe Debug] full scene tree:');
+            scene.traverse((o) => console.log('  ', o.type, o.name, o));
+        };
+        w.__globeDebug = { scene, group: groupRef, dump };
+        // 100ms 後に一度自動で dump (mount 直後だと group が空のことがあるため)
+        const id = window.setTimeout(dump, 200);
+        return () => window.clearTimeout(id);
+    }, [scene]);
 
     const arcStates = useMemo(() => {
         return Array.from({ length: ARC_COUNT }, () => randomArc());
