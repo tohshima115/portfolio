@@ -8,14 +8,11 @@ import Lenis from 'lenis';
 //     切替え (rAF を 1 本化、ScrollTrigger と同期)
 //   - lenis.on('scroll', ScrollTrigger.update) で StatementSection 等の
 //     pin/scrub と同期させる
-//   - Hero フェーズ (document.body.dataset.homePhase が 'intro' / 'cover' /
-//     'reveal') は lenis.stop() で停止: useIntroProgress が wheel/touch を
-//     自前で捌くため干渉を避ける。'scroll' に切替わったら lenis.start()
-//   - MutationObserver で homePhase の変化を監視 (HomeIntro 側のコードに
-//     手を入れなくて済むよう疎結合にしておく)
+//   - HomeIntro が sticky pin 構造に変わったため、Hero フェーズも Lenis に
+//     乗せて全域で滑らかにスクロールさせる (phase 別の start/stop は不要)
 //
-// React 不要な vanilla なライブラリだが、Astro の client:load で React island
-// として読み込ませるため React コンポーネントとして実装。DOM は描画しない。
+// React 不要な vanilla なライブラリだが、Astro の client:only=react で React
+// island として読み込ませるため React コンポーネントとして実装。DOM は描画しない。
 
 export const SmoothScroll: React.FC = () => {
     useEffect(() => {
@@ -36,22 +33,6 @@ export const SmoothScroll: React.FC = () => {
             // タッチデバイスはネイティブの慣性スクロールに任せる (iOS/Android で
             // syncTouch=true にすると逆に違和感が出やすい)
             syncTouch: false,
-        });
-
-        // Hero フェーズでは停止 (useIntroProgress と競合させない)
-        const applyPhase = () => {
-            const phase = document.body.dataset.homePhase;
-            if (phase === 'intro' || phase === 'cover' || phase === 'reveal') {
-                lenis.stop();
-            } else {
-                lenis.start();
-            }
-        };
-        applyPhase();
-        const observer = new MutationObserver(applyPhase);
-        observer.observe(document.body, {
-            attributes: true,
-            attributeFilter: ['data-home-phase'],
         });
 
         // 自前 rAF で Lenis を回す。gsap 統合が成功したらここを止めて
@@ -113,7 +94,6 @@ export const SmoothScroll: React.FC = () => {
 
         return () => {
             cancelled = true;
-            observer.disconnect();
             if (rafId) cancelAnimationFrame(rafId);
             if (gsapInstance && tickerFn) gsapInstance.ticker.remove(tickerFn);
             unsubScroll?.();

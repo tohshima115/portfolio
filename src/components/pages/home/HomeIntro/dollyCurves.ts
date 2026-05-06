@@ -21,10 +21,12 @@ export const dollyBlurPx = (p: number): number => {
     return q * q * 14;
 };
 
-/** opacity: 0.7 から薄め始め、最後に 0.55 まで。完全には消さず cut 余白を残す。 */
+/** opacity: 0.7 から薄め始め、progress 1.0 で完全消失。
+ *  sticky pin から外れる瞬間に Hero が消えていることで、Statement との
+ *  境界が綺麗に切替わる。 */
 export const dollyOpacity = (p: number): number => {
     if (p <= 0.7) return 1;
-    return 1 - ((p - 0.7) / 0.3) * 0.45;
+    return 1 - (p - 0.7) / 0.3;
 };
 
 /** 背景 (ContourBackground canvas) は前景より弱めの blur で GPU 負荷を抑える。 */
