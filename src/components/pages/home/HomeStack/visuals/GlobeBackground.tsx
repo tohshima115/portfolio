@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { Line2 } from 'three/examples/jsm/lines/Line2.js';
-import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // 「Cloudflare の TOP みたいな地球儀 + ネットワーク」を SF 工業トーンで再構成。
@@ -49,10 +46,16 @@ const sphericalToVector3 = (lat: number, lng: number, r: number = 1): THREE.Vect
 const POP_VECTORS = POPS.map((p) => sphericalToVector3(p.lat, p.lng, 1));
 
 const ARC_COUNT = 5;
-const ARC_RESOLUTION = 64;
-const ARC_TOTAL_POINTS = ARC_RESOLUTION + 1;
-const ARC_TOTAL_SEGMENTS = ARC_TOTAL_POINTS - 1;
-const ARC_LINEWIDTH_PX = 2.5;
+// arc は TubeGeometry (curve に沿った 3D チューブ) で描画。
+//   tubularSegments = 64 で curve に沿った分割数
+//   radialSegments = 6 で断面の正六角形
+//   radius = 0.008 (world units) でカメラ z=4.2 fov=40° のフレームでだいたい 3px 太さ
+// indexed BufferGeometry なので setDrawRange(0, indices) でクリーンに部分描画できる。
+// 1 tubular につき radialSegments * 2 triangle = 12 triangle = 36 indices
+const ARC_TUBULAR_SEGMENTS = 64;
+const ARC_RADIAL_SEGMENTS = 6;
+const ARC_TUBE_RADIUS = 0.008;
+const INDICES_PER_TUBULAR = ARC_RADIAL_SEGMENTS * 6;
 
 // 起点と終点が短すぎる arc は「ちょっと光ってすぐ消える点」になって絵にならないので、
 // 弦長 (= 球面 chord 長) が一定以上のペアだけ採用する。
@@ -98,50 +101,57 @@ interface ArcLineProps {
     color: string;
 }
 
-// arc は WebGL の gl.LINES (1px 固定) ではなく Line2 (shader-based、ピクセル幅指定可) で描画。
-// 「instanceCount を可変にして growing arc」を実現する: LineGeometry は内部的に
-// InstancedBufferGeometry で各 segment が 1 instance なので、instanceCount を絞ると
-// 先頭から N 本までだけ描画される。
+// arc は TubeGeometry (curve に沿った 3D チューブ) を Mesh で描画。
+// indexed BufferGeometry なので setDrawRange(0, indices) で素直に成長アニメ可能。
+// Line2 instanceCount で growing が効かなかった (= 先端だけ表示後に止まる) のを回避。
 const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
+    const meshRef = useRef<THREE.Mesh>(null);
     const lastIdsRef = useRef<{ fromIdx: number; toIdx: number } | null>(null);
-    const { size } = useThree();
 
-    const lineObject = useMemo(() => {
-        const geometry = new LineGeometry();
-        // pre-allocate: ARC_TOTAL_POINTS 個の点 (= ARC_TOTAL_SEGMENTS 本の segment)
-        const initial = new Array(ARC_TOTAL_POINTS * 3).fill(0);
-        geometry.setPositions(initial);
-        geometry.instanceCount = 0;
-        const material = new LineMaterial({
-            color: new THREE.Color(color),
-            linewidth: ARC_LINEWIDTH_PX,
-            transparent: true,
-            opacity: 0,
-            depthTest: true,
-            depthWrite: false,
-        });
-        return new Line2(geometry, material);
-    }, [color]);
+    const material = useMemo(
+        () =>
+            new THREE.MeshBasicMaterial({
+                color: new THREE.Color(color),
+                transparent: true,
+                opacity: 0,
+                depthTest: true,
+                depthWrite: false,
+            }),
+        [color],
+    );
+
+    const initialGeometry = useMemo(() => {
+        // dummy curve、最初の useFrame で実際の curve に置き換わる
+        const dummy = new THREE.LineCurve3(
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0.001, 0, 0),
+        );
+        const g = new THREE.TubeGeometry(
+            dummy,
+            1,
+            ARC_TUBE_RADIUS,
+            ARC_RADIAL_SEGMENTS,
+            false,
+        );
+        g.setDrawRange(0, 0);
+        return g;
+    }, []);
 
     useEffect(() => {
         return () => {
-            lineObject.geometry.dispose();
-            (lineObject.material as LineMaterial).dispose();
+            material.dispose();
+            const m = meshRef.current;
+            if (m) m.geometry.dispose();
+            else initialGeometry.dispose();
         };
-    }, [lineObject]);
-
-    // Line2 のピクセル幅は material.resolution = (canvas size) を必要とする
-    useEffect(() => {
-        const mat = lineObject.material as LineMaterial;
-        mat.resolution.set(size.width, size.height);
-    }, [lineObject, size.width, size.height]);
+    }, [material, initialGeometry]);
 
     useFrame((_, dt) => {
         const state = stateRef.current;
-        const lineGeo = lineObject.geometry as LineGeometry;
-        const mat = lineObject.material as LineMaterial;
+        const mesh = meshRef.current;
+        if (!mesh) return;
 
-        // endpoints が変わったら polyline の頂点を書き換え (full curve 分セット)
+        // endpoints が変わったら TubeGeometry を作り直し
         if (
             !lastIdsRef.current ||
             lastIdsRef.current.fromIdx !== state.fromIdx ||
@@ -159,10 +169,15 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
                 .normalize()
                 .multiplyScalar(liftAmount);
             const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
-            const points = curve.getPoints(ARC_RESOLUTION);
-            const flat: number[] = [];
-            for (const p of points) flat.push(p.x, p.y, p.z);
-            lineGeo.setPositions(flat);
+            const newGeo = new THREE.TubeGeometry(
+                curve,
+                ARC_TUBULAR_SEGMENTS,
+                ARC_TUBE_RADIUS,
+                ARC_RADIAL_SEGMENTS,
+                false,
+            );
+            mesh.geometry.dispose();
+            mesh.geometry = newGeo;
             lastIdsRef.current = {
                 fromIdx: state.fromIdx,
                 toIdx: state.toIdx,
@@ -179,25 +194,25 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
             state.duration = next.duration;
         }
 
-        // 0..0.5 で伸びる (instanceCount を増やす)、0.5..1.0 で fade out
+        // 0..0.5 で先端から伸びる (drawRange を indices ぶん広げる)、0.5..1.0 で fade out
         const phase = state.phase;
         let segments: number;
         let opacity: number;
         if (phase <= 0.5) {
             segments = Math.max(
                 1,
-                Math.floor((phase / 0.5) * ARC_TOTAL_SEGMENTS),
+                Math.floor((phase / 0.5) * ARC_TUBULAR_SEGMENTS),
             );
             opacity = Math.min(0.9, phase * 6);
         } else {
-            segments = ARC_TOTAL_SEGMENTS;
+            segments = ARC_TUBULAR_SEGMENTS;
             opacity = 0.9 * (1 - (phase - 0.5) / 0.5);
         }
-        lineGeo.instanceCount = segments;
-        mat.opacity = opacity;
+        mesh.geometry.setDrawRange(0, segments * INDICES_PER_TUBULAR);
+        material.opacity = opacity;
     });
 
-    return <primitive object={lineObject} />;
+    return <mesh ref={meshRef} geometry={initialGeometry} material={material} />;
 };
 
 interface GlobeProps {
