@@ -223,28 +223,18 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* solid 塗り (グレー、半径 0.99 で wireframe の内側に置く)。
-                CSS 変数 (--color-muted-foreground) は oklch() で記述されており Three.js の
-                Color.setStyle が parse しきれず白フォールバックされるケースがあるため、
-                安全策として hex を直接渡す。 */}
-            <mesh geometry={fillGeometry} renderOrder={0}>
-                <meshBasicMaterial
-                    color="#7a7a7a"
-                    transparent
-                    opacity={0.55}
-                />
+            {/* solid 塗り (白、opaque)。
+                opaque + FrontSide (デフォルト) で裏面の triangle は culled、
+                さらに depth buffer に書き込むので arc の裏側半分も自動で隠れる。 */}
+            <mesh geometry={fillGeometry}>
+                <meshBasicMaterial color="#ffffff" />
             </mesh>
 
-            {/* wireframe sphere (白、塗りの上に浮かせる)。renderOrder で fill より後に
-                必ず描画させ、線が fill に飲まれないようにする。 */}
-            <mesh geometry={wireGeometry} renderOrder={1}>
-                <meshBasicMaterial
-                    color="#ffffff"
-                    wireframe
-                    transparent
-                    opacity={0.9}
-                    depthTest={false}
-                />
+            {/* wireframe sphere (グレー、白面の上に乗る)。
+                opaque で描画。半径 0.99 の fill より僅かに外側 (radius 1.0) なので
+                depth test で自然に fill の前に来る。 */}
+            <mesh geometry={wireGeometry}>
+                <meshBasicMaterial color="#999999" wireframe />
             </mesh>
 
             {/* arcs (Cloudflare orange、reduced-motion ではアニメ自体を出さない) */}
