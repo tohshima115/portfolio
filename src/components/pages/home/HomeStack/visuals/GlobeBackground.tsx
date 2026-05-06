@@ -182,16 +182,22 @@ interface GlobeProps {
 const Globe: React.FC<GlobeProps> = ({ reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
 
-    // 表面塗り用の solid sphere (半径 1.0) と、その外側に薄く被せる wireframe (半径 1.008)。
-    // EdgesGeometry (threshold 1°) で四角格子の外枠だけ抽出し、quad 内の diagonal split を除去。
-    // WireframeGeometry だと triangle ごとの全 edge (= diagonal 含む) が出て線密度が高すぎ、
-    // グレーの面に見えてしまうため。
+    // 表面塗り用の solid sphere (半径 1.0) と、その外側に被せる wireframe (半径 1.015)。
+    // EdgesGeometry (threshold 1°) で四角格子の外枠だけ抽出。
+    //
+    // wire 半径と subdivision の根拠:
+    //   wire の line は 2 頂点を結ぶ "直線 chord" なので、中点は球面の内側にめり込む。
+    //   半径 R、頂点間角度 θ の chord 中点までの距離は R*cos(θ/2)。
+    //   18×12 (θ=20°) で wire 半径 1.008 だと 1.008 * cos(10°) = 0.993 < fill 1.0 で
+    //   edge の中ほどが fill に occlude されて途切れて見える。
+    //   24×16 (θ=15°) + 半径 1.015 にすれば 1.015 * cos(7.5°) = 1.006 > 1.0 で全 chord
+    //   中点が fill の外に出て、線が途切れず描画される。
     const fillGeometry = useMemo(
         () => new THREE.SphereGeometry(1.0, 36, 24),
         [],
     );
     const wireBaseGeometry = useMemo(
-        () => new THREE.SphereGeometry(1.008, 18, 12),
+        () => new THREE.SphereGeometry(1.015, 24, 16),
         [],
     );
     const wireGeometry = useMemo(
