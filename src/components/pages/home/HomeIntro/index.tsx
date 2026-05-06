@@ -94,8 +94,14 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return () => window.removeEventListener('scroll', update);
     }, [progressMv, reducedMotion]);
 
-    // Hero が完全消失している間 (dolly progress >= 0.999) は HomeStack の
-    // クリック / hover を吸わないように pointer-events を切る
+    // Hero が完全消失している間 (dolly progress >= 0.999) は:
+    //   - display:none で section ごと DOM から外す
+    //     (HeroSection の outer の bg-background が HomeStack を覆い隠さなくなる
+    //      + ContourBackground の Canvas の rAF も IntersectionObserver で停止)
+    //   - pointer-events も念のため none (display:none と冗長だが安全側に)
+    const heroDisplay = useTransform(progressMv, (p: number) =>
+        p >= 0.999 ? 'none' : 'block',
+    );
     const heroPointerEvents = useTransform(progressMv, (p: number) =>
         p >= 0.999 ? 'none' : 'auto',
     );
@@ -132,7 +138,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 className="fixed inset-0 z-[5] bg-background overflow-hidden"
                 onClickCapture={handleLinkClick}
                 data-home-intro
-                style={{ pointerEvents: heroPointerEvents }}
+                style={{ display: heroDisplay, pointerEvents: heroPointerEvents }}
             >
                 <HeroSection
                     skipIntro={skipIntro}

@@ -4,7 +4,7 @@ import { ContourBackground } from '../PrtsInterface/components/ContourBackground
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
 import type { UpdateItem } from '../HomeScene/types';
-import { dollyOpacity } from './dollyCurves';
+import { dollyScale, dollyOpacity } from './dollyCurves';
 
 interface Props {
     skipIntro: boolean;
@@ -13,13 +13,13 @@ interface Props {
     /** 0..1 の遷移進捗。ContourBackground の uChaos uniform にバイパスする */
     chaos?: MotionValue<number> | number;
     /**
-     * 0..1 の Hero→Statement dolly 進捗 (案 G)。HeroSection 側は opacity のみに反映。
-     *   - scale は preserve-3d 配下の Z 距離を縮めて 3D 配置を崩すので避ける
-     *   - filter:blur は新しい grouping context を作って preserve-3d をフラット化し、
-     *     HeroLayer 内の translateZ (MainTitle 80 / NavigationLayer 160) が rotateX と
-     *     組み合わさって「縦に引き伸ばされる」現象を引き起こすので避ける
-     * scale + blur + opacity は ContourBackground (背景の等高線) に任せ、
-     * 前景はクリアなまま opacity で薄れて消える表現にする (= 被写界深度的な分業)。
+     * 0..1 の Hero→Statement dolly 進捗 (案 G)。
+     * scale は preserve-3d の「外側」のレイヤに、opacity も外側に当てる。
+     * (内側 motion.div で rotateX + preserve-3d を完結させ、外側で 2D 縮小すれば
+     *  3D 空間内の Z 距離 = translateZ は影響を受けない。これで前景もカメラ引き
+     *  しつつ MainTitle / NavigationLayer の 3D 配置は崩れない)
+     * filter:blur は preserve-3d をフラット化するので前景には当てず、
+     * 背景 (ContourBackground) 側にだけ scale + blur + opacity をかける。
      */
     dolly?: MotionValue<number>;
 }
@@ -45,19 +45,21 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
 
     // dolly: 親が undefined を渡してきても hooks を呼ぶ必要があるので fallback を常に作る。
     //
-    // 重要: HeroSection の motion.div には scale も filter:blur も当てない。
-    //   この motion.div は preserve-3d の起点で、子の HeroLayer 内では MainTitle や
-    //   NavigationLayer が translateZ で 3D 配置されている:
-    //     - scale をかけると Z 距離も比例して縮み、rotateX (鳥瞰角) と組み合わさって
-    //       要素の Y 位置がズレる
-    //     - filter:blur は新しい合成レイヤ (grouping context) を作って preserve-3d を
-    //       フラット化する。translateZ がゼロ扱いになった上で rotateX で傾くので、
-    //       要素全体が「縦に引き伸ばされた」ように見える
-    //   どちらも「カメラ引き」感を出すために ContourBackground (背景) 側に任せ、
-    //   前景 (ロゴ・ナビ) はクリアなまま opacity で薄れて消える形にする
-    //   (= 被写界深度的な分業: subject はピントが残り、背景がボケる)
+    // 構造: 2 段の motion.div で preserve-3d を内側に閉じ込める
+    //   外側 (transform-style: flat): scale + opacity
+    //   内側 (transform-style: preserve-3d): rotateX + 子の translateZ 配置
+    //
+    // 内側の 3D 空間で rotateX + translateZ がレンダリングされ、その結果が
+    // 投影として外側に渡る。外側の scale はその投影結果に対する 2D 縮小なので、
+    // 内側 3D 空間内の Z 距離は変わらない (= MainTitle / NavigationLayer の
+    // translateZ が影響を受けず、3D 配置の見え方が崩れない)。
+    //
+    // filter:blur は前景には当てない: filter は CSS 仕様で grouping context を作り、
+    // preserve-3d をフラット化するため。前景 (ロゴ・ナビ) は scale + opacity だけ、
+    // 背景 (等高線) は ContourBackground 側で scale + blur + opacity 全部当てる。
     const dollyFallback = useMotionValue(0);
     const dollySrc = dolly ?? dollyFallback;
+    const heroScale = useTransform(dollySrc, dollyScale);
     const heroOpacity = useTransform(dollySrc, dollyOpacity);
 
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -104,18 +106,30 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             <HoverBackground hoveredItem={hoveredItem} />
 
             {/*
-              外側ラッパ:
+              外側ラッパ (transform-style: flat):
+              dolly の scale + opacity をここに当てる。preserve-3d を持たないので
+              内側 motion.div の 3D 空間は外側から見て「平面投影された結果」となり、
+              その投影結果が scale で 2D 縮小される (= 3D 空間内の Z 距離は不変)。
+            */}
+            <motion.div
+                style={{
+                    scale: heroScale,
+                    opacity: heroOpacity,
+                    willChange: 'transform, opacity',
+                }}
+                className="relative w-full h-full origin-center"
+            >
+            {/*
+              内側ラッパ (transform-style: preserve-3d):
               - rotateX = mouse Y 連動の鳥瞰角 (parallax)
-              旧構造の camera 連動 rotateZ は撤去 (各セクション独立で天地固定)。
-              HeroLayer 内の 3D 子要素 (NavigationLayer translateZ 160 / MainTitle 80)
-              を camera の 3D 空間に正しく載せるため preserve-3d を維持する。
+              - HeroLayer 内の 3D 子要素 (NavigationLayer translateZ 160 / MainTitle 80)
+                を camera の 3D 空間に載せる
             */}
             <motion.div
                 style={{
                     rotateX,
-                    opacity: heroOpacity,
                     transformStyle: 'preserve-3d',
-                    willChange: 'transform, opacity',
+                    willChange: 'transform',
                 }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >
@@ -136,6 +150,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                         updates={updates}
                     />
                 </div>
+            </motion.div>
             </motion.div>
         </div>
     );
