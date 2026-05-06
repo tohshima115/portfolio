@@ -124,6 +124,11 @@ const personSchema = {
 				// 復元する) と layout 確定タイミングが噛み合わず、pin の start/end 計算が
 				// ズレて「同じセクションが二か所に出る」破綻が起きる。アニメ主体の TOP では
 				// 復元を諦めて常に先頭から見せる方が破綻しない。
+				//
+				// scrollRestoration='manual' だけでは、Chromium 系 + Lenis 環境で layout
+				// 確定後に過去の scrollY が再適用されるケースがある (本人確認済み)。
+				// そのため rAF ループで「ユーザーが操作する or 1 秒経過するまで scroll=0
+				// を強制し続ける」形で復元を完全に潰す。
 				if ("scrollRestoration" in window.history) {
 					window.history.scrollRestoration = "manual";
 				}
@@ -132,6 +137,29 @@ const personSchema = {
 				} catch (e) {
 					/* ignore */
 				}
+				(function lockTop() {
+					var armed = true;
+					var disarm = function () {
+						armed = false;
+					};
+					var opts = { once: true, passive: true, capture: true };
+					window.addEventListener("wheel", disarm, opts);
+					window.addEventListener("touchstart", disarm, opts);
+					window.addEventListener(
+						"keydown",
+						disarm,
+						{ once: true, capture: true },
+					);
+					window.setTimeout(disarm, 1000);
+					var raf = function () {
+						if (!armed) return;
+						if (window.scrollY !== 0 || window.pageYOffset !== 0) {
+							window.scrollTo(0, 0);
+						}
+						window.requestAnimationFrame(raf);
+					};
+					window.requestAnimationFrame(raf);
+				})();
 			})();
 		</script>
 		<ClientRouter />
