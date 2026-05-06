@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { Line2 } from 'three/examples/jsm/lines/Line2.js';
+import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // 「Cloudflare の TOP みたいな地球儀 + ネットワーク」を SF 工業トーンで再構成。
@@ -48,6 +51,13 @@ const POP_VECTORS = POPS.map((p) => sphericalToVector3(p.lat, p.lng, 1));
 const ARC_COUNT = 5;
 const ARC_RESOLUTION = 64;
 const ARC_TOTAL_POINTS = ARC_RESOLUTION + 1;
+const ARC_TOTAL_SEGMENTS = ARC_TOTAL_POINTS - 1;
+const ARC_LINEWIDTH_PX = 2.5;
+
+// 起点と終点が短すぎる arc は「ちょっと光ってすぐ消える点」になって絵にならないので、
+// 弦長 (= 球面 chord 長) が一定以上のペアだけ採用する。
+// 1.0 = 球面上 60° の角距離 (e.g., 東京〜デリー級) 以上。
+const MIN_ARC_CHORD = 1.0;
 
 interface ArcState {
     fromIdx: number;
@@ -57,18 +67,24 @@ interface ArcState {
 }
 
 const randomArc = (excludeFromIdx: number = -1): ArcState => {
-    let fromIdx = Math.floor(Math.random() * POP_VECTORS.length);
-    if (excludeFromIdx >= 0) {
+    let fromIdx = 0;
+    let toIdx = 0;
+    let attempts = 0;
+    do {
         fromIdx =
-            (excludeFromIdx +
-                1 +
-                Math.floor(Math.random() * (POP_VECTORS.length - 1))) %
-            POP_VECTORS.length;
-    }
-    let toIdx = Math.floor(Math.random() * POP_VECTORS.length);
-    while (toIdx === fromIdx) {
+            excludeFromIdx >= 0
+                ? (excludeFromIdx +
+                      1 +
+                      Math.floor(Math.random() * (POP_VECTORS.length - 1))) %
+                  POP_VECTORS.length
+                : Math.floor(Math.random() * POP_VECTORS.length);
         toIdx = Math.floor(Math.random() * POP_VECTORS.length);
-    }
+        attempts++;
+    } while (
+        (toIdx === fromIdx ||
+            POP_VECTORS[fromIdx].distanceTo(POP_VECTORS[toIdx]) < MIN_ARC_CHORD) &&
+        attempts < 50
+    );
     return {
         fromIdx,
         toIdx,
@@ -82,36 +98,50 @@ interface ArcLineProps {
     color: string;
 }
 
+// arc は WebGL の gl.LINES (1px 固定) ではなく Line2 (shader-based、ピクセル幅指定可) で描画。
+// 「instanceCount を可変にして growing arc」を実現する: LineGeometry は内部的に
+// InstancedBufferGeometry で各 segment が 1 instance なので、instanceCount を絞ると
+// 先頭から N 本までだけ描画される。
 const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
     const lastIdsRef = useRef<{ fromIdx: number; toIdx: number } | null>(null);
+    const { size } = useThree();
 
     const lineObject = useMemo(() => {
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(ARC_TOTAL_POINTS * 3);
-        geometry.setAttribute(
-            'position',
-            new THREE.BufferAttribute(positions, 3),
-        );
-        geometry.setDrawRange(0, 0);
-        const material = new THREE.LineBasicMaterial({
-            color,
+        const geometry = new LineGeometry();
+        // pre-allocate: ARC_TOTAL_POINTS 個の点 (= ARC_TOTAL_SEGMENTS 本の segment)
+        const initial = new Array(ARC_TOTAL_POINTS * 3).fill(0);
+        geometry.setPositions(initial);
+        geometry.instanceCount = 0;
+        const material = new LineMaterial({
+            color: new THREE.Color(color),
+            linewidth: ARC_LINEWIDTH_PX,
             transparent: true,
             opacity: 0,
+            depthTest: true,
+            depthWrite: false,
         });
-        return new THREE.Line(geometry, material);
+        return new Line2(geometry, material);
     }, [color]);
 
     useEffect(() => {
         return () => {
             lineObject.geometry.dispose();
-            (lineObject.material as THREE.LineBasicMaterial).dispose();
+            (lineObject.material as LineMaterial).dispose();
         };
     }, [lineObject]);
 
+    // Line2 のピクセル幅は material.resolution = (canvas size) を必要とする
+    useEffect(() => {
+        const mat = lineObject.material as LineMaterial;
+        mat.resolution.set(size.width, size.height);
+    }, [lineObject, size.width, size.height]);
+
     useFrame((_, dt) => {
         const state = stateRef.current;
+        const lineGeo = lineObject.geometry as LineGeometry;
+        const mat = lineObject.material as LineMaterial;
 
-        // endpoints が変わったら geometry の座標を書き換え (再 alloc しない)
+        // endpoints が変わったら polyline の頂点を書き換え (full curve 分セット)
         if (
             !lastIdsRef.current ||
             lastIdsRef.current.fromIdx !== state.fromIdx ||
@@ -130,13 +160,9 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
                 .multiplyScalar(liftAmount);
             const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
             const points = curve.getPoints(ARC_RESOLUTION);
-            const positionAttr = lineObject.geometry.attributes
-                .position as THREE.BufferAttribute;
-            for (let i = 0; i < points.length; i++) {
-                positionAttr.setXYZ(i, points[i].x, points[i].y, points[i].z);
-            }
-            positionAttr.needsUpdate = true;
-            lineObject.geometry.computeBoundingSphere();
+            const flat: number[] = [];
+            for (const p of points) flat.push(p.x, p.y, p.z);
+            lineGeo.setPositions(flat);
             lastIdsRef.current = {
                 fromIdx: state.fromIdx,
                 toIdx: state.toIdx,
@@ -153,23 +179,22 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
             state.duration = next.duration;
         }
 
-        // drawRange: 0..0.5 で伸びる、0.5..1.0 で fade out
+        // 0..0.5 で伸びる (instanceCount を増やす)、0.5..1.0 で fade out
         const phase = state.phase;
-        let drawCount: number;
+        let segments: number;
         let opacity: number;
         if (phase <= 0.5) {
-            drawCount = Math.max(
-                2,
-                Math.floor((phase / 0.5) * ARC_TOTAL_POINTS),
+            segments = Math.max(
+                1,
+                Math.floor((phase / 0.5) * ARC_TOTAL_SEGMENTS),
             );
-            // 立ち上がり中も最初の数フレームだけ薄くしたい (ぱっと出ないように)
             opacity = Math.min(0.9, phase * 6);
         } else {
-            drawCount = ARC_TOTAL_POINTS;
+            segments = ARC_TOTAL_SEGMENTS;
             opacity = 0.9 * (1 - (phase - 0.5) / 0.5);
         }
-        lineObject.geometry.setDrawRange(0, drawCount);
-        (lineObject.material as THREE.LineBasicMaterial).opacity = opacity;
+        lineGeo.instanceCount = segments;
+        mat.opacity = opacity;
     });
 
     return <primitive object={lineObject} />;
@@ -197,7 +222,7 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
         [],
     );
     const wireBaseGeometry = useMemo(
-        () => new THREE.SphereGeometry(1.015, 24, 16),
+        () => new THREE.SphereGeometry(1.009, 24, 16),
         [],
     );
     const wireGeometry = useMemo(
