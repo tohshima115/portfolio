@@ -230,22 +230,17 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* ライティング: page bg (oklch 0.97) と純白 fill の差が小さく球体シルエットが
-                認識しにくい問題を解決するため、directional + ambient で陰影をつける。
-                meshLambertMaterial は light に応答するため、shaded 側がやや暗くなり立体感が出る。 */}
-            <ambientLight intensity={1.6} />
-            <directionalLight position={[3, 2, 4]} intensity={1.6} />
-
-            {/* solid 塗り (白、opaque、Lambert で陰影あり)。
+            {/* solid 塗り (白、opaque、unlit)。
                 opaque + FrontSide (デフォルト) で裏面の triangle は culled、
-                さらに depth buffer に書き込むので arc の裏側半分も自動で隠れる。 */}
+                さらに depth buffer に書き込むので arc の裏側半分も自動で隠れる。
+                Canvas に flat prop を付けて tone mapping (ACESFilmic) を切ってあるため
+                #ffffff がそのまま画面に純白として出る。 */}
             <mesh geometry={fillGeometry}>
-                <meshLambertMaterial color="#ffffff" />
+                <meshBasicMaterial color="#ffffff" />
             </mesh>
 
             {/* wireframe — lineSegments + EdgesGeometry で line だけを明示的に描画。
-                半径 1.008 で fill (1.0) より僅かに外、z-fighting なし。
-                LineBasicMaterial は light の影響を受けないので一定のグレーで表示される。 */}
+                半径 1.008 で fill (1.0) より僅かに外、z-fighting なし。 */}
             <lineSegments geometry={wireGeometry}>
                 <lineBasicMaterial color="#999999" />
             </lineSegments>
@@ -281,6 +276,7 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
                 camera={{ position: [0, 0, 4.2], fov: 40 }}
                 dpr={[1, 1.5]}
                 frameloop="always"
+                flat
                 gl={{ antialias: true, alpha: true }}
             >
                 <Globe reduced={reduced} />
