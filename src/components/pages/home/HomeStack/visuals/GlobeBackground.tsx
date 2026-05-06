@@ -5,12 +5,13 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // 「Cloudflare の TOP みたいな地球儀 + ネットワーク」を SF 工業トーンで再構成。
 // - wireframe sphere (foreground 色 / 低 opacity)
-// - PoP 候補 15 都市の小ドット (Cloudflare ブランドオレンジ)
 // - 同時に 5 本の arc が常時走っており、phase 0..0.5 で伸び、0.5..1.0 で消える
 // - 1 本完了したら別の都市ペアへリスポーン
 //
-// 「Cloudflare 感」を最優先するため、点と arc は theme accent ではなく
+// 「Cloudflare 感」を最優先するため、arc は theme accent ではなく
 // Cloudflare ブランドオレンジ (#F38020) を直接使う。
+//
+// 都市は POP_VECTORS として保持するが、ドット描画はせず arc の起点/終点としてだけ参照する。
 
 const CLOUDFLARE_ORANGE = '#F38020';
 
@@ -135,7 +136,9 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
         ) {
             const from = POP_VECTORS[state.fromIdx];
             const to = POP_VECTORS[state.toIdx];
-            const liftAmount = 1.22 + from.distanceTo(to) * 0.18;
+            // sphere 半径 1.0 + camera フレーミング (z=3.6, fov 40°, half-height ~1.31) で
+            // 端切れしないよう arc 最大持ち上がりを ~1.27 に抑える。
+            const liftAmount = 1.13 + from.distanceTo(to) * 0.07;
             const mid = from
                 .clone()
                 .add(to)
@@ -197,16 +200,6 @@ interface GlobeProps {
 const Globe: React.FC<GlobeProps> = ({ foreColor, reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
 
-    const popPositions = useMemo(() => {
-        const arr = new Float32Array(POP_VECTORS.length * 3);
-        POP_VECTORS.forEach((v, i) => {
-            arr[i * 3] = v.x * 1.005;
-            arr[i * 3 + 1] = v.y * 1.005;
-            arr[i * 3 + 2] = v.z * 1.005;
-        });
-        return arr;
-    }, []);
-
     const sphereGeometry = useMemo(
         () => new THREE.SphereGeometry(1, 28, 18),
         [],
@@ -247,23 +240,6 @@ const Globe: React.FC<GlobeProps> = ({ foreColor, reduced }) => {
                 />
             </mesh>
 
-            {/* PoP points (Cloudflare orange) */}
-            <points>
-                <bufferGeometry>
-                    <bufferAttribute
-                        attach="attributes-position"
-                        args={[popPositions, 3]}
-                    />
-                </bufferGeometry>
-                <pointsMaterial
-                    color={CLOUDFLARE_ORANGE}
-                    size={0.058}
-                    sizeAttenuation
-                    transparent
-                    opacity={1.0}
-                />
-            </points>
-
             {/* arcs (Cloudflare orange、reduced-motion ではアニメ自体を出さない) */}
             {!reduced &&
                 arcRefs.map((ref, i) => (
@@ -294,7 +270,7 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
     return (
         <div className={className} aria-hidden>
             <Canvas
-                camera={{ position: [0, 0, 3.2], fov: 36 }}
+                camera={{ position: [0, 0, 3.6], fov: 40 }}
                 dpr={[1, 1.5]}
                 frameloop="always"
                 gl={{ antialias: true, alpha: true }}
