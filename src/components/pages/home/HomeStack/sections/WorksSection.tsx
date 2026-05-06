@@ -24,14 +24,15 @@ const PROJECT_PINS = [
     { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
 ];
 
-// 横 8 × 縦 6 = 48 stack。row 圧縮で重なるぶん、row 数を増やして bottom も覆う。
+// 横 8 × 縦 6 = 48 stack。
 const FOLDER_COLS = 8;
 const FOLDER_ROWS = 6;
 const TILE_W_VW = 13; // 13 × 8 = 104vw
-const TILE_H_VH = 21; // row 0 → row 1 の標準的な縦間隔
-// row 1 以降は ROW_COMPRESSED_STRIDE で詰める (LAYER_SCALE×TILE_H 未満にすれば
-// 重なりが発生 = ユーザ指定の「マイナス間隔」)。
-const ROW_COMPRESSED_STRIDE_VH = 15;
+const TILE_H_VH = 21; // 標準的な縦間隔 (row 0→1 と row N-2→N-1 で使用)
+// 中段 (row 1..N-2 間) は ROW_COMPRESSED_STRIDE で詰める。
+// LAYER_SCALE_Y × TILE_H 未満にすれば overlap が発生 = ユーザ指定の「マイナス間隔」。
+// 12vh stride で row 0..5 全体を ~99vh に収まるよう調整。
+const ROW_COMPRESSED_STRIDE_VH = 12;
 const STACK_LAYERS = 4;
 // 各スタックの「重なり方向」は画面中心を基準とする radial 配置。
 //   front 層 → 中心に寄る方向
@@ -81,9 +82,12 @@ const CENTER_COL = (FOLDER_COLS - 1) / 2;
 const CENTER_ROW = (FOLDER_ROWS - 1) / 2;
 
 const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
-    // LAYER_SCALE を上げる (= folder が tile を多く占有 → stack 間 gap 縮小)。
-    const LAYER_SCALE = 0.94;
-    const layerInsetPct = ((1 - LAYER_SCALE) / 2) * 100;
+    // 横方向は若干 narrow にして stack 間に visible gap、
+    // 縦方向は tile の大半を占有 (中段 row 圧縮と組み合わせて密度を出す)。
+    const LAYER_SCALE_X = 0.82;
+    const LAYER_SCALE_Y = 0.94;
+    const layerInsetXPct = ((1 - LAYER_SCALE_X) / 2) * 100;
+    const layerInsetYPct = ((1 - LAYER_SCALE_Y) / 2) * 100;
 
     // 最終 (settled) の中心方向ベクトル (-1..+1)
     const finalDirX = (CENTER_COL - tile.col) / CENTER_COL;
@@ -101,11 +105,21 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
         ['--travel' as string]: 0,
     };
 
-    // row 0 → row 1 は標準間隔 (TILE_H)、row 1 以降は圧縮 stride で詰める。
-    const rowTopVh =
-        tile.row === 0
-            ? 0
-            : TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
+    // row 0 → row 1 と row N-2 → row N-1 は標準間隔 TILE_H。
+    // 中段の row 1..N-2 間は圧縮 stride で詰めて重ねる。
+    const rowTopVh = (() => {
+        if (tile.row === 0) return 0;
+        if (tile.row === FOLDER_ROWS - 1) {
+            // 最終行: row N-2 の位置 + 標準間隔
+            return (
+                TILE_H_VH +
+                (FOLDER_ROWS - 3) * ROW_COMPRESSED_STRIDE_VH +
+                TILE_H_VH
+            );
+        }
+        // 中段: row 0 から TILE_H + 圧縮 stride を積み上げ
+        return TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
+    })();
 
     return (
         <div
@@ -134,10 +148,10 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
                         key={layer}
                         style={{
                             position: 'absolute',
-                            top: `${layerInsetPct}%`,
-                            left: `${layerInsetPct}%`,
-                            width: `${LAYER_SCALE * 100}%`,
-                            height: `${LAYER_SCALE * 100}%`,
+                            top: `${layerInsetYPct}%`,
+                            left: `${layerInsetXPct}%`,
+                            width: `${LAYER_SCALE_X * 100}%`,
+                            height: `${LAYER_SCALE_Y * 100}%`,
                             // calc 内で var(--travel) を使い、init と final を線形補間
                             transform: `translate(
                                 calc(((1 - var(--travel)) * var(--init-dx) + var(--travel) * var(--final-dx)) * ${factorX}px),
