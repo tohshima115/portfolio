@@ -24,21 +24,18 @@ const PROJECT_PINS = [
     { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
 ];
 
-// 横 6 × 縦 4 = 24 タイル。22vw × 25vh 程度で全画面被覆。
-// preserveAspectRatio="none" で box にぴったり詰める (タブも一緒に拡縮)。
-const FOLDER_COLS = 6;
-const FOLDER_ROWS = 4;
-const TILE_W_VW = 18; // 18 × 6 = 108vw (右に少しオーバー)
-const TILE_H_VH = 26; // 26 × 4 = 104vh (下に少しオーバー)
+// 横 4 × 縦 3 = 12 stack。各 stack は 4 枚の folder を少しずつ offset で
+// 重ねて「書類の山」感を出す。スタック単位で横入りするので、間隔は前バージョン
+// より広めに取る。
+const FOLDER_COLS = 4;
+const FOLDER_ROWS = 3;
+const TILE_W_VW = 26; // 26 × 4 = 104vw
+const TILE_H_VH = 36; // 36 × 3 = 108vh
+const STACK_LAYERS = 4;
+const STACK_OFFSET_PX = 10; // 各層が前の層から 10px ずれる
 
 // public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
-// flipY=true で SVG 内部レベルで上下反転 (タブが下向きになる)。
-// 外側の CSS scale で flipY すると GSAP の scale 分解が悪さするので、
-// SVG 内部の <g transform> で行うのが安全。
-const FolderShape: React.FC<{ className?: string; flipY?: boolean }> = ({
-    className,
-    flipY,
-}) => (
+const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
     <svg
         viewBox="0 0 709 567"
         preserveAspectRatio="none"
@@ -46,13 +43,7 @@ const FolderShape: React.FC<{ className?: string; flipY?: boolean }> = ({
         className={className}
         aria-hidden
     >
-        <g
-            transform={
-                flipY
-                    ? 'matrix(1,0,0,-1,-1228.346457,1653.563)'
-                    : 'matrix(1,0,0,1,-1228.346457,-1086.562999)'
-            }
-        >
+        <g transform="matrix(1,0,0,1,-1228.346457,-1086.562999)">
             <path
                 fill="currentColor"
                 d="M1228.346,1653.543L1937.008,1653.543L1937.008,1181.102C1937.008,1181.102 1678.894,1180.896 1606.299,1181.102C1487.818,1181.44 1535.151,1086.851 1417.323,1086.614C1359.999,1086.499 1228.346,1086.614 1228.346,1086.614L1228.346,1653.543Z"
@@ -70,10 +61,14 @@ interface FolderTile {
     delay: number;
 }
 
+// 1 stack = 4 枚の folder を staircase に offset させて重ねる。
+// 内側 layer は tile box より小さく中央配置 → stack 同士の間に visible gap が残る。
+// transform は外側 wrapper (data-folder-tile) で xPercent 横入りされ、
+// 内側 layers は inset の中央寄せ + translate(±offsetPx) で「pile」の見た目を作る。
 const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
-    // 最終露出: row 0 (top) はタブが下方向 (中央側) に向くよう SVG 内部反転、
-    //           row 最終 (bottom) は自然向き。中間行は punch で隠れるので自然向き。
-    const flipY = tile.row === 0;
+    // tile box に対する layer の比率。0.78 だと両側 11% ずつ余白 (= 約 2.8vw / 4vh)。
+    const LAYER_SCALE = 0.78;
+    const layerInsetPct = ((1 - LAYER_SCALE) / 2) * 100;
     return (
         <div
             data-folder-tile
@@ -90,7 +85,29 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
                 willChange: 'transform',
             }}
         >
-            <FolderShape className="block w-full h-full" flipY={flipY} />
+            {Array.from({ length: STACK_LAYERS }).map((_, layer) => {
+                // 中央寄せの staircase 配置。
+                //   layer=0 (back) : (-offset, -offset)
+                //   layer=N-1 (front): (+offset, +offset)
+                const dx = (layer - (STACK_LAYERS - 1) / 2) * STACK_OFFSET_PX;
+                const dy = (layer - (STACK_LAYERS - 1) / 2) * STACK_OFFSET_PX;
+                return (
+                    <div
+                        key={layer}
+                        style={{
+                            position: 'absolute',
+                            top: `${layerInsetPct}%`,
+                            left: `${layerInsetPct}%`,
+                            width: `${LAYER_SCALE * 100}%`,
+                            height: `${LAYER_SCALE * 100}%`,
+                            transform: `translate(${dx}px, ${dy}px)`,
+                            zIndex: layer,
+                        }}
+                    >
+                        <FolderShape className="block w-full h-full" />
+                    </div>
+                );
+            })}
         </div>
     );
 };
