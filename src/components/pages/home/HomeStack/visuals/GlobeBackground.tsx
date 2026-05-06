@@ -45,23 +45,6 @@ const sphericalToVector3 = (lat: number, lng: number, r: number = 1): THREE.Vect
 
 const POP_VECTORS = POPS.map((p) => sphericalToVector3(p.lat, p.lng, 1));
 
-const readCssColor = (variable: string, fallback: string): string => {
-    if (typeof window === 'undefined') return fallback;
-    try {
-        const probe = document.createElement('div');
-        probe.style.color = `var(${variable})`;
-        probe.style.position = 'absolute';
-        probe.style.visibility = 'hidden';
-        probe.style.pointerEvents = 'none';
-        document.body.appendChild(probe);
-        const c = getComputedStyle(probe).color;
-        document.body.removeChild(probe);
-        return c;
-    } catch {
-        return fallback;
-    }
-};
-
 const ARC_COUNT = 5;
 const ARC_RESOLUTION = 64;
 const ARC_TOTAL_POINTS = ARC_RESOLUTION + 1;
@@ -193,11 +176,10 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
 };
 
 interface GlobeProps {
-    fillColor: string;
     reduced: boolean;
 }
 
-const Globe: React.FC<GlobeProps> = ({ fillColor, reduced }) => {
+const Globe: React.FC<GlobeProps> = ({ reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
 
     // 表面塗り用の solid sphere (半径 0.99) と wireframe sphere (半径 1.0)。
@@ -241,22 +223,27 @@ const Globe: React.FC<GlobeProps> = ({ fillColor, reduced }) => {
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* solid 塗り (グレー、半径 0.99 で wireframe の内側に置く) */}
-            <mesh geometry={fillGeometry}>
+            {/* solid 塗り (グレー、半径 0.99 で wireframe の内側に置く)。
+                CSS 変数 (--color-muted-foreground) は oklch() で記述されており Three.js の
+                Color.setStyle が parse しきれず白フォールバックされるケースがあるため、
+                安全策として hex を直接渡す。 */}
+            <mesh geometry={fillGeometry} renderOrder={0}>
                 <meshBasicMaterial
-                    color={fillColor}
+                    color="#7a7a7a"
                     transparent
-                    opacity={0.42}
+                    opacity={0.55}
                 />
             </mesh>
 
-            {/* wireframe sphere (白、塗りの上に浮かせる) */}
-            <mesh geometry={wireGeometry}>
+            {/* wireframe sphere (白、塗りの上に浮かせる)。renderOrder で fill より後に
+                必ず描画させ、線が fill に飲まれないようにする。 */}
+            <mesh geometry={wireGeometry} renderOrder={1}>
                 <meshBasicMaterial
                     color="#ffffff"
                     wireframe
                     transparent
-                    opacity={0.55}
+                    opacity={0.9}
+                    depthTest={false}
                 />
             </mesh>
 
@@ -276,11 +263,9 @@ interface Props {
 export const GlobeBackground: React.FC<Props> = ({ className }) => {
     const reduced = useReducedMotion();
     const [mounted, setMounted] = useState(false);
-    const [fillColor, setFillColor] = useState('#999999');
 
     useEffect(() => {
         setMounted(true);
-        setFillColor(readCssColor('--color-muted-foreground', '#999999'));
     }, []);
 
     if (!mounted) {
@@ -295,7 +280,7 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
                 frameloop="always"
                 gl={{ antialias: true, alpha: true }}
             >
-                <Globe fillColor={fillColor} reduced={reduced} />
+                <Globe reduced={reduced} />
             </Canvas>
         </div>
     );
