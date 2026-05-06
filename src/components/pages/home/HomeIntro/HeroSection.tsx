@@ -4,7 +4,7 @@ import { ContourBackground } from '../PrtsInterface/components/ContourBackground
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
 import type { UpdateItem } from '../HomeScene/types';
-import { dollyScale, dollyOpacity } from './dollyCurves';
+import { dollyScale, dollyBlurPxFg, dollyOpacity } from './dollyCurves';
 
 interface Props {
     skipIntro: boolean;
@@ -54,6 +54,11 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
     const dollyFallback = useMotionValue(0);
     const dollySrc = dolly ?? dollyFallback;
     const heroScale = useTransform(dollySrc, dollyScale);
+    const heroFilter = useTransform(dollySrc, (p: number) => {
+        const px = dollyBlurPxFg(p);
+        // blur(0px) でもレイヤを作るブラウザ対策。閾値前は filter を 'none' に。
+        return px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'none';
+    });
     const heroOpacity = useTransform(dollySrc, dollyOpacity);
 
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -111,9 +116,10 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                 style={{
                     rotateX,
                     scale: heroScale,
+                    filter: heroFilter,
                     opacity: heroOpacity,
                     transformStyle: 'preserve-3d',
-                    willChange: 'transform, opacity',
+                    willChange: 'transform, filter, opacity',
                 }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >

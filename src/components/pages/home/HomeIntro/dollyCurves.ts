@@ -31,3 +31,16 @@ export const dollyOpacity = (p: number): number => {
 
 /** 背景 (ContourBackground canvas) は前景より弱めの blur で GPU 負荷を抑える。 */
 export const dollyBlurPxBg = (p: number): number => dollyBlurPx(p) * 0.6;
+
+/** 前景 (HeroSection) 用 blur (px): 0 → 12。
+ *
+ *  立ち上がりを progress 0.7 (= opacity が下がり始めるポイント) に合わせる。
+ *  filter:blur は CSS 仕様で grouping context を作って preserve-3d をフラット化
+ *  するが、opacity も < 1 のときに同じく grouping を作るので、どのみち progress 0.7
+ *  以降はフラット化される段階に入る。blur の立ち上がりを opacity 低下と同期させれば、
+ *  フラット化が新たに目立つことなく「ピントが外れて薄れて消える」自然な表現になる。 */
+export const dollyBlurPxFg = (p: number): number => {
+    if (p <= 0.7) return 0;
+    const q = (p - 0.7) / 0.3;
+    return q * q * 12;
+};
