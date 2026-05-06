@@ -4,7 +4,7 @@ import { ContourBackground } from '../PrtsInterface/components/ContourBackground
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
 import type { UpdateItem } from '../HomeScene/types';
-import { dollyBlurPx, dollyOpacity } from './dollyCurves';
+import { dollyOpacity } from './dollyCurves';
 
 interface Props {
     skipIntro: boolean;
@@ -13,9 +13,13 @@ interface Props {
     /** 0..1 の遷移進捗。ContourBackground の uChaos uniform にバイパスする */
     chaos?: MotionValue<number> | number;
     /**
-     * 0..1 の Hero→Statement dolly 進捗 (案 G)。HeroSection 側は filter:blur と opacity
-     * のみに反映 (scale は preserve-3d 配下の Z 距離を縮めて 3D 配置を崩すので避ける)。
-     * ContourBackground にもそのまま流し、scale 由来の「カメラ引き」感は背景に任せる。
+     * 0..1 の Hero→Statement dolly 進捗 (案 G)。HeroSection 側は opacity のみに反映。
+     *   - scale は preserve-3d 配下の Z 距離を縮めて 3D 配置を崩すので避ける
+     *   - filter:blur は新しい grouping context を作って preserve-3d をフラット化し、
+     *     HeroLayer 内の translateZ (MainTitle 80 / NavigationLayer 160) が rotateX と
+     *     組み合わさって「縦に引き伸ばされる」現象を引き起こすので避ける
+     * scale + blur + opacity は ContourBackground (背景の等高線) に任せ、
+     * 前景はクリアなまま opacity で薄れて消える表現にする (= 被写界深度的な分業)。
      */
     dolly?: MotionValue<number>;
 }
@@ -41,20 +45,19 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
 
     // dolly: 親が undefined を渡してきても hooks を呼ぶ必要があるので fallback を常に作る。
     //
-    // 重要: HeroSection の motion.div には scale を当てない。
+    // 重要: HeroSection の motion.div には scale も filter:blur も当てない。
     //   この motion.div は preserve-3d の起点で、子の HeroLayer 内では MainTitle や
-    //   NavigationLayer が translateZ で 3D 配置されている。scale をかけると Z 距離も
-    //   比例して縮み、rotateX (鳥瞰角) と組み合わさって Y 位置がズレる
-    //   (= ロゴが縦に伸びる / PROJECT ナビが下にずれる現象の原因)。
-    //   scale 由来の「カメラ引き」感は ContourBackground (背景の等高線) に任せ、
-    //   HeroLayer 側は blur と opacity だけで「ピントが外れて遠のく」表現にする。
+    //   NavigationLayer が translateZ で 3D 配置されている:
+    //     - scale をかけると Z 距離も比例して縮み、rotateX (鳥瞰角) と組み合わさって
+    //       要素の Y 位置がズレる
+    //     - filter:blur は新しい合成レイヤ (grouping context) を作って preserve-3d を
+    //       フラット化する。translateZ がゼロ扱いになった上で rotateX で傾くので、
+    //       要素全体が「縦に引き伸ばされた」ように見える
+    //   どちらも「カメラ引き」感を出すために ContourBackground (背景) 側に任せ、
+    //   前景 (ロゴ・ナビ) はクリアなまま opacity で薄れて消える形にする
+    //   (= 被写界深度的な分業: subject はピントが残り、背景がボケる)
     const dollyFallback = useMotionValue(0);
     const dollySrc = dolly ?? dollyFallback;
-    const heroFilter = useTransform(dollySrc, (p: number) => {
-        const px = dollyBlurPx(p);
-        // blur(0px) でもレイヤを作るブラウザ対策。閾値前は filter を 'none' に。
-        return px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'none';
-    });
     const heroOpacity = useTransform(dollySrc, dollyOpacity);
 
     const viewportRef = useRef<HTMLDivElement>(null);
@@ -110,10 +113,9 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             <motion.div
                 style={{
                     rotateX,
-                    filter: heroFilter,
                     opacity: heroOpacity,
                     transformStyle: 'preserve-3d',
-                    willChange: 'transform, filter, opacity',
+                    willChange: 'transform, opacity',
                 }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >
