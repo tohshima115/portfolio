@@ -83,13 +83,14 @@ const BOTTOM_COLS: FolderCol[] = [
 ];
 
 // 1 カラム描画。row='top' で本体が上端から下に伸び、タブはさらに下 (スリット側) へ突出。
-// row='bottom' は上下反転 (本体は下端から上に、タブは上 = スリット側へ突出)。
-// reduced=true の場合は初期 transform を当てず最終位置で静的に表示。
+// row='bottom' は上下反転。
+// 初期非表示は `data-row` 経由の opacity:0 + GSAP の gsap.set/fromTo で yPercent を
+// 設定する。ここで inline transform を当てると gsap が % を px に正規化して固定して
+// しまうため、transform は当てない。
 const FolderColumn: React.FC<{
     col: FolderCol;
     row: 'top' | 'bottom';
-    reduced: boolean;
-}> = ({ col, row, reduced }) => {
+}> = ({ col, row }) => {
     const isTop = row === 'top';
     const tabHeight = col.tab?.h ?? 0;
 
@@ -100,13 +101,7 @@ const FolderColumn: React.FC<{
             style={{
                 width: `${col.w}vw`,
                 height: '100%',
-                // pin 中の隠し初期状態: 画面外に退避 (reduced 時は当てない)
-                transform: reduced
-                    ? undefined
-                    : isTop
-                      ? 'translateY(-110%)'
-                      : 'translateY(110%)',
-                willChange: reduced ? undefined : 'transform',
+                willChange: 'transform',
             }}
         >
             {/* 本体 */}
@@ -193,14 +188,23 @@ export const WorksHeroTransition: React.FC = () => {
                 },
             });
 
-            // 0.05 — 0.50: top カラム sweep down (stagger custom: index 順ではなく
-            // 中央寄りから外側へではなく、こちらは shuffled delay を使い「ザザッと
-            // 同時に複数着地」する印象にする)
+            // GSAP は CSS / inline の translateY(%) を px に正規化して `y` に
+            // 入れることがあり、その状態で yPercent を動かしても残った y(px) で
+            // 元の位置に戻ってしまう。setup 時点で y を 0 にリセットしつつ
+            // yPercent を明示する。
+            gsap.set(topCols, { yPercent: -110, y: 0 });
+            gsap.set(bottomCols, { yPercent: 110, y: 0 });
+            gsap.set(headingChars, { yPercent: -110, y: 0, opacity: 0 });
+
+            // 0.05 — 0.50: top/bottom カラムが画面外から zip in。shuffled delay で
+            // 「ザザッと同時に複数着地」する印象にする。
             topCols.forEach((el, i) => {
-                tl.to(
+                tl.fromTo(
                     el,
+                    { yPercent: -110, y: 0 },
                     {
                         yPercent: 0,
+                        y: 0,
                         duration: 0.4,
                         ease: 'power3.out',
                     },
@@ -208,10 +212,12 @@ export const WorksHeroTransition: React.FC = () => {
                 );
             });
             bottomCols.forEach((el, i) => {
-                tl.to(
+                tl.fromTo(
                     el,
+                    { yPercent: 110, y: 0 },
                     {
                         yPercent: 0,
+                        y: 0,
                         duration: 0.4,
                         ease: 'power3.out',
                     },
@@ -242,12 +248,14 @@ export const WorksHeroTransition: React.FC = () => {
                 0.52,
             );
 
-            // 0.55 — 0.85: 巨大 WORKS char stagger (上から落ちる)
-            tl.to(
+            // 0.55 — 0.85: 巨大 WORKS char stagger (上から落ちる)。
+            tl.fromTo(
                 headingChars,
+                { opacity: 0, yPercent: -110, y: 0 },
                 {
                     opacity: 1,
                     yPercent: 0,
+                    y: 0,
                     stagger: 0.04,
                     duration: 0.5,
                     ease: 'power3.out',
@@ -311,12 +319,7 @@ export const WorksHeroTransition: React.FC = () => {
                     className="absolute top-0 left-0 right-0 flex h-[40vh] z-10 pointer-events-none"
                 >
                     {TOP_COLS.map((col, i) => (
-                        <FolderColumn
-                            key={`t-${i}`}
-                            col={col}
-                            row="top"
-                            reduced={reduced}
-                        />
+                        <FolderColumn key={`t-${i}`} col={col} row="top" />
                     ))}
                 </div>
 
@@ -327,12 +330,7 @@ export const WorksHeroTransition: React.FC = () => {
                     className="absolute bottom-0 left-0 right-0 flex h-[40vh] z-10 pointer-events-none"
                 >
                     {BOTTOM_COLS.map((col, i) => (
-                        <FolderColumn
-                            key={`b-${i}`}
-                            col={col}
-                            row="bottom"
-                            reduced={reduced}
-                        />
+                        <FolderColumn key={`b-${i}`} col={col} row="bottom" />
                     ))}
                 </div>
 
