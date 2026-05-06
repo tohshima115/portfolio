@@ -1,31 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { useMotionValue } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { HeroSection } from './HeroSection';
 
 export type { UpdateItem };
 
-// HomeIntro: Hero を 1 viewport 分 sticky pin で張り付かせ、
-// scrollY 0..SCROLL_RANGE_PX を dolly progress 0..1 にマップする構造。
+// HomeIntro: 「fixed Hero + scroll spacer」方式。
 //
-// 利点:
-//   - Hero と Statement のスクロールが連続した 1 本のネイティブスクロールになる
-//     → Lenis の smooth scroll が Hero でも効く / scrollbar が分裂しない
-//   - useIntroProgress の wheel/touch 自前捕食、phase state、HardCutOverlay、
-//     IntroShutterOverlay、useReturnToHero がすべて不要 (スクロール位置だけで完結)
+// 構造:
+//   <div style="height: SCROLL_RANGE_PX" />     ← スクロールスペーサー
+//   <section style="fixed inset-0 z-5">        ← Hero 本体 (viewport に張り付く)
+//     <HeroSection />
+//   </section>
+//   ↓ 続く HomeStack は body 自然フロー (scrollY=SCROLL_RANGE_PX から開始)
 //
 // 動作:
-//   - 0 → SCROLL_RANGE_PX: Hero が sticky pin で画面に張り付き、dolly が 0→1 に進行
-//     (背景 contour と前景の HeroLayer が一緒にカメラ的に引いていき、後半でブラー)
-//   - SCROLL_RANGE_PX で dolly opacity = 0 → Hero が完全消失
-//   - そのまま下にスクロールすると pin wrapper が終わり、Statement が見えてくる
-//   - Statement から上方向にスクロールすれば Hero pin range に再突入し、
-//     dolly が逆方向に進行して Hero が復活 (専用イベント不要)
+//   - scrollY 0..SCROLL_RANGE_PX: Hero が画面を占めつつ dolly progress 0→1 進行
+//     (Hero 自体は CSS 的に微動だにしないので sticky の sub-pixel paint 揺れに
+//      よる「要素が縦に伸びる」現象が発生しない)
+//   - scrollY=SCROLL_RANGE_PX: dolly opacity が 0 → Hero が透明、同時に
+//     Statement 上端が viewport 上端に到達 → 視覚的に引き渡し
+//   - scrollY > SCROLL_RANGE_PX: HomeStack が natural scroll で続く
+//   - 戻りは Statement から上方向 scroll で自動的に Hero pin range に再突入
 //
-// reduced-motion:
-//   - dolly を Hero に渡さない & wrapper の追加高さを取らない
-//     (= Hero は単純な 100vh のセクションとして表示)
+// 利点 (sticky 方式と比較):
+//   - Hero が完全 fixed なので 3D 配置が paint 単位で揺れない
+//   - スクロールバーは依然 1 本 (spacer がスクロール量を body に提供)
+//   - Lenis の smooth scroll は全域で有効
 
 const SCROLL_RANGE_PX = 480;
 
@@ -72,7 +74,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         }
     };
 
-    // dolly progress = scrollY / SCROLL_RANGE_PX (0..1 にクランプ)
+    // dolly progress = scrollY / SCROLL_RANGE_PX
     const progressMv = useMotionValue(0);
     useEffect(() => {
         if (typeof window === 'undefined') return;
@@ -92,25 +94,53 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         return () => window.removeEventListener('scroll', update);
     }, [progressMv, reducedMotion]);
 
-    return (
-        <section
-            className="relative w-full"
-            style={{
-                height: reducedMotion
-                    ? '100vh'
-                    : `calc(100vh + ${SCROLL_RANGE_PX}px)`,
-            }}
-            onClickCapture={handleLinkClick}
-            data-home-intro
-        >
-            <div className="sticky top-0 w-full h-screen overflow-hidden bg-background">
+    // Hero が完全消失している間 (dolly progress >= 0.999) は HomeStack の
+    // クリック / hover を吸わないように pointer-events を切る
+    const heroPointerEvents = useTransform(progressMv, (p: number) =>
+        p >= 0.999 ? 'none' : 'auto',
+    );
+
+    // reduced-motion: dolly 演出なし、Hero は単純な 100vh セクションとして
+    // 通常フローで配置 (Statement と縦並び)
+    if (reducedMotion) {
+        return (
+            <section
+                className="relative w-full h-screen bg-background overflow-hidden"
+                onClickCapture={handleLinkClick}
+                data-home-intro
+            >
                 <HeroSection
                     skipIntro={skipIntro}
                     updates={updates}
                     active={true}
-                    dolly={reducedMotion ? undefined : progressMv}
                 />
-            </div>
-        </section>
+            </section>
+        );
+    }
+
+    return (
+        <>
+            {/* スクロールスペーサー: scrollY 0..SCROLL_RANGE_PX を body に確保。
+                これがあることで Hero pin range が単一スクロールバーに連続して反映される */}
+            <div
+                aria-hidden
+                style={{ height: `${SCROLL_RANGE_PX}px`, pointerEvents: 'none' }}
+                data-home-intro-spacer
+            />
+            {/* Hero: viewport に固定。CSS 的に微動だにしないので 3D 配置が安定 */}
+            <motion.section
+                className="fixed inset-0 z-[5] bg-background overflow-hidden"
+                onClickCapture={handleLinkClick}
+                data-home-intro
+                style={{ pointerEvents: heroPointerEvents }}
+            >
+                <HeroSection
+                    skipIntro={skipIntro}
+                    updates={updates}
+                    active={true}
+                    dolly={progressMv}
+                />
+            </motion.section>
+        </>
     );
 };
