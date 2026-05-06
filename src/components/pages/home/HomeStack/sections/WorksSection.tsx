@@ -121,11 +121,20 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
         return TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
     })();
 
+    // 中段 (row 1..N-2) × 中央 4 列 (col 2..5) は WORKS reveal 時に shrink して
+    // 消える。data-mid="1" で gsap 側から拾う。
+    const isMid =
+        tile.col >= 2 &&
+        tile.col <= 5 &&
+        tile.row >= 1 &&
+        tile.row <= FOLDER_ROWS - 2;
+
     return (
         <div
             data-folder-tile
             data-from-left={tile.fromLeft ? '1' : '0'}
             data-tile-delay={tile.delay}
+            data-mid={isMid ? '1' : '0'}
             style={{
                 position: 'absolute',
                 left: `${tile.col * TILE_W_VW}vw`,
@@ -225,7 +234,10 @@ const WorksLead: React.FC = () => {
 
             // folder + WORKS reveal
             const tileEls = container.querySelectorAll<HTMLElement>('[data-folder-tile]');
-            const punch = container.querySelector('[data-trans-punch]');
+            const midTiles = container.querySelectorAll<HTMLElement>(
+                '[data-folder-tile][data-mid="1"]',
+            );
+            const heroLayer = container.querySelector('[data-hero-layer]');
             const sublabel = container.querySelector('[data-trans-sublabel]');
             const ruleLeft = container.querySelector('[data-trans-rule="left"]');
             const ruleRight = container.querySelector('[data-trans-rule="right"]');
@@ -307,14 +319,25 @@ const WorksLead: React.FC = () => {
 
             // Phase C: 全被覆ホールド (0.58 ~ 0.66) — 何もしない (タイルは to 完了後 0)
 
-            // Phase D: 中央 punch-out (0.66 ~ 0.78)
-            tl.fromTo(
-                punch,
-                { height: 0 },
+            // Phase D: 中段 × 中央 4 列の folder stack を縦 0% / 横 50% に縮めて
+            // 視覚的に「消す」。同時に Cloudflare hero (z-10) を opacity フェード
+            // アウトさせ、空いた center area が背景色になるようにする。
+            tl.to(
+                midTiles,
                 {
-                    height: '52vh',
-                    duration: 0.12,
+                    scaleX: 0.5,
+                    scaleY: 0,
+                    duration: 0.14,
                     ease: 'power3.inOut',
+                },
+                0.66,
+            );
+            tl.to(
+                heroLayer,
+                {
+                    opacity: 0,
+                    duration: 0.14,
+                    ease: 'power2.out',
                 },
                 0.66,
             );
@@ -367,8 +390,9 @@ const WorksLead: React.FC = () => {
                 data-pin-inner
                 className="relative w-full h-screen overflow-hidden bg-background"
             >
-                {/* z-10: 既存の Cloudflare hero (folders に覆われる) */}
-                <div className="absolute inset-0 z-10 flex items-center">
+                {/* z-10: 既存の Cloudflare hero (folders に覆われる)。
+                    Phase D で folder shrink と同時にフェードアウトさせる。 */}
+                <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
                     <div className="absolute top-6 left-6 md:top-8 md:left-12">
                         <CornerLabel label="WORKS" id="01" />
                     </div>
@@ -450,15 +474,7 @@ const WorksLead: React.FC = () => {
                     ))}
                 </div>
 
-                {/* z-30: 中央 punch-out (folders を背景色で覆って center が抜けて見える効果) */}
-                <div
-                    aria-hidden
-                    data-trans-punch
-                    className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-30 bg-background pointer-events-none"
-                    style={{ height: 0 }}
-                />
-
-                {/* z-40: WORKS hero center content (punch の上) */}
+                {/* z-40: WORKS hero center content (folder shrink で空いた領域に出現) */}
                 <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12">
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center gap-4 mb-6 md:mb-8">
