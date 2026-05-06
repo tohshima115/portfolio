@@ -24,19 +24,20 @@ const PROJECT_PINS = [
     { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
 ];
 
-// 横 6 × 縦 4 = 24 stack。各 stack は 4 枚の folder を少しずつ offset で
-// 重ねて「書類の山」感を出す。スタック単位で横入りする。
-const FOLDER_COLS = 6;
-const FOLDER_ROWS = 4;
-const TILE_W_VW = 17; // 17 × 6 = 102vw
-const TILE_H_VH = 26; // 26 × 4 = 104vh
+// 横 8 × 縦 5 = 40 stack。folder を小さくして数を増やすと密度が出る。
+const FOLDER_COLS = 8;
+const FOLDER_ROWS = 5;
+const TILE_W_VW = 13; // 13 × 8 = 104vw
+const TILE_H_VH = 21; // 21 × 5 = 105vh
 const STACK_LAYERS = 4;
-// 各スタックの「重なり方向」は画面中心 (grid center) を基準とする radial 配置。
+// 各スタックの「重なり方向」は画面中心を基準とする radial 配置。
 //   front 層 → 中心に寄る方向
 //   back 層  → 外側 (中心から離れる方向)
-// → 左上 stack は 左上→右下、右上 stack は 右上→左下、… 中央付近は offset ≈ 0
-const STACK_OFFSET_X_PX = 14; // 1 step あたり横 offset (corner で最大)
-const STACK_OFFSET_Y_PX = 9; // 1 step あたり縦 offset
+// stack の入場中 (--travel: 0..1) は initial direction (= 左から流入なので
+// 全 stack 右向き = +x) と final direction (= radial) を補間し、移動中も
+// 「front が viewport center を向く」状態を維持する。
+const STACK_OFFSET_X_PX = 10;
+const STACK_OFFSET_Y_PX = 6;
 
 // public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
 const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
@@ -70,18 +71,31 @@ interface FolderTile {
 // 中心からの方向ベクトルを正規化 → 各層の offset がその方向に沿って動く。
 //   front (大きい layer index) → 中心に寄る
 //   back  (小さい layer index) → 外側
-// 中央付近の stack は offset の magnitude が小さくなり「ほぼ重なる」状態になる。
-const CENTER_COL = (FOLDER_COLS - 1) / 2; // 6 cols → 2.5
-const CENTER_ROW = (FOLDER_ROWS - 1) / 2; // 4 rows → 1.5
+// CSS var `--travel` (0..1) を gsap で animate し、初期 (=左から流入のため全
+// stack 右向き) → 最終 (= radial) を補間。これにより移動中も front が viewport
+// center を向き続ける。
+const CENTER_COL = (FOLDER_COLS - 1) / 2;
+const CENTER_ROW = (FOLDER_ROWS - 1) / 2;
 
 const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
-    // tile box に対する layer の比率。0.78 だと両側 11% ずつ余白 (= 約 2.8vw / 4vh)。
     const LAYER_SCALE = 0.78;
     const layerInsetPct = ((1 - LAYER_SCALE) / 2) * 100;
 
-    // 中心方向の単位ベクトル (-1..+1)。中心の cell は 0 に近く offset 小。
-    const dirX = (CENTER_COL - tile.col) / CENTER_COL;
-    const dirY = (CENTER_ROW - tile.row) / CENTER_ROW;
+    // 最終 (settled) の中心方向ベクトル (-1..+1)
+    const finalDirX = (CENTER_COL - tile.col) / CENTER_COL;
+    const finalDirY = (CENTER_ROW - tile.row) / CENTER_ROW;
+    // 初期方向: 全 stack は左から入るので「中心向き = +x」一律
+    const initialDirX = 1;
+    const initialDirY = 0;
+
+    // CSS 変数で渡し、layer の transform で var を補間する
+    const styleVars: React.CSSProperties = {
+        ['--init-dx' as string]: initialDirX,
+        ['--init-dy' as string]: initialDirY,
+        ['--final-dx' as string]: finalDirX,
+        ['--final-dy' as string]: finalDirY,
+        ['--travel' as string]: 0,
+    };
 
     return (
         <div
@@ -97,14 +111,14 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
                 color: 'var(--color-foreground)',
                 lineHeight: 0,
                 willChange: 'transform',
+                ...styleVars,
             }}
         >
             {Array.from({ length: STACK_LAYERS }).map((_, layer) => {
                 // t : -1.5, -0.5, 0.5, 1.5 (back → front)
-                // 中心方向に front を寄せる: offset = t * dir * step
                 const t = layer - (STACK_LAYERS - 1) / 2;
-                const offX = t * dirX * STACK_OFFSET_X_PX;
-                const offY = t * dirY * STACK_OFFSET_Y_PX;
+                const factorX = t * STACK_OFFSET_X_PX;
+                const factorY = t * STACK_OFFSET_Y_PX;
                 return (
                     <div
                         key={layer}
@@ -114,7 +128,11 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
                             left: `${layerInsetPct}%`,
                             width: `${LAYER_SCALE * 100}%`,
                             height: `${LAYER_SCALE * 100}%`,
-                            transform: `translate(${offX}px, ${offY}px)`,
+                            // calc 内で var(--travel) を使い、init と final を線形補間
+                            transform: `translate(
+                                calc(((1 - var(--travel)) * var(--init-dx) + var(--travel) * var(--final-dx)) * ${factorX}px),
+                                calc(((1 - var(--travel)) * var(--init-dy) + var(--travel) * var(--final-dy)) * ${factorY}px)
+                            )`,
                             zIndex: layer,
                         }}
                     >
@@ -241,18 +259,21 @@ const WorksLead: React.FC = () => {
 
             // Phase B: folder grid 左から waterfall 入り (0.30 ~ 0.62)
             // 全 tile が x:-110vw → 0 で左から滑り込む。delay (data 属性) は
-            // 「右側着地ほど早く出発」なので col 5 → col 0 の順に到着する。
+            // 「右側着地ほど早く出発」なので col 末 → col 0 の順に到着する。
+            // 同時に --travel を 0 → 1 に animate し、layer の offset 方向を
+            // 「初期 (右向き)」から「最終 (radial)」へ補間する。
             tileEls.forEach((el) => {
-                gsap.set(el, { x: '-110vw', xPercent: 0 });
+                gsap.set(el, { x: '-110vw', xPercent: 0, '--travel': 0 });
             });
             tileEls.forEach((el) => {
                 const d = Number(el.getAttribute('data-tile-delay')) || 0;
                 tl.fromTo(
                     el,
-                    { x: '-110vw', xPercent: 0 },
+                    { x: '-110vw', xPercent: 0, '--travel': 0 },
                     {
                         x: 0,
                         xPercent: 0,
+                        '--travel': 1,
                         duration: 0.12,
                         ease: 'power3.out',
                     },
