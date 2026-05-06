@@ -24,15 +24,14 @@ const PROJECT_PINS = [
     { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
 ];
 
-// 横 4 × 縦 3 = 12 stack。各 stack は 4 枚の folder を少しずつ offset で
-// 重ねて「書類の山」感を出す。スタック単位で横入りするので、間隔は前バージョン
-// より広めに取る。
-const FOLDER_COLS = 4;
-const FOLDER_ROWS = 3;
-const TILE_W_VW = 26; // 26 × 4 = 104vw
-const TILE_H_VH = 36; // 36 × 3 = 108vh
+// 横 6 × 縦 4 = 24 stack。各 stack は 4 枚の folder を少しずつ offset で
+// 重ねて「書類の山」感を出す。スタック単位で横入りする。
+const FOLDER_COLS = 6;
+const FOLDER_ROWS = 4;
+const TILE_W_VW = 17; // 17 × 6 = 102vw
+const TILE_H_VH = 26; // 26 × 4 = 104vh
 const STACK_LAYERS = 4;
-const STACK_OFFSET_PX = 10; // 各層が前の層から 10px ずれる
+const STACK_OFFSET_PX = 8; // 各層が前の層から 8px ずれる (タイル縮小に合わせて offset も小さく)
 
 // public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
 const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
