@@ -24,11 +24,14 @@ const PROJECT_PINS = [
     { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
 ];
 
-// 横 8 × 縦 5 = 40 stack。folder を小さくして数を増やすと密度が出る。
+// 横 8 × 縦 6 = 48 stack。row 圧縮で重なるぶん、row 数を増やして bottom も覆う。
 const FOLDER_COLS = 8;
-const FOLDER_ROWS = 5;
+const FOLDER_ROWS = 6;
 const TILE_W_VW = 13; // 13 × 8 = 104vw
-const TILE_H_VH = 21; // 21 × 5 = 105vh
+const TILE_H_VH = 21; // row 0 → row 1 の標準的な縦間隔
+// row 1 以降は ROW_COMPRESSED_STRIDE で詰める (LAYER_SCALE×TILE_H 未満にすれば
+// 重なりが発生 = ユーザ指定の「マイナス間隔」)。
+const ROW_COMPRESSED_STRIDE_VH = 15;
 const STACK_LAYERS = 4;
 // 各スタックの「重なり方向」は画面中心を基準とする radial 配置。
 //   front 層 → 中心に寄る方向
@@ -98,6 +101,12 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
         ['--travel' as string]: 0,
     };
 
+    // row 0 → row 1 は標準間隔 (TILE_H)、row 1 以降は圧縮 stride で詰める。
+    const rowTopVh =
+        tile.row === 0
+            ? 0
+            : TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
+
     return (
         <div
             data-folder-tile
@@ -106,7 +115,7 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
             style={{
                 position: 'absolute',
                 left: `${tile.col * TILE_W_VW}vw`,
-                top: `${tile.row * TILE_H_VH}vh`,
+                top: `${rowTopVh}vh`,
                 width: `${TILE_W_VW}vw`,
                 height: `${TILE_H_VH}vh`,
                 color: 'var(--color-foreground)',
