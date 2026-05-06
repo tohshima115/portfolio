@@ -31,11 +31,12 @@ const FOLDER_ROWS = 4;
 const TILE_W_VW = 17; // 17 × 6 = 102vw
 const TILE_H_VH = 26; // 26 × 4 = 104vh
 const STACK_LAYERS = 4;
-// 重なりのずれで 3D 感を出す: 各層は staircase 状に offset (back→front で
-// 左上→右下) かつ微小回転させて「斜めに積まれた書類束」風にする。
-const STACK_OFFSET_X_PX = 12; // 横方向 offset (1 step あたり)
-const STACK_OFFSET_Y_PX = 7; // 縦方向 offset (横よりやや小さく "leaning" 風)
-const STACK_ROT_DEG = 1.4; // 1 step あたりの傾き (合計で ±約 2.1deg)
+// 各スタックの「重なり方向」は画面中心 (grid center) を基準とする radial 配置。
+//   front 層 → 中心に寄る方向
+//   back 層  → 外側 (中心から離れる方向)
+// → 左上 stack は 左上→右下、右上 stack は 右上→左下、… 中央付近は offset ≈ 0
+const STACK_OFFSET_X_PX = 14; // 1 step あたり横 offset (corner で最大)
+const STACK_OFFSET_Y_PX = 9; // 1 step あたり縦 offset
 
 // public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
 const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
@@ -64,14 +65,24 @@ interface FolderTile {
     delay: number;
 }
 
-// 1 stack = 4 枚の folder を staircase に offset させて重ねる。
-// 内側 layer は tile box より小さく中央配置 → stack 同士の間に visible gap が残る。
-// transform は外側 wrapper (data-folder-tile) で xPercent 横入りされ、
-// 内側 layers は inset の中央寄せ + translate(±offsetPx) で「pile」の見た目を作る。
+// 1 stack = 4 枚の folder を radial に offset させて重ねる。
+// stack の (col, row) と grid center (CENTER_COL, CENTER_ROW) を基準に、
+// 中心からの方向ベクトルを正規化 → 各層の offset がその方向に沿って動く。
+//   front (大きい layer index) → 中心に寄る
+//   back  (小さい layer index) → 外側
+// 中央付近の stack は offset の magnitude が小さくなり「ほぼ重なる」状態になる。
+const CENTER_COL = (FOLDER_COLS - 1) / 2; // 6 cols → 2.5
+const CENTER_ROW = (FOLDER_ROWS - 1) / 2; // 4 rows → 1.5
+
 const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
     // tile box に対する layer の比率。0.78 だと両側 11% ずつ余白 (= 約 2.8vw / 4vh)。
     const LAYER_SCALE = 0.78;
     const layerInsetPct = ((1 - LAYER_SCALE) / 2) * 100;
+
+    // 中心方向の単位ベクトル (-1..+1)。中心の cell は 0 に近く offset 小。
+    const dirX = (CENTER_COL - tile.col) / CENTER_COL;
+    const dirY = (CENTER_ROW - tile.row) / CENTER_ROW;
+
     return (
         <div
             data-folder-tile
@@ -89,13 +100,11 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
             }}
         >
             {Array.from({ length: STACK_LAYERS }).map((_, layer) => {
-                // 中央寄せの staircase 配置 + 微小回転で 3D pile 感。
-                //   layer=0 (back) : 左上 + やや反時計回り
-                //   layer=N-1 (front): 右下 + やや時計回り
-                const t = layer - (STACK_LAYERS - 1) / 2; // -1.5, -0.5, 0.5, 1.5
-                const dx = t * STACK_OFFSET_X_PX;
-                const dy = t * STACK_OFFSET_Y_PX;
-                const rot = t * STACK_ROT_DEG;
+                // t : -1.5, -0.5, 0.5, 1.5 (back → front)
+                // 中心方向に front を寄せる: offset = t * dir * step
+                const t = layer - (STACK_LAYERS - 1) / 2;
+                const offX = t * dirX * STACK_OFFSET_X_PX;
+                const offY = t * dirY * STACK_OFFSET_Y_PX;
                 return (
                     <div
                         key={layer}
@@ -105,8 +114,7 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
                             left: `${layerInsetPct}%`,
                             width: `${LAYER_SCALE * 100}%`,
                             height: `${LAYER_SCALE * 100}%`,
-                            transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)`,
-                            transformOrigin: 'center center',
+                            transform: `translate(${offX}px, ${offY}px)`,
                             zIndex: layer,
                         }}
                     >
