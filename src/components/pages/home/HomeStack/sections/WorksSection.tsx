@@ -148,13 +148,19 @@ const WorksLead: React.FC = () => {
         const arr: FolderTile[] = [];
         for (let r = 0; r < FOLDER_ROWS; r++) {
             for (let c = 0; c < FOLDER_COLS; c++) {
-                const idx = r * FOLDER_COLS + c;
+                // 全 folder は左から入場。最終的に右に着地する (= col 大) ものほど
+                // 早く出発し、画面を横切って奥に積まれていく waterfall 順。
+                // col 0 (一番左の最終位置) が最後に滑り込む。
+                const colInverted = FOLDER_COLS - 1 - c; // 0 (rightmost) .. N-1 (leftmost)
+                // col 内の行で僅かにジッター: 完全な縦一列同時着地を避ける
+                const rowJitter = (r / FOLDER_ROWS) * 0.15;
+                const delay =
+                    colInverted / Math.max(1, FOLDER_COLS - 1) + rowJitter;
                 arr.push({
                     row: r,
                     col: c,
-                    fromLeft: (idx % 2) === 0,
-                    // delay は (col, row) 由来で「左右からほぼ同時に湧く」感を出す
-                    delay: ((c * 1.7 + r * 2.3) % 5) / 5,
+                    fromLeft: true,
+                    delay: delay / 1.15, // 0..1 に正規化
                 });
             }
         }
@@ -233,28 +239,24 @@ const WorksLead: React.FC = () => {
                 0.30,
             );
 
-            // Phase B: folder grid 横入り (0.36 ~ 0.58)
-            // xPercent (= タイル幅基準) だと grid 中央の tile が viewport に残る。
-            // x に viewport 単位文字列を渡して全 tile を確実に画面外へ。
+            // Phase B: folder grid 左から waterfall 入り (0.30 ~ 0.62)
+            // 全 tile が x:-110vw → 0 で左から滑り込む。delay (data 属性) は
+            // 「右側着地ほど早く出発」なので col 5 → col 0 の順に到着する。
             tileEls.forEach((el) => {
-                const fromLeft = el.getAttribute('data-from-left') === '1';
-                const fromX = fromLeft ? '-110vw' : '110vw';
-                gsap.set(el, { x: fromX, xPercent: 0 });
+                gsap.set(el, { x: '-110vw', xPercent: 0 });
             });
             tileEls.forEach((el) => {
-                const fromLeft = el.getAttribute('data-from-left') === '1';
-                const fromX = fromLeft ? '-110vw' : '110vw';
                 const d = Number(el.getAttribute('data-tile-delay')) || 0;
                 tl.fromTo(
                     el,
-                    { x: fromX, xPercent: 0 },
+                    { x: '-110vw', xPercent: 0 },
                     {
                         x: 0,
                         xPercent: 0,
-                        duration: 0.18,
+                        duration: 0.12,
                         ease: 'power3.out',
                     },
-                    0.36 + d * 0.18,
+                    0.30 + d * 0.20,
                 );
             });
 
