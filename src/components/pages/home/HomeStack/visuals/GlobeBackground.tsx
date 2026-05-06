@@ -136,9 +136,9 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
         ) {
             const from = POP_VECTORS[state.fromIdx];
             const to = POP_VECTORS[state.toIdx];
-            // sphere 半径 1.0 + camera フレーミング (z=3.6, fov 40°, half-height ~1.31) で
-            // 端切れしないよう arc 最大持ち上がりを ~1.27 に抑える。
-            const liftAmount = 1.13 + from.distanceTo(to) * 0.07;
+            // sphere 半径 1.0 + camera フレーミング (z=4.2, fov 40°, half-height ~1.53) で
+            // 余裕を持って端切れしないよう arc 最大持ち上がりを ~1.20 に抑える。
+            const liftAmount = 1.10 + from.distanceTo(to) * 0.05;
             const mid = from
                 .clone()
                 .add(to)
@@ -194,17 +194,29 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
 
 interface GlobeProps {
     foreColor: string;
+    fillColor: string;
     reduced: boolean;
 }
 
-const Globe: React.FC<GlobeProps> = ({ foreColor, reduced }) => {
+const Globe: React.FC<GlobeProps> = ({ foreColor, fillColor, reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
 
-    const sphereGeometry = useMemo(
+    // 表面塗り用の solid sphere (半径 0.99) と wireframe sphere (半径 1.0)。
+    // 半径を分けることで wireframe の線が fill に z-fighting せず、塗りの上に綺麗に乗る。
+    const fillGeometry = useMemo(
+        () => new THREE.SphereGeometry(0.99, 36, 24),
+        [],
+    );
+    const wireGeometry = useMemo(
         () => new THREE.SphereGeometry(1, 28, 18),
         [],
     );
-    useEffect(() => () => sphereGeometry.dispose(), [sphereGeometry]);
+    useEffect(() => {
+        return () => {
+            fillGeometry.dispose();
+            wireGeometry.dispose();
+        };
+    }, [fillGeometry, wireGeometry]);
 
     const arcStates = useMemo(() => {
         return Array.from({ length: ARC_COUNT }, () => randomArc());
@@ -230,13 +242,22 @@ const Globe: React.FC<GlobeProps> = ({ foreColor, reduced }) => {
 
     return (
         <group ref={groupRef} rotation={[0.32, 0, 0]}>
-            {/* wireframe sphere (foreground 色のまま、opacity を bump して可読性 up) */}
-            <mesh geometry={sphereGeometry}>
+            {/* solid 塗り (グレー、半径 0.99 で wireframe の内側に置く) */}
+            <mesh geometry={fillGeometry}>
+                <meshBasicMaterial
+                    color={fillColor}
+                    transparent
+                    opacity={0.42}
+                />
+            </mesh>
+
+            {/* wireframe sphere (foreground 色、塗りの上に浮かせる) */}
+            <mesh geometry={wireGeometry}>
                 <meshBasicMaterial
                     color={foreColor}
                     wireframe
                     transparent
-                    opacity={0.22}
+                    opacity={0.32}
                 />
             </mesh>
 
@@ -257,10 +278,12 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
     const reduced = useReducedMotion();
     const [mounted, setMounted] = useState(false);
     const [foreColor, setForeColor] = useState('#0a0a0a');
+    const [fillColor, setFillColor] = useState('#999999');
 
     useEffect(() => {
         setMounted(true);
         setForeColor(readCssColor('--color-foreground', '#0a0a0a'));
+        setFillColor(readCssColor('--color-muted-foreground', '#999999'));
     }, []);
 
     if (!mounted) {
@@ -270,12 +293,16 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
     return (
         <div className={className} aria-hidden>
             <Canvas
-                camera={{ position: [0, 0, 3.6], fov: 40 }}
+                camera={{ position: [0, 0, 4.2], fov: 40 }}
                 dpr={[1, 1.5]}
                 frameloop="always"
                 gl={{ antialias: true, alpha: true }}
             >
-                <Globe foreColor={foreColor} reduced={reduced} />
+                <Globe
+                    foreColor={foreColor}
+                    fillColor={fillColor}
+                    reduced={reduced}
+                />
             </Canvas>
         </div>
     );
