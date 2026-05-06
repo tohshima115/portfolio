@@ -193,12 +193,11 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
 };
 
 interface GlobeProps {
-    foreColor: string;
     fillColor: string;
     reduced: boolean;
 }
 
-const Globe: React.FC<GlobeProps> = ({ foreColor, fillColor, reduced }) => {
+const Globe: React.FC<GlobeProps> = ({ fillColor, reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
 
     // 表面塗り用の solid sphere (半径 0.99) と wireframe sphere (半径 1.0)。
@@ -251,13 +250,13 @@ const Globe: React.FC<GlobeProps> = ({ foreColor, fillColor, reduced }) => {
                 />
             </mesh>
 
-            {/* wireframe sphere (foreground 色、塗りの上に浮かせる) */}
+            {/* wireframe sphere (白、塗りの上に浮かせる) */}
             <mesh geometry={wireGeometry}>
                 <meshBasicMaterial
-                    color={foreColor}
+                    color="#ffffff"
                     wireframe
                     transparent
-                    opacity={0.32}
+                    opacity={0.55}
                 />
             </mesh>
 
@@ -277,12 +276,10 @@ interface Props {
 export const GlobeBackground: React.FC<Props> = ({ className }) => {
     const reduced = useReducedMotion();
     const [mounted, setMounted] = useState(false);
-    const [foreColor, setForeColor] = useState('#0a0a0a');
     const [fillColor, setFillColor] = useState('#999999');
 
     useEffect(() => {
         setMounted(true);
-        setForeColor(readCssColor('--color-foreground', '#0a0a0a'));
         setFillColor(readCssColor('--color-muted-foreground', '#999999'));
     }, []);
 
@@ -298,11 +295,7 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
                 frameloop="always"
                 gl={{ antialias: true, alpha: true }}
             >
-                <Globe
-                    foreColor={foreColor}
-                    fillColor={fillColor}
-                    reduced={reduced}
-                />
+                <Globe fillColor={fillColor} reduced={reduced} />
             </Canvas>
         </div>
     );
