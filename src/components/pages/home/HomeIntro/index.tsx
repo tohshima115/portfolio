@@ -29,7 +29,9 @@ export type { UpdateItem };
 //   - スクロールバーは依然 1 本 (spacer がスクロール量を body に提供)
 //   - Lenis の smooth scroll は全域で有効
 
-const SCROLL_RANGE_PX = 480;
+// Hero pin range (= dolly progress 0→1 に必要なスクロール量)。
+// 大きいほど引き切るまでに wheel 数回ぶん必要になり、演出にじっくり浸れる。
+const SCROLL_RANGE_PX = 1200;
 
 const readSkipIntroFlag = (): boolean => {
     if (typeof window === 'undefined') return false;
