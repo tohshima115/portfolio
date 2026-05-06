@@ -119,6 +119,19 @@ const personSchema = {
 				if (skip) {
 					document.documentElement.classList.add("prts-skip-intro");
 				}
+				// HomeIntro の 1200px spacer と HomeStack の GSAP pinSpacer は hydrate 後に
+				// 注入されるため、ブラウザ標準の scroll 復元 (mid-page reload で過去の scrollY を
+				// 復元する) と layout 確定タイミングが噛み合わず、pin の start/end 計算が
+				// ズレて「同じセクションが二か所に出る」破綻が起きる。アニメ主体の TOP では
+				// 復元を諦めて常に先頭から見せる方が破綻しない。
+				if ("scrollRestoration" in window.history) {
+					window.history.scrollRestoration = "manual";
+				}
+				try {
+					window.scrollTo(0, 0);
+				} catch (e) {
+					/* ignore */
+				}
 			})();
 		</script>
 		<ClientRouter />
@@ -127,7 +140,7 @@ const personSchema = {
 		<SiteHeader />
 		<SmoothScroll client:only="react" />
 		<HomeIntro client:only="react" updates={latestUpdates} />
-		<HomeStack client:visible updates={latestUpdates} />
+		<HomeStack client:load updates={latestUpdates} />
 		<MarkdownActions client:load transition:persist="md-actions" />
 		<WebGLTransition
 			client:only="react"
