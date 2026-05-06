@@ -56,7 +56,7 @@ export const AboutSection: React.FC = () => {
 
                 <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-12">
                     <div className="flex items-start justify-between mb-16">
-                        <CornerLabel label="ABOUT" id="03" />
+                        <CornerLabel label="ABOUT" id="02" />
                         <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60">
                             Shogo Toyoshima · 26
                         </span>

@@ -6,18 +6,13 @@ import { GridLayer } from '../visuals/GridLayer';
 import { ScanLines } from '../visuals/ScanLines';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
-import type { UpdateItem } from '../../HomeScene/types';
-
-interface Props {
-    updates?: UpdateItem[];
-}
 
 // docs/career/profile.md より退職時期 / 入社可能時期 + about-copywriting.md スタンス。
 // 同心円 SVG + ScrambleText で「最後の合図」演出。
 
 const RINGS = [1200, 900, 600, 360];
 
-export const CTASection: React.FC<Props> = ({ updates: _updates = [] }) => {
+export const CTASection: React.FC = () => {
     const ref = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
     const inView = useInView(ref, { once: true, amount: 0.4 });

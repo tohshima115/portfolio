@@ -1,21 +1,21 @@
 import React from 'react';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
-import { StatementSection } from './sections/StatementSection';
 import { WorksSection } from './sections/WorksSection';
 import { AboutSection } from './sections/AboutSection';
+import { LatestSection } from './sections/LatestSection';
 import { CTASection } from './sections/CTASection';
 import { HudOverlay } from './visuals/HudOverlay';
 
 export type { UpdateItem };
 
 // HomeStack: Hero 直下のネイティブ縦スクロール本体。
-// Statement / Works / About / CTA の 4 セクションを通常フローで縦に並べる。
+// Works (Lead → Flagship → Ops) → About → Latest → CTA の構成を縦に並べる。
 // 各セクションが独自に IntersectionObserver / ScrollTrigger で reveal/parallax を持つ。
 //
-// HomeIntro が sticky pin 構造になり、scrollY 0..480 が Hero の dolly range、
-// 480px 以降からこのスタックが見え始める。Statement に戻るのも単に上方向
-// スクロールするだけで自動的に Hero pin range に再突入する (専用イベント不要)。
+// HomeIntro が fixed + scroll spacer 構造、scrollY 0..1200 が Hero の dolly range、
+// 1200px 以降からこのスタックが見え始める。Works に戻るのも単に上方向スクロールで
+// 自動的に Hero pin range に再突入する (専用イベント不要)。
 //
 // internal リンクは WebGL transition、外部リンクは通常遷移 (HomeIntro と同じ挙動)。
 
@@ -52,10 +52,10 @@ export const HomeStack: React.FC<Props> = ({ updates = [] }) => {
             onClickCapture={handleLinkClick}
             data-home-stack
         >
-            <StatementSection />
             <WorksSection />
             <AboutSection />
-            <CTASection updates={updates} />
+            <LatestSection updates={updates} />
+            <CTASection />
             <HudOverlay />
         </main>
     );

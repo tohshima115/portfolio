@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { CornerLabel } from '../primitives/CornerLabel';
 import { CountUp } from '../primitives/CountUp';
+import { KeyValueGrid } from '../primitives/KeyValueGrid';
 import { SplitChars } from '../primitives/SplitChars';
 import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
@@ -30,10 +31,12 @@ export const WorksFlagshipPart: React.FC = () => {
         disabled: reduced,
         setup: ({ gsap, container }) => {
             const idLabel = container.querySelector('[data-flagship-id]');
+            const intro = container.querySelector('[data-flagship-intro]');
             const heading = container.querySelectorAll(
                 '[data-flagship-heading] [data-split-chars][data-anim] > span',
             );
             const numbers = container.querySelectorAll('[data-flagship-number]');
+            const role = container.querySelector('[data-flagship-role]');
             const chips = container.querySelectorAll('[data-flagship-chip]');
             const cta = container.querySelector('[data-flagship-cta]');
             const bottomBar = container.querySelector('[data-flagship-bottom-bar]');
@@ -54,6 +57,13 @@ export const WorksFlagshipPart: React.FC = () => {
             });
 
             tl.to(idLabel, { opacity: 1, y: 0, duration: 0.3 }, 0);
+            if (intro) {
+                tl.to(
+                    intro,
+                    { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+                    0.05,
+                );
+            }
             tl.to(
                 heading,
                 {
@@ -63,7 +73,7 @@ export const WorksFlagshipPart: React.FC = () => {
                     duration: 0.5,
                     ease: 'power3.out',
                 },
-                0.15,
+                0.2,
             );
             tl.to(
                 numbers,
@@ -74,8 +84,15 @@ export const WorksFlagshipPart: React.FC = () => {
                     duration: 0.5,
                     ease: 'power2.out',
                 },
-                0.45,
+                0.5,
             );
+            if (role) {
+                tl.to(
+                    role,
+                    { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+                    0.7,
+                );
+            }
             tl.to(
                 chips,
                 {
@@ -85,19 +102,19 @@ export const WorksFlagshipPart: React.FC = () => {
                     duration: 0.4,
                     ease: 'power2.out',
                 },
-                0.7,
+                0.85,
             );
             tl.to(
                 cta,
                 { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
-                0.9,
+                1.05,
             );
             if (bottomBar) {
                 tl.fromTo(
                     bottomBar,
                     { scaleX: 0 },
                     { scaleX: 1, duration: 0.4, ease: 'none' },
-                    0.95,
+                    1.1,
                 );
             }
         },
@@ -148,7 +165,16 @@ export const WorksFlagshipPart: React.FC = () => {
                     SECTION 02 / WORKS
                 </div>
 
-                <div className="relative z-10 max-w-6xl w-full mx-auto px-6 md:px-12 pt-24 md:pt-32 pb-20">
+                <div className="relative z-10 max-w-6xl w-full mx-auto px-6 md:px-12 pt-20 md:pt-24 pb-16">
+                    {/* cluster intro: 巨大見出しの上に置くサブヘッダ */}
+                    <p
+                        data-flagship-intro
+                        data-reveal
+                        className="font-sans text-sm md:text-base text-foreground/70 leading-relaxed mb-5 md:mb-6 max-w-2xl"
+                    >
+                        自分の SaaS を Cloudflare スタックで設計から運用まで出荷する。
+                    </p>
+
                     {/* 巨大見出し */}
                     <h2
                         data-flagship-heading
@@ -167,7 +193,7 @@ export const WorksFlagshipPart: React.FC = () => {
                     </h2>
 
                     {/* AIChatClip 名 + 数字パネル */}
-                    <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="mt-10 md:mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* number cell 1: Free */}
                         <NumberCell
                             value={27}
@@ -191,8 +217,20 @@ export const WorksFlagshipPart: React.FC = () => {
                         />
                     </div>
 
+                    {/* Role 行: 1 人で全工程を表明 */}
+                    <div data-flagship-role data-reveal className="mt-10">
+                        <KeyValueGrid
+                            items={[
+                                {
+                                    key: 'Role',
+                                    value: '1 人で全工程 (企画 / 設計 / UI / 実装 / 運用 / マーケ)',
+                                },
+                            ]}
+                        />
+                    </div>
+
                     {/* スタックチップ */}
-                    <div className="mt-12 flex flex-wrap gap-2">
+                    <div className="mt-8 flex flex-wrap gap-2">
                         {STACK_CHIPS.map((chip) => (
                             <span
                                 key={chip}
@@ -210,7 +248,7 @@ export const WorksFlagshipPart: React.FC = () => {
                     <div
                         data-flagship-cta
                         data-reveal
-                        className="mt-12 flex flex-wrap gap-4 items-center font-mono text-xs uppercase tracking-[0.3em]"
+                        className="mt-10 flex flex-wrap gap-4 items-center font-mono text-xs uppercase tracking-[0.3em]"
                     >
                         <a
                             href="/projects/aichatclip"

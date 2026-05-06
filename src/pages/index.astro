@@ -32,7 +32,7 @@ const allUpdates = [
 	})),
 ].sort((a, b) => b.date.valueOf() - a.date.valueOf());
 
-const latestUpdates = allUpdates.slice(0, 3).map((u) => ({
+const latestUpdates = allUpdates.slice(0, 5).map((u) => ({
 	...u,
 	date: u.date.toISOString(), // passed via props, keep as string
 }));
