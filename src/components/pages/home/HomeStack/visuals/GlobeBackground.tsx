@@ -60,7 +60,63 @@ const INDICES_PER_TUBULAR = ARC_RADIAL_SEGMENTS * 6;
 // 起点と終点が短すぎる arc は「ちょっと光ってすぐ消える点」になって絵にならないので、
 // 弦長 (= 球面 chord 長) が一定以上のペアだけ採用する。
 // 1.0 = 球面上 60° の角距離 (e.g., 東京〜デリー級) 以上。
+// 1.95 上限は anti-podal (180°) 近傍で slerp が degenerate するのを避けるため。
 const MIN_ARC_CHORD = 1.0;
+const MAX_ARC_CHORD = 1.95;
+
+// arc curve の頂点 lift (大円上に乗せた状態から外側にどれだけ盛り上げるか)。
+// 1.18 = 球面 +18% で camera フレーム内に余裕で収まり、長距離 arc も球を突き抜けない。
+const ARC_PEAK_LIFT = 1.18;
+
+// 大円 (great circle) に沿って slerp し、t=0..1 を放物線で外側に持ち上げる Curve。
+// QuadraticBezierCurve3(from, mid, to) は弦に対する bezier なので長距離だと
+// 曲線が球の内側に潜って fill に occlude されてしまう (90°arc midpoint = 0.94 で球内)。
+// 大円ベースなら curve は常に半径 >= 1.0 を保つので球面を突き抜けない。
+class GreatCircleArcCurve extends THREE.Curve<THREE.Vector3> {
+    private fromUnit: THREE.Vector3;
+    private toUnit: THREE.Vector3;
+    private omega: number;
+    private sinOmega: number;
+    private peakLift: number;
+
+    constructor(from: THREE.Vector3, to: THREE.Vector3, peakLift: number) {
+        super();
+        this.fromUnit = from.clone().normalize();
+        this.toUnit = to.clone().normalize();
+        const dot = THREE.MathUtils.clamp(
+            this.fromUnit.dot(this.toUnit),
+            -1,
+            1,
+        );
+        this.omega = Math.acos(dot);
+        this.sinOmega = Math.sin(this.omega);
+        this.peakLift = peakLift;
+    }
+
+    getPoint(
+        t: number,
+        optionalTarget: THREE.Vector3 = new THREE.Vector3(),
+    ): THREE.Vector3 {
+        let onSphere: THREE.Vector3;
+        if (this.sinOmega < 0.001) {
+            // 起点と終点がほぼ一致 or 完全に antipodal の縮退ケース。
+            // randomArc 側で除外しているはずだが念のため lerp + 正規化で fallback。
+            onSphere = this.fromUnit.clone().lerp(this.toUnit, t);
+            if (onSphere.lengthSq() > 1e-6) onSphere.normalize();
+            else onSphere.copy(this.fromUnit);
+        } else {
+            const sa = Math.sin((1 - t) * this.omega) / this.sinOmega;
+            const sb = Math.sin(t * this.omega) / this.sinOmega;
+            onSphere = this.fromUnit
+                .clone()
+                .multiplyScalar(sa)
+                .add(this.toUnit.clone().multiplyScalar(sb));
+        }
+        // 放物線リフト: 4*t*(1-t) は t=0,1 で 0、t=0.5 で 1
+        const lift = 1.0 + 4 * t * (1 - t) * (this.peakLift - 1.0);
+        return optionalTarget.copy(onSphere).multiplyScalar(lift);
+    }
+}
 
 interface ArcState {
     fromIdx: number;
@@ -85,7 +141,10 @@ const randomArc = (excludeFromIdx: number = -1): ArcState => {
         attempts++;
     } while (
         (toIdx === fromIdx ||
-            POP_VECTORS[fromIdx].distanceTo(POP_VECTORS[toIdx]) < MIN_ARC_CHORD) &&
+            POP_VECTORS[fromIdx].distanceTo(POP_VECTORS[toIdx]) <
+                MIN_ARC_CHORD ||
+            POP_VECTORS[fromIdx].distanceTo(POP_VECTORS[toIdx]) >
+                MAX_ARC_CHORD) &&
         attempts < 50
     );
     return {
@@ -159,16 +218,8 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
         ) {
             const from = POP_VECTORS[state.fromIdx];
             const to = POP_VECTORS[state.toIdx];
-            // sphere 半径 1.0 + camera フレーミング (z=4.2, fov 40°, half-height ~1.53) で
-            // 余裕を持って端切れしないよう arc 最大持ち上がりを ~1.20 に抑える。
-            const liftAmount = 1.10 + from.distanceTo(to) * 0.05;
-            const mid = from
-                .clone()
-                .add(to)
-                .multiplyScalar(0.5)
-                .normalize()
-                .multiplyScalar(liftAmount);
-            const curve = new THREE.QuadraticBezierCurve3(from, mid, to);
+            // 大円沿い + 放物線リフト。fixed peakLift で長距離 arc も球を突き抜けない。
+            const curve = new GreatCircleArcCurve(from, to, ARC_PEAK_LIFT);
             const newGeo = new THREE.TubeGeometry(
                 curve,
                 ARC_TUBULAR_SEGMENTS,
