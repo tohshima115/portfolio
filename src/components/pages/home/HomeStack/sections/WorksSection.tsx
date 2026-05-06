@@ -78,7 +78,8 @@ const CENTER_COL = (FOLDER_COLS - 1) / 2;
 const CENTER_ROW = (FOLDER_ROWS - 1) / 2;
 
 const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
-    const LAYER_SCALE = 0.78;
+    // LAYER_SCALE を上げる (= folder が tile を多く占有 → stack 間 gap 縮小)。
+    const LAYER_SCALE = 0.94;
     const layerInsetPct = ((1 - LAYER_SCALE) / 2) * 100;
 
     // 最終 (settled) の中心方向ベクトル (-1..+1)
