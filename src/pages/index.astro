@@ -7,6 +7,7 @@ import { HomeStack } from "../components/pages/home/HomeStack";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
+import { SmoothScroll } from "../components/common/SmoothScroll";
 
 const projects = await getCollection("projects");
 const blogPosts = await getCollection("blog");
@@ -124,6 +125,7 @@ const personSchema = {
 	</head>
 	<body class="min-h-screen">
 		<SiteHeader />
+		<SmoothScroll client:only="react" />
 		<HomeIntro client:only="react" updates={latestUpdates} />
 		<HomeStack client:visible updates={latestUpdates} />
 		<MarkdownActions client:load transition:persist="md-actions" />
