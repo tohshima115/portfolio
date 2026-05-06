@@ -4,6 +4,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
 import { WorksFlagshipPart } from './WorksFlagshipPart';
 import { WorksOpsCarousel } from './WorksOpsCarousel';
+import { WorksHeroTransition } from './WorksHeroTransition';
 import { DividerMarker } from '../visuals/DividerMarker';
 import { GlobeBackground } from '../visuals/GlobeBackground';
 
@@ -231,13 +232,16 @@ const WorksLead: React.FC = () => {
     );
 };
 
-// Works = WorksLead (pin scrub 1 行 anchor + globe + Cloudflare stats) +
-// AIChatClip pin (FLAGSHIP) + 業務改善 3 本横スクロール (OPS) を縦に並べる。
+// Works = WorksLead (Cloudflare anchor + globe + stack badges)
+//       → WorksHeroTransition (file-folder sweep → WORKS hero reveal)
+//       → WorksFlagshipPart (AIChatClip)
+//       → WorksOpsCarousel (PL Dashboard / Expense / Schedule)
 // 各サブセクションが内部で data-section / pin / scrub を別々に持つ。
 export const WorksSection: React.FC = () => {
     return (
         <>
             <WorksLead />
+            <WorksHeroTransition />
             <WorksFlagshipPart />
             <DividerMarker py={48} />
             <WorksOpsCarousel />
