@@ -182,22 +182,29 @@ interface GlobeProps {
 const Globe: React.FC<GlobeProps> = ({ reduced }) => {
     const groupRef = useRef<THREE.Group>(null);
 
-    // 表面塗り用の solid sphere (半径 0.99) と wireframe sphere (半径 1.0)。
-    // 半径を分けることで wireframe の線が fill に z-fighting せず、塗りの上に綺麗に乗る。
+    // 表面塗り用の solid sphere (半径 1.0) と、その外側に薄く被せる wireframe (半径 1.008)。
+    // wireframe は lineSegments + WireframeGeometry で「明示的に line だけ」のオブジェクトに
+    // することで、meshBasicMaterial の wireframe フラグが期待通り解釈されない RT issue や
+    // 同じ深度での z-fighting を完全に避ける。
     const fillGeometry = useMemo(
-        () => new THREE.SphereGeometry(0.99, 36, 24),
+        () => new THREE.SphereGeometry(1.0, 36, 24),
+        [],
+    );
+    const wireBaseGeometry = useMemo(
+        () => new THREE.SphereGeometry(1.008, 24, 16),
         [],
     );
     const wireGeometry = useMemo(
-        () => new THREE.SphereGeometry(1, 28, 18),
-        [],
+        () => new THREE.WireframeGeometry(wireBaseGeometry),
+        [wireBaseGeometry],
     );
     useEffect(() => {
         return () => {
             fillGeometry.dispose();
+            wireBaseGeometry.dispose();
             wireGeometry.dispose();
         };
-    }, [fillGeometry, wireGeometry]);
+    }, [fillGeometry, wireBaseGeometry, wireGeometry]);
 
     const arcStates = useMemo(() => {
         return Array.from({ length: ARC_COUNT }, () => randomArc());
@@ -230,12 +237,11 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
                 <meshBasicMaterial color="#ffffff" />
             </mesh>
 
-            {/* wireframe sphere (グレー、白面の上に乗る)。
-                opaque で描画。半径 0.99 の fill より僅かに外側 (radius 1.0) なので
-                depth test で自然に fill の前に来る。 */}
-            <mesh geometry={wireGeometry}>
-                <meshBasicMaterial color="#999999" wireframe />
-            </mesh>
+            {/* wireframe — lineSegments + WireframeGeometry で line だけを明示的に描画。
+                半径 1.008 で fill (1.0) より僅かに外、z-fighting なし。 */}
+            <lineSegments geometry={wireGeometry}>
+                <lineBasicMaterial color="#999999" />
+            </lineSegments>
 
             {/* arcs (Cloudflare orange、reduced-motion ではアニメ自体を出さない) */}
             {!reduced &&
