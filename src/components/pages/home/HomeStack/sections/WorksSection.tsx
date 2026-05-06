@@ -31,7 +31,11 @@ const FOLDER_ROWS = 4;
 const TILE_W_VW = 17; // 17 × 6 = 102vw
 const TILE_H_VH = 26; // 26 × 4 = 104vh
 const STACK_LAYERS = 4;
-const STACK_OFFSET_PX = 8; // 各層が前の層から 8px ずれる (タイル縮小に合わせて offset も小さく)
+// 重なりのずれで 3D 感を出す: 各層は staircase 状に offset (back→front で
+// 左上→右下) かつ微小回転させて「斜めに積まれた書類束」風にする。
+const STACK_OFFSET_X_PX = 12; // 横方向 offset (1 step あたり)
+const STACK_OFFSET_Y_PX = 7; // 縦方向 offset (横よりやや小さく "leaning" 風)
+const STACK_ROT_DEG = 1.4; // 1 step あたりの傾き (合計で ±約 2.1deg)
 
 // public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
 const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
@@ -85,11 +89,13 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
             }}
         >
             {Array.from({ length: STACK_LAYERS }).map((_, layer) => {
-                // 中央寄せの staircase 配置。
-                //   layer=0 (back) : (-offset, -offset)
-                //   layer=N-1 (front): (+offset, +offset)
-                const dx = (layer - (STACK_LAYERS - 1) / 2) * STACK_OFFSET_PX;
-                const dy = (layer - (STACK_LAYERS - 1) / 2) * STACK_OFFSET_PX;
+                // 中央寄せの staircase 配置 + 微小回転で 3D pile 感。
+                //   layer=0 (back) : 左上 + やや反時計回り
+                //   layer=N-1 (front): 右下 + やや時計回り
+                const t = layer - (STACK_LAYERS - 1) / 2; // -1.5, -0.5, 0.5, 1.5
+                const dx = t * STACK_OFFSET_X_PX;
+                const dy = t * STACK_OFFSET_Y_PX;
+                const rot = t * STACK_ROT_DEG;
                 return (
                     <div
                         key={layer}
@@ -99,7 +105,8 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
                             left: `${layerInsetPct}%`,
                             width: `${LAYER_SCALE * 100}%`,
                             height: `${LAYER_SCALE * 100}%`,
-                            transform: `translate(${dx}px, ${dy}px)`,
+                            transform: `translate(${dx}px, ${dy}px) rotate(${rot}deg)`,
+                            transformOrigin: 'center center',
                             zIndex: layer,
                         }}
                     >
