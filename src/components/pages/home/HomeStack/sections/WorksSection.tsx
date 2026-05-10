@@ -167,10 +167,10 @@ const WorksLead: React.FC = () => {
                 return col > Math.max(...waveCols) ? 0 : 1.0;
             };
             // progress 0 → identity (scale 1, 回転なし)
-            // progress 1 → scale 0.5 + rotateX 90° (奥に倒れて edge-on で消える)
+            // progress 1 → scale 0 + rotateX 90° (点に縮みつつ奥に倒れて消える)
             // 親 grid の perspective で 3D に見える。
             const scaleVars = (progress: number) => ({
-                scale: 1 - 0.5 * progress,
+                scale: 1 - progress,
                 rotationX: progress * 90,
             });
 
