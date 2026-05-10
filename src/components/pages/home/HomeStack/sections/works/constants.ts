@@ -149,7 +149,9 @@ export const TIMING = {
     outroSweepStart: 2.70,
     outroSweepStaggerWindow: 0.40,
     outroSweepFadeDuration: 0.20,
-    outroBioFadeInAt: 3.40,
+    // sweep の終盤 (last tile fade ~3.10-3.30) と overlap させ、
+    // 「folder が消え終わる頃には About がほぼ見えている」体感に。
+    outroBioFadeInAt: 3.10,
     outroBioFadeInDuration: 0.30,
     outroEnd: 3.70,
 } as const;
