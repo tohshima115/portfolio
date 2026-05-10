@@ -140,6 +140,7 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
             data-tile-delay={tile.delay}
             data-mid={isMid ? '1' : '0'}
             data-mid-delay={midDelay}
+            data-tile-col={tile.col}
             style={{
                 position: 'absolute',
                 left: `${tile.col * TILE_W_VW}vw`,
@@ -347,13 +348,28 @@ const WorksLead: React.FC = () => {
             );
             // mid tile shrink を col 左→右 / 同 col 内 row 上→下 の順で stagger。
             // 各 tile の data-mid-delay (JSX 側で計算済み) を読んで起点に加算する。
+            // シフト後の右端3列 (pre-shift col 4/5/6) は partial collapse で残し、
+            // 「stagger 進行中で止まった」見た目を作る (右に行くほど進捗が浅い)。
             midTiles.forEach((el) => {
                 const d = Number(el.getAttribute('data-mid-delay')) || 0;
+                const col = Number(el.getAttribute('data-tile-col'));
+                let targetX = 0.5;
+                let targetY = 0;
+                if (col === 4) {
+                    targetX = 0.65;
+                    targetY = 0.30;
+                } else if (col === 5) {
+                    targetX = 0.78;
+                    targetY = 0.55;
+                } else if (col === 6) {
+                    targetX = 0.90;
+                    targetY = 0.80;
+                }
                 tl.to(
                     el,
                     {
-                        scaleX: 0.5,
-                        scaleY: 0,
+                        scaleX: targetX,
+                        scaleY: targetY,
                         duration: 0.07,
                         ease: 'power3.inOut',
                     },
