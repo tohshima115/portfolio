@@ -12,6 +12,8 @@ import {
     WAVE_PROGRESS_GRID,
     WAVE_GROWBACK,
     TILE_W_VW,
+    FOLDER_COLS,
+    HIDDEN_LEFT_COLS,
     TIMING,
     NO_FOLDER_BAND_TOP_VH,
     NO_FOLDER_BAND_HEIGHT_VH,
@@ -293,6 +295,61 @@ const WorksLead: React.FC = () => {
                     );
                 }
             });
+
+            // ─── Phase G: Outro ───
+            // 1) Swept (project 03) を fade out
+            // 2) 全 folder tile を col 左→右の stagger で opacity 0 に sweep
+            // 3) cleared 画面に Bio stage を fade in
+            // 4) pin 終了 → 通常スクロールで AboutSection に繋がる
+            const sweptStage = projectStage('03');
+            if (sweptStage) {
+                tl.to(
+                    sweptStage,
+                    {
+                        opacity: 0,
+                        y: -18,
+                        duration: TIMING.outroSweptFadeOutDuration,
+                        ease: 'power2.in',
+                    },
+                    TIMING.outroSweptFadeOutAt,
+                );
+            }
+
+            const colSpan = HIDDEN_LEFT_COLS + FOLDER_COLS - 1; // -4..7 = 11 ぶん
+            tileEls.forEach((el) => {
+                const c = Number(el.getAttribute('data-tile-col'));
+                const colNorm = (c + HIDDEN_LEFT_COLS) / colSpan; // 0 (左端) → 1 (右端)
+                const fadeStart =
+                    TIMING.outroSweepStart + colNorm * TIMING.outroSweepStaggerWindow;
+                tl.to(
+                    el,
+                    {
+                        opacity: 0,
+                        duration: TIMING.outroSweepFadeDuration,
+                        ease: 'power2.in',
+                    },
+                    fadeStart,
+                );
+            });
+
+            const bioStage = container.querySelector<HTMLElement>('[data-stage="bio"]');
+            if (bioStage) {
+                gsap.set(bioStage, { opacity: 0, y: 18 });
+                tl.to(
+                    bioStage,
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: TIMING.outroBioFadeInDuration,
+                        ease: 'power3.out',
+                    },
+                    TIMING.outroBioFadeInAt,
+                );
+            }
+
+            // 終端ダミー: timeline 全体長を outroEnd まで確保し、pin scroll が
+            // bio fade-in の余韻まで届くようにする。
+            tl.to({}, { duration: 0.01 }, TIMING.outroEnd);
         },
     });
 
@@ -320,6 +377,10 @@ const WorksLead: React.FC = () => {
                 {!reduced && PROJECTS.map((p) => (
                     <ProjectStage key={p.id} project={p} reduced={reduced} />
                 ))}
+
+                {/* z-40: Bio stage (Phase G で fade in)。pin 解除後は下の AboutSection に
+                    フローで繋がるので、ここでは AboutSection の lead に近い見出しだけ用意。 */}
+                {!reduced && <BioStage />}
             </div>
 
             {/* reduced-motion 用 static fallback: 3 プロジェクトを通常スクロールで読めるリストに */}
@@ -453,6 +514,40 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
                     className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-left"
                 >
                     03 projects · solo-shipped on Cloudflare
+                </p>
+            </div>
+        </div>
+    </div>
+);
+
+// Bio stage (z-40): Phase G の終盤で folder sweep + Swept fade-out が完了した後に
+// fade in する見出し。pin 解除後は下の AboutSection (timeline + stack) に繋がる。
+const BioStage: React.FC = () => (
+    <div
+        data-stage="bio"
+        className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
+        style={{
+            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
+            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+            opacity: 0,
+        }}
+    >
+        <div className="max-w-7xl w-full">
+            <div className="flex items-center gap-4 mb-6 md:mb-8">
+                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
+                    <span className="text-accent">+</span>
+                    <span className="ml-3">Section 03 / About</span>
+                </p>
+                <span aria-hidden className="h-px bg-foreground/40 flex-1" />
+            </div>
+
+            <h2 className="font-sans font-black text-foreground text-left text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]">
+                BIO
+            </h2>
+
+            <div className="mt-6 md:mt-8 flex flex-col items-start gap-5">
+                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 text-left max-w-2xl leading-relaxed">
+                    経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
                 </p>
             </div>
         </div>

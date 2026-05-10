@@ -81,8 +81,8 @@ export const MID_DELAY_ROW_STAGGER = 0.04;
 // ───────────────────────────────────────────────────────────
 // Pin & section dimensions
 // ───────────────────────────────────────────────────────────
-export const PIN_SCROLL_END = '+=700%';
-export const SECTION_MIN_HEIGHT_VH = 800;
+export const PIN_SCROLL_END = '+=950%';
+export const SECTION_MIN_HEIGHT_VH = 1050;
 
 // ───────────────────────────────────────────────────────────
 // Timeline labels
@@ -135,7 +135,19 @@ export const TIMING = {
     // settle 開始を outAt から +offset 遅らせて「シフト中盤で wave がスライドする」見た目に。
     shiftSettleOffset: 0.06,
 
-    // F3 settle 後の drift 終端。pin 終端より少し手前で止まる。
-    // (timeline 全体は 0..2.70 を pin 0..1 に scrub)
+    // wave / 右シフトの終端。F3 settle 後の drift もここで終わる。
+    // この時点で Swept project は表示・hold 中。Outro 開始もこの時刻。
     timelineEnd: 2.70,
+
+    // ─── Phase G (Outro): 折り紙を左→右に sweep + Swept fade out + Bio fade in ───
+    // sweep は col に応じた stagger で各 tile の opacity を 0 にする。
+    // Swept は同時に fade out。両方終わってから (= cleared 画面) Bio が fade in。
+    outroSweptFadeOutAt: 2.70,
+    outroSweptFadeOutDuration: 0.22,
+    outroSweepStart: 2.70,
+    outroSweepStaggerWindow: 0.40,
+    outroSweepFadeDuration: 0.20,
+    outroBioFadeInAt: 3.40,
+    outroBioFadeInDuration: 0.30,
+    outroEnd: 3.70,
 } as const;
