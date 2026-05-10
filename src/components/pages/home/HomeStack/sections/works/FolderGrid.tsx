@@ -187,9 +187,10 @@ export const FolderGrid: React.FC = () => {
         <div
             aria-hidden
             className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
-            // 各 tile の rotateX を 3D で見せるための perspective。
-            // 値が小さいほど効きが強く、奥行きが誇張される。
-            style={{ perspective: '1500px' }}
+            // 各 tile の rotateX を 3D で見せるための perspective。値が小さいほど奥行きが誇張。
+            // perspectiveOrigin を 50% 50% (= viewport 中央) に固定して、vanishing point が
+            // 右シフトに引きずられず常に画面中央 (上下方向の axis) に来るようにする。
+            style={{ perspective: '1500px', perspectiveOrigin: '50% 50%' }}
         >
             {tiles.map((t, i) => (
                 <FolderTileEl key={`tile-${i}`} tile={t} />
