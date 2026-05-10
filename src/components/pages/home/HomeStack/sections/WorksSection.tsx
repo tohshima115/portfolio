@@ -24,15 +24,18 @@ const PROJECT_PINS = [
     { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
 ];
 
-// 横 8 × 縦 6 = 48 stack。
+// 横 8 × 縦 5 = 40 stack。中段は 3 行 (row 1..3)。
 const FOLDER_COLS = 8;
-const FOLDER_ROWS = 6;
+const FOLDER_ROWS = 5;
 const TILE_W_VW = 13; // 13 × 8 = 104vw
 const TILE_H_VH = 21; // 標準的な縦間隔 (row 0→1 と row N-2→N-1 で使用)
 // 中段 (row 1..N-2 間) は ROW_COMPRESSED_STRIDE で詰める。
 // LAYER_SCALE_Y × TILE_H 未満にすれば overlap が発生 = ユーザ指定の「マイナス間隔」。
-// 12vh stride で row 0..5 全体を ~99vh に収まるよう調整。
 const ROW_COMPRESSED_STRIDE_VH = 12;
+// 行数を 6 → 5 に減らした分の高さを、最上/最下行と中段との余白に振り分ける。
+// 元の総高 (N=6, edge=0): 21+3*12+21 = 78vh → +21vh = 99vh
+// 新総高 (N=5, edge=6):    27+2*12+27 = 78vh → +21vh = 99vh (同等)
+const EDGE_GAP_EXTRA_VH = 6;
 const STACK_LAYERS = 4;
 // 各スタックの「重なり方向」は画面中心を基準とする radial 配置。
 //   front 層 → 中心に寄る方向
@@ -105,20 +108,19 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
         ['--travel' as string]: 0,
     };
 
-    // row 0 → row 1 と row N-2 → row N-1 は標準間隔 TILE_H。
-    // 中段の row 1..N-2 間は圧縮 stride で詰めて重ねる。
+    // row 0 → row 1 と row N-2 → row N-1 は (TILE_H + EDGE_GAP_EXTRA) で広めに。
+    // 中段 row 1..N-2 間は圧縮 stride で詰めて重ねる。
+    const edgeStrideVh = TILE_H_VH + EDGE_GAP_EXTRA_VH;
     const rowTopVh = (() => {
         if (tile.row === 0) return 0;
         if (tile.row === FOLDER_ROWS - 1) {
-            // 最終行: row N-2 の位置 + 標準間隔
             return (
-                TILE_H_VH +
+                edgeStrideVh +
                 (FOLDER_ROWS - 3) * ROW_COMPRESSED_STRIDE_VH +
-                TILE_H_VH
+                edgeStrideVh
             );
         }
-        // 中段: row 0 から TILE_H + 圧縮 stride を積み上げ
-        return TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
+        return edgeStrideVh + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
     })();
 
     // 中段行 (row 1..N-2) のスタックを shrink で消し、画面中央に WORKS reveal 用の
