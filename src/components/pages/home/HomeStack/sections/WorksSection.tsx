@@ -8,7 +8,9 @@ import { CLOUDFLARE_SERVICES, PROJECTS } from './works/data';
 import {
     PIN_SCROLL_END,
     SECTION_MIN_HEIGHT_VH,
-    PARTIAL_BASE,
+    INITIAL_WAVE_COLS,
+    WAVE_PROGRESS,
+    WAVE_DRIFT,
     ROW_PROGRESS_FALLOFF,
     ROW_TOP_BONUS,
     TILE_W_VW,
@@ -140,30 +142,85 @@ const WorksLead: React.FC = () => {
                 TIMING.folderShiftStart,
             );
 
-            // mid tile shrink を col 左→右 / 同 col 内 row 上→下 の順で stagger。
-            // シフト後の右端3列 (PARTIAL_BASE 定義列) は partial collapse で残し、
-            // row 1 (最上段) は ROW_TOP_BONUS で上行ほど明確に進んだ波に見せる。
-            // 完全潰し列は inOut、partial collapse は終端でゆっくり静止する .out 系。
+            // mid tile shrink — wave 方式。
+            // 各 event (Phase D + 各 project transition) で wave が 1 列ずつ左にスライドし、
+            // 画面の visible 右 3 列が常に同じパターン (P0/P1/P2) に見えるようにする。
+            // 各 col の progress 推移を pre-compute し、変化のあった event だけ:
+            //   1) settle tween (短い、強い ease.out) で wave 値に到達
+            //   2) drift tween (長い、緩やか) で +WAVE_DRIFT までゆっくり進ませる
+            //      → 「完全に止まった状態」が出ないように slow continuation を保つ
+            const EVENT_TIMES = [
+                TIMING.midShrinkStart,
+                ...TIMING.projectTransitions.map((t) => t.outAt),
+            ];
+            const waveProgressAt = (col: number, eventIdx: number): number => {
+                const waveCols = INITIAL_WAVE_COLS.map((c) => c - eventIdx);
+                const idx = waveCols.indexOf(col);
+                return idx >= 0 ? WAVE_PROGRESS[idx] : 1.0;
+            };
+            const rowAdjustedProgress = (base: number, row: number): number => {
+                if (base >= 1.0) return 1.0;
+                const bonus = row === 1 ? ROW_TOP_BONUS : 0;
+                return Math.max(
+                    0,
+                    Math.min(1, base + bonus - ROW_PROGRESS_FALLOFF * (row - 1)),
+                );
+            };
+            const scaleVars = (rowProgress: number) => ({
+                scaleX: 1 - 0.5 * rowProgress,
+                scaleY: 1 - rowProgress,
+            });
+
             midTiles.forEach((el) => {
-                const d = Number(el.getAttribute('data-mid-delay')) || 0;
+                const stagger = Number(el.getAttribute('data-mid-delay')) || 0;
                 const col = Number(el.getAttribute('data-tile-col'));
                 const row = Number(el.getAttribute('data-tile-row'));
-                const base = PARTIAL_BASE[col];
-                const isPartial = base !== undefined;
-                const bonus = row === 1 ? ROW_TOP_BONUS : 0;
-                const progress = isPartial
-                    ? Math.max(0, Math.min(1, base + bonus - ROW_PROGRESS_FALLOFF * (row - 1)))
-                    : 1.0;
-                tl.to(
-                    el,
-                    {
-                        scaleX: 1 - 0.5 * progress,
-                        scaleY: 1 - progress,
-                        duration: TIMING.midShrinkDuration,
-                        ease: isPartial ? 'power3.out' : 'power4.inOut',
-                    },
-                    TIMING.midShrinkStart + d,
-                );
+
+                // この col の progress 推移 (変化のある event のみ)
+                const progression: { time: number; progress: number }[] = [];
+                let prev = -1;
+                EVENT_TIMES.forEach((time, idx) => {
+                    const p = waveProgressAt(col, idx);
+                    if (p !== prev) {
+                        progression.push({ time, progress: p });
+                        prev = p;
+                    }
+                });
+
+                progression.forEach(({ time, progress }, entryIdx) => {
+                    const isPhaseD = entryIdx === 0 && time === TIMING.midShrinkStart;
+                    const settleStart = time + (isPhaseD ? stagger : 0);
+                    const settleEnd = settleStart + TIMING.midShrinkDuration;
+                    const nextEventTime =
+                        entryIdx + 1 < progression.length
+                            ? progression[entryIdx + 1].time
+                            : TIMING.timelineEnd;
+                    const driftDuration = Math.max(0.05, nextEventTime - settleEnd);
+
+                    tl.to(
+                        el,
+                        {
+                            ...scaleVars(rowAdjustedProgress(progress, row)),
+                            duration: TIMING.midShrinkDuration,
+                            ease: 'power3.out',
+                        },
+                        settleStart,
+                    );
+
+                    // drift は partial 状態でだけ。完全潰し (1.0) なら scaleY:0 のままで不可視。
+                    if (progress < 1.0) {
+                        const driftBase = Math.min(1.0, progress + WAVE_DRIFT);
+                        tl.to(
+                            el,
+                            {
+                                ...scaleVars(rowAdjustedProgress(driftBase, row)),
+                                duration: driftDuration,
+                                ease: 'none',
+                            },
+                            settleEnd,
+                        );
+                    }
+                });
             });
 
             tl.to(

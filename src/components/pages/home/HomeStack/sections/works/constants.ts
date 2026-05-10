@@ -35,20 +35,26 @@ export const LAYER_SCALE_X = 0.82;
 export const LAYER_SCALE_Y = 0.84;
 
 // ───────────────────────────────────────────────────────────
-// Phase D — partial collapse
-// シフト後の右端 3 列 (pre-shift col 4/5/6) を半潰れで止める。
+// Mid shrink wave — 右シフトに合わせて 1 列ずつ左へ波が移動する。
 // progress 1.0 → (scaleX 0.5 / scaleY 0) = 完全潰し
 // progress 0.0 → (scaleX 1.0 / scaleY 1.0) = 未着手
+//
+// 初期 wave は cols 4/5/6 (P0/P1/P2)。各 project transition で wave 全体が
+// 1 列ずつ左にスライド: F1=[3,4,5], F2=[2,3,4], F3=[1,2,3]。
+// → wave に該当しない col は常に full collapse (1.0)。
+// → 画面の visible 右 3 列が常に同じ wave パターンに見える。
 // ───────────────────────────────────────────────────────────
-export const PARTIAL_BASE: Record<number, number> = {
-    4: 0.70,
-    5: 0.45,
-    6: 0.20,
-};
+export const INITIAL_WAVE_COLS = [4, 5, 6];
+export const WAVE_PROGRESS = [0.70, 0.45, 0.20]; // P0 (一番崩れた) → P2 (一番残っている)
+
 // 同列内で row が下がるごとに進捗を減衰
 export const ROW_PROGRESS_FALLOFF = 0.10;
 // row 1 (中段の最上段) のみ +bonus で上行ほど明確に進んだ波に見せる
 export const ROW_TOP_BONUS = 0.10;
+
+// 各 settle 後に行うドリフトの量。settle で wave 値に到達 → その後 +WAVE_DRIFT まで
+// ゆっくり進行させて「完全に止まった状態」を作らない。
+export const WAVE_DRIFT = 0.05;
 
 // 中段 mid shrink の per-tile stagger (data-mid-delay の係数)
 export const MID_DELAY_COL_STAGGER = 0.15;
@@ -105,4 +111,8 @@ export const TIMING = {
     projectOutDuration: 0.10,
     projectInDuration: 0.14,
     projectRuleDuration: 0.10,
+
+    // F3 settle 後の drift 終端。pin 終端より少し手前で止まる。
+    // (timeline 全体は 0..2.70 を pin 0..1 に scrub)
+    timelineEnd: 2.70,
 } as const;

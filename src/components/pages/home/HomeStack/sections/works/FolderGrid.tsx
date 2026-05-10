@@ -89,9 +89,10 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
     // 中段行 (row 1..N-2) の stack を Phase D で shrink して画面中央に WORKS reveal
     // 用の横帯を作る。発火順は col 左→右、同 col 内では row 上→下。
     const isMid = tile.row >= 1 && tile.row <= FOLDER_ROWS - 2;
-    // col -1..7 → 0..1 / row 1..(N-2) → 0..1 で正規化
+    // col stagger: (col + 1) / FOLDER_COLS を 0..1 に正規化 (col -2..-4 は負になるので 0 にクランプ)。
+    // row stagger: row 1..(N-2) を 0..1 に正規化。
     const midDelay = isMid
-        ? ((tile.col + 1) / FOLDER_COLS) * MID_DELAY_COL_STAGGER
+        ? Math.max(0, (tile.col + 1) / FOLDER_COLS) * MID_DELAY_COL_STAGGER
         + ((tile.row - 1) / Math.max(1, FOLDER_ROWS - 3)) * MID_DELAY_ROW_STAGGER
         : 0;
 
