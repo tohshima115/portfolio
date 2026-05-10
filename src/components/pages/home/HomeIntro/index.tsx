@@ -44,6 +44,17 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const [skipIntro] = useState<boolean>(readSkipIntroFlag);
     const [reducedMotion, setReducedMotion] = useState(false);
 
+    // index.astro が SSR HTML に置く #hero-boot-overlay を hydrate 完了時に消す。
+    // HomeIntro 自体が client:only="react" のため、HomeStack (client:load で SSR
+    // される WorksSection の folder grid) が hydrate までの一瞬だけ覗く問題を、
+    // 初期オーバーレイで覆って隠している。Hero (fixed bg-background) が
+    // 描画され始めたタイミング = この component が mount したタイミングで
+    // 役目を終えるので display:none に切り替える。
+    useEffect(() => {
+        const overlay = document.getElementById('hero-boot-overlay');
+        if (overlay) overlay.style.display = 'none';
+    }, []);
+
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) return;
         const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
