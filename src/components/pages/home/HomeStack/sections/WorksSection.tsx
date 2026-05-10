@@ -31,7 +31,7 @@ const TILE_W_VW = 13; // 13 × 8 = 104vw
 const TILE_H_VH = 21; // 標準的な縦間隔 (row 0→1 と row N-2→N-1 で使用)
 // 中段 (row 1..N-2 間) は ROW_COMPRESSED_STRIDE で詰める。
 // LAYER_SCALE_Y × TILE_H 未満にすれば overlap が発生 = ユーザ指定の「マイナス間隔」。
-const ROW_COMPRESSED_STRIDE_VH = 12;
+const ROW_COMPRESSED_STRIDE_VH = 14;
 // 行数を 6 → 5 に減らした分の高さを、最上/最下行と中段との余白に振り分ける。
 // 元の総高 (N=6, edge=0): 21+3*12+21 = 78vh → +21vh = 99vh
 // 新総高 (N=5, edge=6):    27+2*12+27 = 78vh → +21vh = 99vh (同等)
@@ -86,9 +86,9 @@ const CENTER_ROW = (FOLDER_ROWS - 1) / 2;
 
 const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
     // 横方向は若干 narrow にして stack 間に visible gap、
-    // 縦方向は tile の大半を占有 (中段 row 圧縮と組み合わせて密度を出す)。
+    // 縦方向は tile セルより小さくして中段 row 同士の間に余白を確保する。
     const LAYER_SCALE_X = 0.82;
-    const LAYER_SCALE_Y = 0.94;
+    const LAYER_SCALE_Y = 0.84;
     const layerInsetXPct = ((1 - LAYER_SCALE_X) / 2) * 100;
     const layerInsetYPct = ((1 - LAYER_SCALE_Y) / 2) * 100;
 
