@@ -170,12 +170,17 @@ const personSchema = {
 		<!--
 		  HomeIntro は client:only="react" のため SSR HTML に含まれず、
 		  HomeStack (= client:load で SSR される WorksSection) のフォルダーが
-		  hydrate 完了までの一瞬だけ覗いてしまう。
-		  Hero と同じ bg-background でフルスクリーンを覆う初期オーバーレイを
-		  Astro 側で先に置き、HomeIntro が mount したら React 側で display:none する。
-		  SiteHeader (z-[100]) より下、Hero (z-[5]) より上の z-[6]。
+		  hydrate 完了までの一瞬だけ覗いてしまう。それを SSR 段階で覆う初期
+		  オーバーレイ。Tailwind の JIT 抽出に依存すると初回 paint に間に合わない
+		  ケースがあるので inline style + var(--color-background) で確実に塗る。
+		  SiteHeader (z-[100]) より下、Hero (z-[5]) より上の z-index:6。
+		  HomeIntro が mount したら React 側で display:none する。
 		-->
-		<div id="hero-boot-overlay" class="fixed inset-0 z-[6] bg-background" aria-hidden="true"></div>
+		<div
+			id="hero-boot-overlay"
+			aria-hidden="true"
+			style="position:fixed;inset:0;z-index:6;background-color:var(--color-background);"
+		></div>
 		<HomeIntro client:only="react" updates={latestUpdates} />
 		<HomeStack client:load updates={latestUpdates} />
 		<MarkdownActions client:load transition:persist="md-actions" />
