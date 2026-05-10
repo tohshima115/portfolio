@@ -346,8 +346,6 @@ const WorksLead: React.FC = () => {
                 {
                     scaleX: 0.5,
                     scaleY: 0,
-                    rotateX: 90,
-                    transformOrigin: '50% 50%',
                     duration: 0.14,
                     ease: 'power3.inOut',
                 },
