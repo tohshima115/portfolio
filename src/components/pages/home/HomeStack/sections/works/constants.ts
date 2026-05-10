@@ -49,11 +49,11 @@ export const INITIAL_WAVE_COLS = [4, 5, 6];
 
 // wave 内の [position][row index 0..2 = 中段 row 1..3] 別 progress。
 //   position 0 = 3 列目 (= wave 左端、画面で言うと右から 3 列目): 中程度の partial collapse、
-//                上行ほど崩れた階段状
+//                上下を中央 row に寄せた緩やかな row 変動
 //   position 1 = 2 列目: 上に行くほど少しだけ縮小、row 3 はゼロ (= 階段)
 //   position 2 = 1 列目 (= 右端): 全 row 縮小なし
 export const WAVE_PROGRESS_GRID: number[][] = [
-    [0.80, 0.60, 0.50], // pos 0 — 上が一番崩れた波の見出し
+    [0.70, 0.60, 0.55], // pos 0 — 中央 row を基準に上下が寄った緩やかな波
     [0.10, 0.05, 0],    // pos 1 — 階段状の薄い縮小
     [0, 0, 0],          // pos 2 — 縮小なし
 ];
