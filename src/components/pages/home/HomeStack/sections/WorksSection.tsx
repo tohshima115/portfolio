@@ -530,8 +530,8 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
 );
 
 // Bio intro stage (z-40): Phase G outro 終盤で fade in する AboutSection への teaser。
-// 左に写真 placeholder (後で <img /> に置換予定)、右に Section ラベル + 名前 + 短い intro +
-// 「scroll for timeline / stack」hint を配置。
+// 他 stage (WORKS / Project) と違って中央寄せ。写真 placeholder + 名前 + 短い intro +
+// 「scroll for timeline / stack」hint を縦並びで配置。
 // pin 解除後は下の AboutSection (timeline + stack の詳細) に通常スクロールで繋がる。
 const BioIntroStage: React.FC = () => (
     <div
@@ -543,8 +543,9 @@ const BioIntroStage: React.FC = () => (
             opacity: 0,
         }}
     >
-        <div className="max-w-7xl w-full">
+        <div className="max-w-3xl w-full mx-auto">
             <div className="flex items-center gap-4 mb-6 md:mb-8">
+                <span aria-hidden className="h-px bg-foreground/40 flex-1" />
                 <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
                     <span className="text-accent">+</span>
                     <span className="ml-3">Section 03 / About</span>
@@ -552,10 +553,10 @@ const BioIntroStage: React.FC = () => (
                 <span aria-hidden className="h-px bg-foreground/40 flex-1" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-start">
-                {/* 写真 placeholder。後で <img src="/path/to/photo.jpg" /> に差し替える想定。
-                    比率 4:5 (W:H) で縦長、accent の小さい四角を tag として右上に配置。 */}
-                <div className="relative w-[160px] h-[200px] md:w-[200px] md:h-[260px] flex-shrink-0 border border-foreground/30 bg-foreground/5 overflow-hidden">
+            <div className="flex flex-col items-center text-center gap-5 md:gap-6">
+                {/* 写真 placeholder。後で <img src="/path/to/photo.jpg" className="w-full h-full object-cover" />
+                    に差し替える想定。比率 4:5 (W:H) で縦長、accent 色の小さい tag を右上に。 */}
+                <div className="relative w-[150px] h-[190px] md:w-[180px] md:h-[230px] border border-foreground/30 bg-foreground/5 overflow-hidden">
                     <div className="absolute inset-0 flex items-center justify-center">
                         <span className="font-mono text-2xl font-bold tracking-[0.2em] text-foreground/30">
                             S.T.
@@ -564,20 +565,18 @@ const BioIntroStage: React.FC = () => (
                     <span aria-hidden className="absolute -top-1 -right-1 w-2 h-2 bg-accent" />
                 </div>
 
-                <div>
-                    <h2 className="font-sans font-black text-foreground text-left text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] tracking-tight">
-                        Shogo<br />Toyoshima
-                    </h2>
+                <h2 className="font-sans font-black text-foreground text-[clamp(2rem,5vw,3.5rem)] leading-tight tracking-tight">
+                    Shogo Toyoshima
+                </h2>
 
-                    <p className="mt-5 md:mt-6 font-sans text-[14px] md:text-[16px] text-foreground/80 leading-relaxed max-w-xl">
-                        経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
-                    </p>
+                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 leading-relaxed max-w-xl">
+                    経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
+                </p>
 
-                    <p className="mt-5 md:mt-6 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/70">
-                        <span className="text-accent">↓</span>
-                        <span className="ml-3">Scroll for Timeline / Stack</span>
-                    </p>
-                </div>
+                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/70">
+                    <span className="text-accent">↓</span>
+                    <span className="ml-3">Scroll for Timeline / Stack</span>
+                </p>
             </div>
         </div>
     </div>

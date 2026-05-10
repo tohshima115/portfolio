@@ -54,73 +54,45 @@ export const AboutSection: React.FC = () => {
                 <GridLayer size={32} opacity={0.04} />
                 <SectionFrame inset={32} />
 
-                <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-12">
-                    <div className="flex items-start justify-between mb-16">
+                <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
+                    {/* 名前 / 写真 / 縦書き BIO は WorksSection の pin 内 BioIntroStage で見せ済み。
+                        ここでは ABOUT corner label + Timeline + Stack だけに絞る。 */}
+                    <div className="mb-16">
                         <CornerLabel label="ABOUT" id="02" />
-                        <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60">
-                            Shogo Toyoshima · 26
-                        </span>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-12 lg:gap-20">
-                        {/* 左カラム: 縦 BIO + イニシャル */}
-                        <div className="lg:sticky lg:top-32 self-start">
-                            <h2
-                                className="font-sans font-bold text-foreground text-[clamp(3rem,6vw,5rem)] leading-none tracking-tight"
-                                style={{ writingMode: 'vertical-rl' }}
-                            >
-                                BIO
-                            </h2>
-                            <div className="mt-8 flex items-center gap-3">
-                                <span className="relative inline-flex items-center justify-center w-12 h-12 border border-foreground/30 font-mono text-sm font-bold tracking-widest text-foreground">
-                                    S.T.
-                                    <span className="absolute -top-1 -right-1 w-2 h-2 bg-accent" />
-                                </span>
-                                <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted-foreground/80">
-                                    Shogo<br />Toyoshima
-                                </span>
-                            </div>
-                            <p className="mt-8 font-mono text-[11px] tracking-[0.15em] text-muted-foreground/70 leading-relaxed max-w-[200px]">
-                                経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
-                            </p>
-                        </div>
+                    <h3 className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
+                        <span className="text-accent">+</span>
+                        <span>TIMELINE</span>
+                        <span className="flex-1 h-px bg-foreground/10" />
+                    </h3>
 
-                        {/* 右カラム: タイムライン + Stack */}
-                        <div>
-                            <h3 className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
-                                <span className="text-accent">+</span>
-                                <span>TIMELINE</span>
-                                <span className="flex-1 h-px bg-foreground/10" />
-                            </h3>
+                    <ol className="relative pl-6 border-l border-foreground/15">
+                        {TIMELINE.map((row, i) => (
+                            <TimelineItem key={i} row={row} index={i} />
+                        ))}
+                    </ol>
 
-                            <ol className="relative pl-6 border-l border-foreground/15">
-                                {TIMELINE.map((row, i) => (
-                                    <TimelineItem key={i} row={row} index={i} />
-                                ))}
-                            </ol>
+                    <h3 className="mt-20 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
+                        <span className="text-accent">+</span>
+                        <span>STACK</span>
+                        <span className="flex-1 h-px bg-foreground/10" />
+                    </h3>
 
-                            <h3 className="mt-20 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
-                                <span className="text-accent">+</span>
-                                <span>STACK</span>
-                                <span className="flex-1 h-px bg-foreground/10" />
-                            </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                        <StackBlock label="Frontend" items={STACK_FRONTEND} />
+                        <StackBlock label="Edge & Backend" items={STACK_EDGE} />
+                    </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                                <StackBlock label="Frontend" items={STACK_FRONTEND} />
-                                <StackBlock label="Edge & Backend" items={STACK_EDGE} />
-                            </div>
-
-                            <div className="mt-16">
-                                <a
-                                    href="/about"
-                                    className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
-                                >
-                                    <span className="text-accent">+</span>
-                                    <span>Read Full About</span>
-                                    <span aria-hidden>→</span>
-                                </a>
-                            </div>
-                        </div>
+                    <div className="mt-16">
+                        <a
+                            href="/about"
+                            className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
+                        >
+                            <span className="text-accent">+</span>
+                            <span>Read Full About</span>
+                            <span aria-hidden>→</span>
+                        </a>
                     </div>
                 </div>
             </div>
