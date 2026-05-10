@@ -129,17 +129,19 @@ const WorksLead: React.FC = () => {
 
             // ─── Phase C: 全被覆ホールド ─── (タイムラインに何も置かない = scrub 停滞)
 
-            // ─── Phase D: 全 tile 右シフト + 中段 shrink + hero fade ───
-            // 右シフトは TILE_W_VW (=1 列ぶん) 単位で +=。Phase F の各 transition でも
-            // 同じ +=TILE_W_VW を加算するので、累積的に左から hidden cols が滑り込む。
+            // ─── Phase D: 中段 shrink + hero fade + 連続右シフトの開始 ───
+            // 右シフトは Phase D 開始 → timelineEnd まで 1 本の linear tween で連続的に進む。
+            // 総シフト量 = (Phase D 1 回 + project transition 3 回) × 1 列 = 4 列ぶん = 52vw。
+            // → 段階的でなく「スクロールに合わせて常にゆっくり」シフトする見た目に。
+            const TOTAL_SHIFT_COLS = 1 + TIMING.projectTransitions.length;
             tl.to(
                 tileEls,
                 {
-                    x: `+=${TILE_W_VW}vw`,
-                    duration: TIMING.folderShiftDuration,
-                    ease: 'power4.inOut',
+                    x: `+=${TOTAL_SHIFT_COLS * TILE_W_VW}vw`,
+                    duration: TIMING.timelineEnd - TIMING.midShrinkStart,
+                    ease: 'none',
                 },
-                TIMING.folderShiftStart,
+                TIMING.midShrinkStart,
             );
 
             // mid tile shrink — wave 方式。
@@ -265,17 +267,7 @@ const WorksLead: React.FC = () => {
             }));
 
             transitions.forEach(({ id, outAt, outTarget, inAt }) => {
-                // 各 transition で folder grid を 1 列ぶん右へシフト。Phase D と同じ
-                // duration / ease で滑り込ませる。
-                tl.to(
-                    tileEls,
-                    {
-                        x: `+=${TILE_W_VW}vw`,
-                        duration: TIMING.folderShiftDuration,
-                        ease: 'power4.inOut',
-                    },
-                    outAt,
-                );
+                // 右シフトは Phase D 開始時に 1 本の連続 tween で発行済み (本ループでは shift しない)。
                 if (outTarget) {
                     tl.to(
                         outTarget,
