@@ -37,25 +37,29 @@ export const LAYER_SCALE_Y = 0.84;
 // ───────────────────────────────────────────────────────────
 // Mid shrink wave — 右シフトに合わせて 1 列ずつ左へ波が移動する。
 // progress 1.0 → (scaleX 0.5 / scaleY 0) = 完全潰し
-// progress 0.0 → (scaleX 1.0 / scaleY 1.0) = 未着手 (= 縮小なし、フル可視)
+// progress 0.0 → (scaleX 1.0 / scaleY 1.0) = 縮小なし、フル可視
 //
 // 初期 wave は cols 4/5/6。各 project transition で wave 全体が 1 列ずつ
 // 左にスライド: F1=[3,4,5], F2=[2,3,4], F3=[1,2,3]。
-// → wave に該当しない col は常に full collapse (1.0) で mid 不可視。
-// → 画面の visible 右 3 列のうち 3 列目だけが縮小、右 2 列は通常表示。
+// 各 col が wave 外になった時の挙動:
+//   - wave より左 (まだ入ってない / これから入る) → 1.0 (mid 不可視)
+//   - wave より右 (すでに通過 / 画面外へ押し出される) → 0 (縮小なし)
 // ───────────────────────────────────────────────────────────
 export const INITIAL_WAVE_COLS = [4, 5, 6];
-// wave 内の position 別 progress: [3列目 (= wave 左端), 2列目, 1列目 (= 右端)]
-// 右 2 列は 0 (縮小なし) → 3 列目だけ partial collapse。
-export const WAVE_PROGRESS = [0.70, 0, 0];
 
-// 同列内で row が下がるごとに進捗を減衰
-export const ROW_PROGRESS_FALLOFF = 0.10;
-// row 1 (中段の最上段) のみ +bonus で上行ほど明確に進んだ波に見せる
-export const ROW_TOP_BONUS = 0.10;
+// wave 内の [position][row index 0..2 = 中段 row 1..3] 別 progress。
+//   position 0 = 3 列目 (= wave 左端、画面で言うと右から 3 列目): 中程度の partial collapse、
+//                上行ほど崩れた階段状
+//   position 1 = 2 列目: 上に行くほど少しだけ縮小、row 3 はゼロ (= 階段)
+//   position 2 = 1 列目 (= 右端): 全 row 縮小なし
+export const WAVE_PROGRESS_GRID: number[][] = [
+    [0.80, 0.60, 0.50], // pos 0 — 上が一番崩れた波の見出し
+    [0.10, 0.05, 0],    // pos 1 — 階段状の薄い縮小
+    [0, 0, 0],          // pos 2 — 縮小なし
+];
 
-// settle 後、partial collapse の col がスクロールで progress 減 (= tile 大きく) する量。
-// settle で 0.70 まで縮小 → drift で max(0, progress - WAVE_GROWBACK) まで growback。
+// settle 後、partial collapse 状態の row がスクロールで progress 減 (= tile 大きく) する量。
+// drift target = max(0, progress - WAVE_GROWBACK)。
 export const WAVE_GROWBACK = 0.20;
 
 // 中段 mid shrink の per-tile stagger (data-mid-delay の係数)

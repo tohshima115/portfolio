@@ -9,10 +9,8 @@ import {
     PIN_SCROLL_END,
     SECTION_MIN_HEIGHT_VH,
     INITIAL_WAVE_COLS,
-    WAVE_PROGRESS,
+    WAVE_PROGRESS_GRID,
     WAVE_GROWBACK,
-    ROW_PROGRESS_FALLOFF,
-    ROW_TOP_BONUS,
     TILE_W_VW,
     TIMING,
 } from './works/constants';
@@ -154,23 +152,23 @@ const WorksLead: React.FC = () => {
                 TIMING.midShrinkStart,
                 ...TIMING.projectTransitions.map((t) => t.outAt),
             ];
-            const waveProgressAt = (col: number, eventIdx: number): number => {
+            // (col, row, event) → progress を返す。
+            // wave 内: WAVE_PROGRESS_GRID から row 別に lookup
+            // wave より右 (画面外へ押し出される側): 0 = 縮小なしのまま (= 最小化しない)
+            // wave より左 (これから入る側): 1.0 = mid 不可視
+            const waveProgressAt = (
+                col: number,
+                row: number,
+                eventIdx: number,
+            ): number => {
                 const waveCols = INITIAL_WAVE_COLS.map((c) => c - eventIdx);
                 const idx = waveCols.indexOf(col);
-                return idx >= 0 ? WAVE_PROGRESS[idx] : 1.0;
+                if (idx >= 0) return WAVE_PROGRESS_GRID[idx][row - 1];
+                return col > Math.max(...waveCols) ? 0 : 1.0;
             };
-            const rowAdjustedProgress = (base: number, row: number): number => {
-                if (base >= 1.0) return 1.0;
-                if (base <= 0) return 0; // 縮小なしの状態は row 変動も適用しない
-                const bonus = row === 1 ? ROW_TOP_BONUS : 0;
-                return Math.max(
-                    0,
-                    Math.min(1, base + bonus - ROW_PROGRESS_FALLOFF * (row - 1)),
-                );
-            };
-            const scaleVars = (rowProgress: number) => ({
-                scaleX: 1 - 0.5 * rowProgress,
-                scaleY: 1 - rowProgress,
+            const scaleVars = (progress: number) => ({
+                scaleX: 1 - 0.5 * progress,
+                scaleY: 1 - progress,
             });
 
             midTiles.forEach((el) => {
@@ -178,11 +176,11 @@ const WorksLead: React.FC = () => {
                 const col = Number(el.getAttribute('data-tile-col'));
                 const row = Number(el.getAttribute('data-tile-row'));
 
-                // この col の progress 推移 (変化のある event のみ)
+                // この (col, row) の progress 推移 (変化のある event のみ)
                 const progression: { time: number; progress: number }[] = [];
                 let prev = -1;
                 EVENT_TIMES.forEach((time, idx) => {
-                    const p = waveProgressAt(col, idx);
+                    const p = waveProgressAt(col, row, idx);
                     if (p !== prev) {
                         progression.push({ time, progress: p });
                         prev = p;
@@ -199,15 +197,15 @@ const WorksLead: React.FC = () => {
                     tl.to(
                         el,
                         {
-                            ...scaleVars(rowAdjustedProgress(progress, row)),
+                            ...scaleVars(progress),
                             duration: TIMING.midShrinkDuration,
                             ease: 'power3.out',
                         },
                         settleStart,
                     );
 
-                    // growback drift: partial collapse 状態の col のみ、settle 後に
-                    // progress を WAVE_GROWBACK ぶん減らして tile を「ある程度大きく」する。
+                    // growback drift: partial 状態の row のみ、settle 後に progress を
+                    // WAVE_GROWBACK ぶん減らして tile を「ある程度大きく」する。
                     // 0 (縮小なし) や 1.0 (完全潰し) には適用しない。
                     if (progress > 0 && progress < 1.0) {
                         const nextEventTime =
@@ -219,7 +217,7 @@ const WorksLead: React.FC = () => {
                         tl.to(
                             el,
                             {
-                                ...scaleVars(rowAdjustedProgress(growbackTarget, row)),
+                                ...scaleVars(growbackTarget),
                                 duration: driftDuration,
                                 ease: 'none',
                             },
