@@ -80,14 +80,15 @@ export const MID_DELAY_ROW_STAGGER = 0.04;
 
 // ───────────────────────────────────────────────────────────
 // Pin & section dimensions
-// pin scroll range を短くして、AboutSection への遷移タイミングを早める。
-// timeline 全体長 (= TIMING.outroEnd 3.30) を pin scroll 700vh にマップする。
+// outro を圧縮し pin が早めに release されるよう pin scroll を 640vh に短縮。
+// timeline 全体長 (= TIMING.outroEnd 3.00) を pin scroll 640vh にマップ
+// (1 unit ≈ 213vh、earlier phase の感覚は維持)。
 // ───────────────────────────────────────────────────────────
-export const PIN_SCROLL_END = '+=700%';
+export const PIN_SCROLL_END = '+=640%';
 // gsap で計算用 (PIN_SCROLL_END と一致させる)
-export const PIN_SCROLL_RANGE_VH = 700;
-// pin spacer (= pin range 700 + pin-inner.height 100 = 800) を覆える最小値
-export const SECTION_MIN_HEIGHT_VH = 800;
+export const PIN_SCROLL_RANGE_VH = 640;
+// pin spacer (= pin range 640 + pin-inner.height 100 = 740) を覆える最小値
+export const SECTION_MIN_HEIGHT_VH = 740;
 
 // ───────────────────────────────────────────────────────────
 // Timeline labels
@@ -148,12 +149,12 @@ export const TIMING = {
     // sweep は col に応じた stagger で各 tile の opacity を 0 にする。
     // Swept は同時に fade out。両方終わってから (= cleared 画面) Bio が fade in。
     outroSweptFadeOutAt: 2.70,
-    outroSweptFadeOutDuration: 0.22,
+    outroSweptFadeOutDuration: 0.12,
     outroSweepStart: 2.70,
-    outroSweepStaggerWindow: 0.40,
-    outroSweepFadeDuration: 0.20,
-    // outroEnd = sweep last tile fade end。ここで pin が解除され、AboutSection が
-    // 通常スクロールに戻る。AboutSection は折り紙の下のレイヤー (z-auto) に常駐していて
-    // sweep で folder が rotateX/scale 0 になるたびに発掘されていく。
-    outroEnd: 3.30,
+    outroSweepStaggerWindow: 0.20,
+    outroSweepFadeDuration: 0.10,
+    // outroEnd = sweep last tile fade end (= 2.70 + 0.20 + 0.10 = 3.00)。
+    // 旧値 3.30 から 0.30 圧縮、scroll で言うと outro 全体が約 60vh 縮んで pin release
+    // タイミングが早まる。folder の sweep / Swept fade も 1.5x 速い動きに。
+    outroEnd: 3.00,
 } as const;
