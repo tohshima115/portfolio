@@ -189,7 +189,10 @@ const WorksLead: React.FC = () => {
 
                 progression.forEach(({ time, progress }, entryIdx) => {
                     const isPhaseD = entryIdx === 0 && time === TIMING.midShrinkStart;
-                    const settleStart = time + (isPhaseD ? stagger : 0);
+                    // 右シフトの中盤で wave settle が発火するよう shiftSettleOffset を加算。
+                    // Phase D は加えて per-tile stagger も乗せる。
+                    const settleStart =
+                        time + TIMING.shiftSettleOffset + (isPhaseD ? stagger : 0);
                     const settleEnd = settleStart + TIMING.midShrinkDuration;
                     const nextEventTime =
                         entryIdx + 1 < progression.length
