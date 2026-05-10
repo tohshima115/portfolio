@@ -187,6 +187,9 @@ export const FolderGrid: React.FC = () => {
         <div
             aria-hidden
             className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+            // 各 tile の rotateX を 3D で見せるための perspective。
+            // 値が小さいほど効きが強く、奥行きが誇張される。
+            style={{ perspective: '1500px' }}
         >
             {tiles.map((t, i) => (
                 <FolderTileEl key={`tile-${i}`} tile={t} />

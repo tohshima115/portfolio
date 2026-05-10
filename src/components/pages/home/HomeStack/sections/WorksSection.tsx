@@ -166,9 +166,12 @@ const WorksLead: React.FC = () => {
                 if (idx >= 0) return WAVE_PROGRESS_GRID[idx][row - 1];
                 return col > Math.max(...waveCols) ? 0 : 1.0;
             };
+            // progress 0 → identity (scale 1, 回転なし)
+            // progress 1 → scale 0.5 + rotateX 90° (奥に倒れて edge-on で消える)
+            // 親 grid の perspective で 3D に見える。
             const scaleVars = (progress: number) => ({
-                scaleX: 1 - 0.5 * progress,
-                scaleY: 1 - progress,
+                scale: 1 - 0.5 * progress,
+                rotationX: progress * 90,
             });
 
             midTiles.forEach((el) => {
