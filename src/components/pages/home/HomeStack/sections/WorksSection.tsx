@@ -379,13 +379,16 @@ const WorksLead: React.FC = () => {
                         : 1.0;
                 const targetX = 1 - 0.5 * progress;
                 const targetY = 1 - progress;
+                // partial collapse (PARTIAL_BASE 定義列) は終端でゆっくり静止する .out 系、
+                // 完全潰し列は強い加減速の inOut を維持 (終点 scaleY:0 で不可視なので影響なし)。
+                const ease = base !== undefined ? 'power3.out' : 'power4.inOut';
                 tl.to(
                     el,
                     {
                         scaleX: targetX,
                         scaleY: targetY,
                         duration: 0.11,
-                        ease: 'power4.inOut',
+                        ease,
                     },
                     0.66 + d,
                 );
