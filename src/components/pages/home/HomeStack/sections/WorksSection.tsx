@@ -346,6 +346,8 @@ const WorksLead: React.FC = () => {
                 {
                     scaleX: 0.5,
                     scaleY: 0,
+                    rotateX: 90,
+                    transformOrigin: '50% 50%',
                     duration: 0.14,
                     ease: 'power3.inOut',
                 },
@@ -487,6 +489,7 @@ const WorksLead: React.FC = () => {
                 <div
                     aria-hidden
                     className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
+                    style={{ perspective: '1400px', perspectiveOrigin: '50% 50%' }}
                 >
                     {tiles.map((t, i) => (
                         <FolderTileEl key={`tile-${i}`} tile={t} />
