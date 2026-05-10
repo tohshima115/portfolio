@@ -82,6 +82,8 @@ export const MID_DELAY_ROW_STAGGER = 0.04;
 // Pin & section dimensions
 // ───────────────────────────────────────────────────────────
 export const PIN_SCROLL_END = '+=950%';
+// gsap で translate Y などを vh で計算する用 (PIN_SCROLL_END と一致させる)
+export const PIN_SCROLL_RANGE_VH = 950;
 export const SECTION_MIN_HEIGHT_VH = 1050;
 
 // ───────────────────────────────────────────────────────────

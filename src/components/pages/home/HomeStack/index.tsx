@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { WorksSection } from './sections/WorksSection';
-import { AboutSection } from './sections/AboutSection';
 import { LatestSection } from './sections/LatestSection';
 import { CTASection } from './sections/CTASection';
 import { HudOverlay } from './visuals/HudOverlay';
@@ -96,7 +95,6 @@ export const HomeStack: React.FC<Props> = ({ updates = [] }) => {
             data-home-stack
         >
             <WorksSection />
-            <AboutSection />
             <LatestSection updates={updates} />
             <CTASection />
             <HudOverlay />
