@@ -1,258 +1,35 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { CornerLabel } from '../primitives/CornerLabel';
 import { SplitChars } from '../primitives/SplitChars';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
 import { GlobeBackground } from '../visuals/GlobeBackground';
+import { CLOUDFLARE_SERVICES, PROJECTS } from './works/data';
+import {
+    PIN_SCROLL_END,
+    SECTION_MIN_HEIGHT_VH,
+    PARTIAL_BASE,
+    ROW_PROGRESS_FALLOFF,
+    ROW_TOP_BONUS,
+    TIMING,
+} from './works/constants';
+import { FolderGrid } from './works/FolderGrid';
+import { ProjectStage } from './works/ProjectStage';
 
-// 本番投入している Cloudflare サービス。
-const CLOUDFLARE_SERVICES = [
-    'Workers',
-    'D1',
-    'R2',
-    'Durable Objects',
-    'Workers AI',
-    'Zero Trust',
-];
-
-interface Project {
-    id: string;
-    name: string;
-    meta: string;
-    description: string;
-}
-
-const PROJECTS: Project[] = [
-    {
-        id: '01',
-        name: 'AIChatClip',
-        meta: 'Flagship · 1 paid · multi-surface',
-        description:
-            'AI チャット会話を Obsidian に自動同期する SaaS。1 人で企画 / 設計 / UI / 実装 / 運用までを Cloudflare スタックで出荷している。',
-    },
-    {
-        id: '02',
-        name: 'PL Dashboard',
-        meta: 'Cloudflare D1 · 社内運用',
-        description:
-            '見にくい Excel を Cloudflare D1 に乗せ換えた業務改善ダッシュボード。デザイン事務所内で月次運用中、Zero Trust で限定公開。',
-    },
-    {
-        id: '03',
-        name: 'Swept',
-        meta: '起業準備 · プロダクトデザイン',
-        description:
-            '起業準備中のプロダクト。MVP のプロダクトデザインから検証を進め、Cloudflare 上で 0 → 1 を立ち上げ中。',
-    },
-];
-
-// 横 8 × 縦 5 = 40 stack。中段は 3 行 (row 1..3)。
-const FOLDER_COLS = 8;
-const FOLDER_ROWS = 5;
-const TILE_W_VW = 13; // 13 × 8 = 104vw
-const TILE_H_VH = 21; // 標準的な縦間隔 (row 0→1 と row N-2→N-1 で使用)
-// 中段 (row 1..N-2 間) は ROW_COMPRESSED_STRIDE で詰める。
-// LAYER_SCALE_Y × TILE_H 未満にすれば overlap が発生 = ユーザ指定の「マイナス間隔」。
-const ROW_COMPRESSED_STRIDE_VH = 14;
-// 行数を 6 → 5 に減らした分の高さを、最上/最下行と中段との余白に振り分ける。
-// 中段 stride=14 と組み合わせて 99vh に収める: 25*2 + 14*2 + 21 = 99vh
-const EDGE_GAP_EXTRA_VH = 4;
-const STACK_LAYERS = 4;
-// 各スタックの「重なり方向」は画面中心を基準とする radial 配置。
-//   front 層 → 中心に寄る方向
-//   back 層  → 外側 (中心から離れる方向)
-// stack の入場中 (--travel: 0..1) は initial direction (= 左から流入なので
-// 全 stack 右向き = +x) と final direction (= radial) を補間し、移動中も
-// 「front が viewport center を向く」状態を維持する。
-const STACK_OFFSET_X_PX = 18;
-const STACK_OFFSET_Y_PX = 11;
-
-// public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
-const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
-    <svg
-        viewBox="0 0 709 567"
-        preserveAspectRatio="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className={className}
-        aria-hidden
-    >
-        <g transform="matrix(1,0,0,1,-1228.346457,-1086.562999)">
-            <path
-                fill="currentColor"
-                d="M1228.346,1653.543L1937.008,1653.543L1937.008,1181.102C1937.008,1181.102 1678.894,1180.896 1606.299,1181.102C1487.818,1181.44 1535.151,1086.851 1417.323,1086.614C1359.999,1086.499 1228.346,1086.614 1228.346,1086.614L1228.346,1653.543Z"
-            />
-        </g>
-    </svg>
-);
-
-interface FolderTile {
-    row: number;
-    col: number;
-    /** 横入りの方向。true=画面左から、false=画面右から */
-    fromLeft: boolean;
-    /** stagger 用 (0..1) */
-    delay: number;
-}
-
-// 1 stack = 4 枚の folder を radial に offset させて重ねる。
-// stack の (col, row) と grid center (CENTER_COL, CENTER_ROW) を基準に、
-// 中心からの方向ベクトルを正規化 → 各層の offset がその方向に沿って動く。
-//   front (大きい layer index) → 中心に寄る
-//   back  (小さい layer index) → 外側
-// CSS var `--travel` (0..1) を gsap で animate し、初期 (=左から流入のため全
-// stack 右向き) → 最終 (= radial) を補間。これにより移動中も front が viewport
-// center を向き続ける。
-const CENTER_COL = (FOLDER_COLS - 1) / 2;
-const CENTER_ROW = (FOLDER_ROWS - 1) / 2;
-
-const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
-    // 横方向は若干 narrow にして stack 間に visible gap、
-    // 縦方向は tile セルより小さくして中段 row 同士の間に余白を確保する。
-    const LAYER_SCALE_X = 0.82;
-    const LAYER_SCALE_Y = 0.84;
-    const layerInsetXPct = ((1 - LAYER_SCALE_X) / 2) * 100;
-    const layerInsetYPct = ((1 - LAYER_SCALE_Y) / 2) * 100;
-
-    // 最終 (settled) の中心方向ベクトル (-1..+1)
-    const finalDirX = (CENTER_COL - tile.col) / CENTER_COL;
-    const finalDirY = (CENTER_ROW - tile.row) / CENTER_ROW;
-    // 初期方向: 全 stack は左から入るので「中心向き = +x」一律
-    const initialDirX = 1;
-    const initialDirY = 0;
-
-    // CSS 変数で渡し、layer の transform で var を補間する
-    const styleVars: React.CSSProperties = {
-        ['--init-dx' as string]: initialDirX,
-        ['--init-dy' as string]: initialDirY,
-        ['--final-dx' as string]: finalDirX,
-        ['--final-dy' as string]: finalDirY,
-        ['--travel' as string]: 0,
-    };
-
-    // row 0 → row 1 と row N-2 → row N-1 は (TILE_H + EDGE_GAP_EXTRA) で広めに。
-    // 中段 row 1..N-2 間は圧縮 stride で詰めて重ねる。
-    const edgeStrideVh = TILE_H_VH + EDGE_GAP_EXTRA_VH;
-    const rowTopVh = (() => {
-        if (tile.row === 0) return 0;
-        if (tile.row === FOLDER_ROWS - 1) {
-            return (
-                edgeStrideVh +
-                (FOLDER_ROWS - 3) * ROW_COMPRESSED_STRIDE_VH +
-                edgeStrideVh
-            );
-        }
-        return edgeStrideVh + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
-    })();
-
-    // 中段行 (row 1..N-2) のスタックを shrink で消し、画面中央に WORKS reveal 用の
-    // 横帯を作る。全列を対象にし、shrink 自体は col 左→右、同 col 内では row 上→下
-    // の順で順送りに発火させる (delay は data-mid-delay に書き出して gsap が読む)。
-    const isMid = tile.row >= 1 && tile.row <= FOLDER_ROWS - 2;
-    // col -1..7 を 0..1 に正規化 (col + 1) / FOLDER_COLS
-    // row 1..(N-2) を 0..1 に正規化 (row - 1) / (FOLDER_ROWS - 3)
-    const midDelay = isMid
-        ? ((tile.col + 1) / FOLDER_COLS) * 0.15
-        + ((tile.row - 1) / Math.max(1, FOLDER_ROWS - 3)) * 0.04
-        : 0;
-
-    return (
-        <div
-            data-folder-tile
-            data-from-left={tile.fromLeft ? '1' : '0'}
-            data-tile-delay={tile.delay}
-            data-mid={isMid ? '1' : '0'}
-            data-mid-delay={midDelay}
-            data-tile-col={tile.col}
-            data-tile-row={tile.row}
-            style={{
-                position: 'absolute',
-                left: `${tile.col * TILE_W_VW}vw`,
-                top: `${rowTopVh}vh`,
-                width: `${TILE_W_VW}vw`,
-                height: `${TILE_H_VH}vh`,
-                color: 'var(--color-foreground)',
-                lineHeight: 0,
-                willChange: 'transform',
-                ...styleVars,
-            }}
-        >
-            {Array.from({ length: STACK_LAYERS }).map((_, layer) => {
-                // t : -1.5, -0.5, 0.5, 1.5 (back → front)
-                const t = layer - (STACK_LAYERS - 1) / 2;
-                const factorX = t * STACK_OFFSET_X_PX;
-                const factorY = t * STACK_OFFSET_Y_PX;
-                return (
-                    <div
-                        key={layer}
-                        style={{
-                            position: 'absolute',
-                            top: `${layerInsetYPct}%`,
-                            left: `${layerInsetXPct}%`,
-                            width: `${LAYER_SCALE_X * 100}%`,
-                            height: `${LAYER_SCALE_Y * 100}%`,
-                            // calc 内で var(--travel) を使い、init と final を線形補間
-                            transform: `translate(
-                                calc(((1 - var(--travel)) * var(--init-dx) + var(--travel) * var(--final-dx)) * ${factorX}px),
-                                calc(((1 - var(--travel)) * var(--init-dy) + var(--travel) * var(--final-dy)) * ${factorY}px)
-                            )`,
-                            zIndex: layer,
-                        }}
-                    >
-                        <FolderShape className="block w-full h-full" />
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
-// WorksLead = Cloudflare hero + folder cover + WORKS reveal を 1 つの pin
-// セクションに統合。
+// WorksLead = 1 つの pin セクションで以下を順送り表示する:
+//   Phase A (~0.05–0.30): Cloudflare hero reveal
+//   Phase B (~0.30–0.62): folder grid waterfall in
+//   Phase C (~0.62–0.66): 全被覆ホールド
+//   Phase D (~0.66–0.86): 右シフト + 中段 shrink + hero fade
+//   Phase E (~0.78–1.10): WORKS heading reveal
+//   Phase F (~1.30–2.60): WORKS → Project 01 → 02 → 03 を crossfade で順送り
 //
-// pin 範囲 +=300% で 5 フェーズ:
-//   0.00 — 0.05 : idle (Hero 完全消失を見届ける一拍)
-//   0.05 — 0.32 : 既存 reveal (globe / sublabel / headline / chips / count)
-//   0.36 — 0.58 : folder grid (6×4=24) が左右交互から zip in、最終的に全画面被覆
-//   0.58 — 0.66 : 全被覆ホールド
-//   0.66 — 0.78 : 中央 punch-out が h:0 → h:50vh で展開 (折り返しで center が抜ける)
-//   0.78 — 0.92 : WORKS heading + 左右 rule + meta
-//   0.90 — 1.00 : project pin 3 件 stagger
-//
-// reduced-motion: timeline スキップ。folder の最終 transform / center punch の
-// 展開は inline default で「最終状態に近いがアニメ無し」になる。
+// 数値は normalized timeline 上の絶対位置 (constants.ts の TIMING)。
+// pin 範囲は PIN_SCROLL_END (~700% 相当)。reduced-motion 時は scrollScene 自体が
+// disabled で、pin の下に static fallback list を表示する。
 const WorksLead: React.FC = () => {
     const containerRef = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
-
-    const tiles = useMemo<FolderTile[]>(() => {
-        const arr: FolderTile[] = [];
-        for (let r = 0; r < FOLDER_ROWS; r++) {
-            // 左に追加される hidden col (col -1)。Phase B では左外に張り付いたまま、
-            // Phase D で全体右シフトされて新 col 0 のポジションに入る。
-            arr.push({
-                row: r,
-                col: -1,
-                fromLeft: true,
-                delay: 1.0, // waterfall 上は最後尾扱い (見た目には影響しない)
-            });
-            for (let c = 0; c < FOLDER_COLS; c++) {
-                // 全 folder は左から入場。最終的に右に着地する (= col 大) ものほど
-                // 早く出発し、画面を横切って奥に積まれていく waterfall 順。
-                // col 0 (一番左の最終位置) が最後に滑り込む。
-                const colInverted = FOLDER_COLS - 1 - c;
-                const rowJitter = (r / FOLDER_ROWS) * 0.15;
-                const delay =
-                    colInverted / Math.max(1, FOLDER_COLS - 1) + rowJitter;
-                arr.push({
-                    row: r,
-                    col: c,
-                    fromLeft: true,
-                    delay: delay / 1.15,
-                });
-            }
-        }
-        return arr;
-    }, []);
 
     useScrollScene(containerRef, {
         disabled: reduced,
@@ -260,7 +37,7 @@ const WorksLead: React.FC = () => {
             const pinTarget = container.querySelector<HTMLElement>('[data-pin-inner]');
             if (!pinTarget) return;
 
-            // existing lead reveal
+            // ── Phase A 用 selector ──
             const globe = container.querySelector('[data-lead-globe]');
             const subLabel = container.querySelector('[data-lead-sublabel]');
             const headlineLines = container.querySelectorAll('[data-lead-line]');
@@ -268,11 +45,13 @@ const WorksLead: React.FC = () => {
             const stats = container.querySelectorAll('[data-lead-stat]');
             const statsCount = container.querySelector('[data-lead-statcount]');
 
-            // folder + WORKS reveal
+            // ── Phase B/D 用 selector (folder grid) ──
             const tileEls = container.querySelectorAll<HTMLElement>('[data-folder-tile]');
             const midTiles = container.querySelectorAll<HTMLElement>(
                 '[data-folder-tile][data-mid="1"]',
             );
+
+            // ── Phase D/E 用 selector (hero fade + WORKS stage) ──
             const heroLayer = container.querySelector('[data-hero-layer]');
             const sublabel = container.querySelector('[data-trans-sublabel]');
             const ruleLeft = container.querySelector('[data-trans-rule="left"]');
@@ -282,7 +61,7 @@ const WorksLead: React.FC = () => {
             );
             const meta = container.querySelector('[data-trans-meta]');
 
-            // Phase F: 3 project stages (WORKS の次に順送りで表示)
+            // ── Phase F 用 selector (project stages) ──
             const worksStage = container.querySelector<HTMLElement>('[data-stage="works"]');
             const projectStages = container.querySelectorAll<HTMLElement>(
                 '[data-stage="project"]',
@@ -298,7 +77,7 @@ const WorksLead: React.FC = () => {
                 scrollTrigger: {
                     trigger: container,
                     start: 'top top',
-                    end: '+=700%',
+                    end: PIN_SCROLL_END,
                     pin: pinTarget,
                     pinSpacing: true,
                     scrub: 0.7,
@@ -306,45 +85,26 @@ const WorksLead: React.FC = () => {
                 },
             });
 
-            // Phase A: 既存 lead reveal (0.05 ~ 0.32)
-            tl.to(globe, { opacity: 1, duration: 0.10, ease: 'power2.out' }, 0.05);
-            tl.to(
-                subLabel,
-                { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' },
-                0.10,
-            );
+            // ─── Phase A: Cloudflare hero reveal ───
+            tl.to(globe, { opacity: 1, duration: 0.10, ease: 'power2.out' }, TIMING.heroGlobe);
+            tl.to(subLabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroSubLabel);
             tl.to(
                 headlineLines,
-                {
-                    opacity: 1,
-                    y: 0,
-                    stagger: 0.03,
-                    duration: 0.12,
-                    ease: 'power3.out',
-                },
-                0.13,
+                { opacity: 1, y: 0, stagger: 0.03, duration: 0.12, ease: 'power3.out' },
+                TIMING.heroHeadline,
             );
-            tl.to(
-                statsBadge,
-                { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' },
-                0.20,
-            );
+            tl.to(statsBadge, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsBadge);
             tl.to(
                 stats,
                 { opacity: 1, y: 0, stagger: 0.012, duration: 0.10, ease: 'power2.out' },
-                0.23,
+                TIMING.heroStats,
             );
-            tl.to(
-                statsCount,
-                { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' },
-                0.30,
-            );
+            tl.to(statsCount, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsCount);
 
-            // Phase B: folder grid 左から waterfall 入り (0.30 ~ 0.62)
-            // 全 tile が x:-110vw → 0 で左から滑り込む。delay (data 属性) は
-            // 「右側着地ほど早く出発」なので col 末 → col 0 の順に到着する。
-            // 同時に --travel を 0 → 1 に animate し、layer の offset 方向を
-            // 「初期 (右向き)」から「最終 (radial)」へ補間する。
+            // ─── Phase B: folder grid 左から waterfall ───
+            // 全 tile が x:-110vw → 0 で左から滑り込む。delay (data 属性) は「右側着地ほど
+            // 早く出発」なので col 末 → col 0 の順に到着。同時に --travel:0→1 で layer offset
+            // 方向を初期 (右向き) → 最終 (radial) に補間。
             tileEls.forEach((el) => {
                 gsap.set(el, { x: '-110vw', xPercent: 0, '--travel': 0 });
             });
@@ -357,96 +117,57 @@ const WorksLead: React.FC = () => {
                         x: 0,
                         xPercent: 0,
                         '--travel': 1,
-                        duration: 0.12,
+                        duration: TIMING.folderWaterfallDuration,
                         ease: 'expo.out',
                     },
-                    0.30 + d * 0.20,
+                    TIMING.folderWaterfallStart + d * TIMING.folderWaterfallSpread,
                 );
             });
 
-            // Phase C: 全被覆ホールド (0.58 ~ 0.66) — 何もしない (タイルは to 完了後 0)
+            // ─── Phase C: 全被覆ホールド ─── (タイムラインに何も置かない = scrub 停滞)
 
-            // Phase D: 3 並列アニメ (0.66 ~ 0.80)
-            //   1. 全 tile を x:+13vw 右シフト → 左に col -1 が入り、右端 col 7 が退場
-            //   2. 中段 × 元 col 1..4 (= シフト後の新 center 4 列) を scaleY:0 +
-            //      scaleX:0.5 で消し、center area に空白を作る
-            //   3. Cloudflare hero (z-10) を opacity 0 にフェードアウト
+            // ─── Phase D: 全 tile 右シフト + 中段 shrink + hero fade ───
             tl.to(
                 tileEls,
-                {
-                    x: '13vw',
-                    duration: 0.22,
-                    ease: 'power4.inOut',
-                },
-                0.66,
+                { x: '13vw', duration: TIMING.folderShiftDuration, ease: 'power4.inOut' },
+                TIMING.folderShiftStart,
             );
+
             // mid tile shrink を col 左→右 / 同 col 内 row 上→下 の順で stagger。
-            // 各 tile の data-mid-delay (JSX 側で計算済み) を読んで起点に加算する。
-            // シフト後の右端3列 (pre-shift col 4/5/6) は partial collapse で残し、
-            // 「stagger 進行中で止まった」見た目を作る:
-            //   - 列で base 進捗 (col 4=0.7 / 5=0.45 / 6=0.20)
-            //   - 同列内では row 下に行くほど進捗を ROW_FALLOFF 分減衰させる
-            //   - col 6 row 3 (右下) は progress=0 で「発火直前」相当
-            // progress 1.0 → (scaleX 0.5 / scaleY 0) = 完全潰し
-            // progress 0.0 → (scaleX 1.0 / scaleY 1.0) = 未着手
-            const PARTIAL_BASE: Record<number, number> = {
-                4: 0.70,
-                5: 0.45,
-                6: 0.20,
-            };
-            const ROW_PROGRESS_FALLOFF = 0.10;
-            // row 1 (中段の最上段) だけ +0.10 進めて、上行ほど明確に進んだ波に見せる。
-            const ROW_TOP_BONUS = 0.10;
+            // シフト後の右端3列 (PARTIAL_BASE 定義列) は partial collapse で残し、
+            // row 1 (最上段) は ROW_TOP_BONUS で上行ほど明確に進んだ波に見せる。
+            // 完全潰し列は inOut、partial collapse は終端でゆっくり静止する .out 系。
             midTiles.forEach((el) => {
                 const d = Number(el.getAttribute('data-mid-delay')) || 0;
                 const col = Number(el.getAttribute('data-tile-col'));
                 const row = Number(el.getAttribute('data-tile-row'));
                 const base = PARTIAL_BASE[col];
+                const isPartial = base !== undefined;
                 const bonus = row === 1 ? ROW_TOP_BONUS : 0;
-                const progress =
-                    base !== undefined
-                        ? Math.max(
-                              0,
-                              Math.min(1, base + bonus - ROW_PROGRESS_FALLOFF * (row - 1)),
-                          )
-                        : 1.0;
-                const targetX = 1 - 0.5 * progress;
-                const targetY = 1 - progress;
-                // partial collapse (PARTIAL_BASE 定義列) は終端でゆっくり静止する .out 系、
-                // 完全潰し列は強い加減速の inOut を維持 (終点 scaleY:0 で不可視なので影響なし)。
-                const ease = base !== undefined ? 'power3.out' : 'power4.inOut';
+                const progress = isPartial
+                    ? Math.max(0, Math.min(1, base + bonus - ROW_PROGRESS_FALLOFF * (row - 1)))
+                    : 1.0;
                 tl.to(
                     el,
                     {
-                        scaleX: targetX,
-                        scaleY: targetY,
-                        duration: 0.11,
-                        ease,
+                        scaleX: 1 - 0.5 * progress,
+                        scaleY: 1 - progress,
+                        duration: TIMING.midShrinkDuration,
+                        ease: isPartial ? 'power3.out' : 'power4.inOut',
                     },
-                    0.66 + d,
+                    TIMING.midShrinkStart + d,
                 );
             });
+
             tl.to(
                 heroLayer,
-                {
-                    opacity: 0,
-                    duration: 0.22,
-                    ease: 'power2.out',
-                },
-                0.66,
+                { opacity: 0, duration: TIMING.heroFadeDuration, ease: 'power2.out' },
+                TIMING.heroFadeStart,
             );
 
-            // Phase E: WORKS heading + meta (0.78 ~ 1.00)
-            tl.to(
-                [ruleLeft, ruleRight],
-                { scaleX: 1, duration: 0.08, ease: 'power2.out' },
-                0.78,
-            );
-            tl.to(
-                sublabel,
-                { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' },
-                0.78,
-            );
+            // ─── Phase E: WORKS heading reveal ───
+            tl.to([ruleLeft, ruleRight], { scaleX: 1, duration: 0.08, ease: 'power2.out' }, TIMING.worksRule);
+            tl.to(sublabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.worksSubLabel);
             gsap.set(headingChars, { yPercent: -110, y: 0, opacity: 0 });
             tl.fromTo(
                 headingChars,
@@ -455,49 +176,45 @@ const WorksLead: React.FC = () => {
                     opacity: 1,
                     yPercent: 0,
                     y: 0,
-                    stagger: 0.025,
-                    duration: 0.18,
+                    stagger: TIMING.worksHeadingStagger,
+                    duration: TIMING.worksHeadingDuration,
                     ease: 'power3.out',
                 },
-                0.82,
+                TIMING.worksHeading,
             );
-            tl.to(
-                meta,
-                { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' },
-                0.90,
-            );
+            tl.to(meta, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.worksMeta);
 
-            // Phase F: WORKS hold → Project 1 → Project 2 → Project 3
-            // WORKS hold: 1.10 ~ 1.30 (タイムラインに何も置かない = scrub で停滞)
-            // 各 transition は前 stage を fade out しつつ次 stage を fade in、rule scaleX 1。
+            // ─── Phase F: WORKS hold → Project 01 → 02 → 03 ───
+            // 各 transition は前 stage を fade out (outAt 起点) しつつ次 stage を fade in
+            // (inAt 起点)、続けて rule scaleX を 1 に。
             projectStages.forEach((el) => {
                 gsap.set(el, { opacity: 0, y: 18 });
             });
 
-            const TRANSITIONS = [
-                { id: '01', outAt: 1.30, outTarget: worksStage, inAt: 1.36 },
-                { id: '02', outAt: 1.80, outTarget: projectStage('01'), inAt: 1.86 },
-                { id: '03', outAt: 2.30, outTarget: projectStage('02'), inAt: 2.36 },
-            ];
+            // 1 個目の outTarget だけ WORKS stage、それ以外は前 project stage。
+            const transitions = TIMING.projectTransitions.map((t, i) => ({
+                ...t,
+                outTarget: i === 0 ? worksStage : projectStage(TIMING.projectTransitions[i - 1].id),
+            }));
 
-            TRANSITIONS.forEach(({ id, outAt, outTarget, inAt }) => {
-                const inTarget = projectStage(id);
+            transitions.forEach(({ id, outAt, outTarget, inAt }) => {
                 if (outTarget) {
                     tl.to(
                         outTarget,
-                        { opacity: 0, y: -18, duration: 0.10, ease: 'power2.in' },
+                        { opacity: 0, y: -18, duration: TIMING.projectOutDuration, ease: 'power2.in' },
                         outAt,
                     );
                 }
+                const inTarget = projectStage(id);
                 if (inTarget) {
                     tl.to(
                         inTarget,
-                        { opacity: 1, y: 0, duration: 0.14, ease: 'power3.out' },
+                        { opacity: 1, y: 0, duration: TIMING.projectInDuration, ease: 'power3.out' },
                         inAt,
                     );
                     tl.to(
                         projectRules(id),
-                        { scaleX: 1, duration: 0.10, ease: 'power2.out' },
+                        { scaleX: 1, duration: TIMING.projectRuleDuration, ease: 'power2.out' },
                         inAt + 0.02,
                     );
                 }
@@ -509,235 +226,178 @@ const WorksLead: React.FC = () => {
         <section
             ref={containerRef}
             className="relative w-full"
-            style={{ minHeight: reduced ? '100vh' : '800vh' }}
+            style={{ minHeight: reduced ? '100vh' : `${SECTION_MIN_HEIGHT_VH}vh` }}
         >
             <div
                 data-pin-inner
                 className="relative w-full h-screen overflow-hidden bg-background"
             >
-                {/* z-10: 既存の Cloudflare hero (folders に覆われる)。
-                    Phase D で folder shrink と同時にフェードアウトさせる。 */}
-                <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
-                    <div className="absolute top-6 left-6 md:top-8 md:left-12">
-                        <CornerLabel label="WORKS" id="01" />
-                    </div>
-                    <div
-                        aria-hidden
-                        className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:block font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground/40"
-                        style={{ writingMode: 'vertical-rl' }}
-                    >
-                        GLOBAL EDGE / 220+ POPS
-                    </div>
+                {/* z-10: Cloudflare hero (folders に覆われ Phase D で fade out) */}
+                <HeroLayer />
 
-                    <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
-                        <div className="order-2 md:order-1">
-                            <p
-                                data-lead-sublabel
-                                data-reveal
-                                className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-5 flex items-center gap-3"
-                            >
-                                <span className="text-accent">+</span>
-                                <span>Global Edge / Solo Shipper</span>
-                            </p>
-                            <h2 className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl">
-                                <span data-lead-line data-reveal className="block">
-                                    Cloudflare で個人プロダクトを
-                                </span>
-                                <span data-lead-line data-reveal className="block">
-                                    出荷している Product Engineer。
-                                </span>
-                            </h2>
-                            <div className="mt-10">
-                                <p
-                                    data-lead-statbadge
-                                    data-reveal
-                                    className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 flex items-center gap-3"
-                                >
-                                    <span className="text-accent">+</span>
-                                    <span>Cloudflare Stack — In Production</span>
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {CLOUDFLARE_SERVICES.map((s) => (
-                                        <span
-                                            key={s}
-                                            data-lead-stat
-                                            data-reveal
-                                            className="font-mono text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 border border-foreground/15 text-foreground/85"
-                                        >
-                                            {s}
-                                        </span>
-                                    ))}
-                                </div>
-                                <p
-                                    data-lead-statcount
-                                    data-reveal
-                                    className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70 tabular-nums"
-                                >
-                                    {String(CLOUDFLARE_SERVICES.length).padStart(2, '0')}{' '}
-                                    services · solo-shipped
-                                </p>
-                            </div>
-                        </div>
+                {/* z-20: folder grid (左から waterfall in → 全画面被覆 → 右シフト + 中段 shrink) */}
+                <FolderGrid />
 
-                        <div
-                            data-lead-globe
-                            style={{ opacity: 0 }}
-                            className="order-1 md:order-2 flex items-center justify-center"
-                        >
-                            <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />
-                        </div>
-                    </div>
-                </div>
+                {/* z-40: WORKS heading stage (Phase E で reveal、Phase F で fade out) */}
+                <WorksStage reduced={reduced} />
 
-                {/* z-20: folder grid (横入り → 全画面被覆) */}
-                <div
-                    aria-hidden
-                    className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
-                >
-                    {tiles.map((t, i) => (
-                        <FolderTileEl key={`tile-${i}`} tile={t} />
-                    ))}
-                </div>
-
-                {/* z-40: WORKS hero center content (folder shrink で空いた領域に出現) */}
-                <div
-                    data-stage="works"
-                    className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12"
-                >
-                    <div className="max-w-7xl mx-auto">
-                        <div className="flex items-center gap-4 mb-6 md:mb-8">
-                            <span
-                                aria-hidden
-                                data-trans-rule="left"
-                                className="h-px bg-foreground/40 origin-right flex-1"
-                                style={{
-                                    transform: reduced ? undefined : 'scaleX(0)',
-                                }}
-                            />
-                            <p
-                                data-trans-sublabel
-                                data-reveal
-                                className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap"
-                            >
-                                <span className="text-accent">+</span>
-                                <span className="ml-3">Section 02 / In Production</span>
-                            </p>
-                            <span
-                                aria-hidden
-                                data-trans-rule="right"
-                                className="h-px bg-foreground/40 origin-left flex-1"
-                                style={{
-                                    transform: reduced ? undefined : 'scaleX(0)',
-                                }}
-                            />
-                        </div>
-
-                        <h2
-                            data-trans-heading
-                            className="font-sans font-black text-foreground text-center text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]"
-                        >
-                            <SplitChars
-                                text="WORKS"
-                                className="block overflow-hidden"
-                                dataAnim
-                            />
-                        </h2>
-
-                        <div className="mt-6 md:mt-8 flex flex-col items-center gap-5">
-                            <p
-                                data-trans-meta
-                                data-reveal
-                                className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-center"
-                            >
-                                03 projects · solo-shipped on Cloudflare
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* z-40: 3 project stages — WORKS と同じ位置に重ねて opacity で切替。
-                    reduced mode は scrollScene 無効なので opacity 0 のまま不可視。
-                    reduced mode の閲覧用には pin-inner の下に static fallback を置く。 */}
+                {/* z-40: project stages (Phase F で順送り fade in)。同位置に重ねて opacity 切替。
+                    reduced mode は scrollScene 無効なので opacity 0 のまま不可視 (fallback を別途下に表示)。 */}
                 {!reduced && PROJECTS.map((p) => (
-                    <div
-                        key={p.id}
-                        data-stage="project"
-                        data-project-id={p.id}
-                        className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12"
-                        style={{ opacity: 0 }}
-                    >
-                        <div className="max-w-7xl mx-auto">
-                            <div className="flex items-center gap-4 mb-6 md:mb-8">
-                                <span
-                                    aria-hidden
-                                    data-project-rule="left"
-                                    className="h-px bg-foreground/40 origin-right flex-1"
-                                    style={{
-                                        transform: reduced ? undefined : 'scaleX(0)',
-                                    }}
-                                />
-                                <p
-                                    className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap"
-                                >
-                                    <span className="text-accent">+</span>
-                                    <span className="ml-3">
-                                        Project {p.id} / {p.meta}
-                                    </span>
-                                </p>
-                                <span
-                                    aria-hidden
-                                    data-project-rule="right"
-                                    className="h-px bg-foreground/40 origin-left flex-1"
-                                    style={{
-                                        transform: reduced ? undefined : 'scaleX(0)',
-                                    }}
-                                />
-                            </div>
-
-                            <h2 className="font-sans font-black text-foreground text-center text-[clamp(2.75rem,11vw,9rem)] leading-[0.9] tracking-[-0.03em]">
-                                {p.name}
-                            </h2>
-
-                            <div className="mt-6 md:mt-8 flex flex-col items-center gap-5">
-                                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 text-center max-w-2xl leading-relaxed">
-                                    {p.description}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    <ProjectStage key={p.id} project={p} reduced={reduced} />
                 ))}
             </div>
 
-            {/* reduced-motion 用の static fallback: pin animation が走らないので
-                3 プロジェクトを通常スクロールで読めるリストとして並べる。 */}
-            {reduced && (
-                <div className="relative px-6 md:px-12 py-16">
-                    <div className="max-w-4xl mx-auto space-y-12">
-                        {PROJECTS.map((p) => (
-                            <article
-                                key={p.id}
-                                className="border-l-2 border-accent/40 pl-6"
-                            >
-                                <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground mb-2">
-                                    Project {p.id} / {p.meta}
-                                </p>
-                                <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
-                                    {p.name}
-                                </h3>
-                                <p className="text-foreground/80 leading-relaxed">
-                                    {p.description}
-                                </p>
-                            </article>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {/* reduced-motion 用 static fallback: 3 プロジェクトを通常スクロールで読めるリストに */}
+            {reduced && <ReducedFallback />}
         </section>
     );
 };
 
-// Works = WorksLead に集約。
-// Cloudflare hero → folder cover → WORKS heading → 3 project stage を 1 pin で順送り表示する。
-export const WorksSection: React.FC = () => {
-    return <WorksLead />;
-};
+// Cloudflare hero (z-10): Phase A で reveal、Phase D で opacity 0 にフェードアウト。
+const HeroLayer: React.FC = () => (
+    <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
+        <div className="absolute top-6 left-6 md:top-8 md:left-12">
+            <CornerLabel label="WORKS" id="01" />
+        </div>
+        <div
+            aria-hidden
+            className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:block font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground/40"
+            style={{ writingMode: 'vertical-rl' }}
+        >
+            GLOBAL EDGE / 220+ POPS
+        </div>
+
+        <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div className="order-2 md:order-1">
+                <p
+                    data-lead-sublabel
+                    data-reveal
+                    className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-5 flex items-center gap-3"
+                >
+                    <span className="text-accent">+</span>
+                    <span>Global Edge / Solo Shipper</span>
+                </p>
+                <h2 className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl">
+                    <span data-lead-line data-reveal className="block">
+                        Cloudflare で個人プロダクトを
+                    </span>
+                    <span data-lead-line data-reveal className="block">
+                        出荷している Product Engineer。
+                    </span>
+                </h2>
+                <div className="mt-10">
+                    <p
+                        data-lead-statbadge
+                        data-reveal
+                        className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 flex items-center gap-3"
+                    >
+                        <span className="text-accent">+</span>
+                        <span>Cloudflare Stack — In Production</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {CLOUDFLARE_SERVICES.map((s) => (
+                            <span
+                                key={s}
+                                data-lead-stat
+                                data-reveal
+                                className="font-mono text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 border border-foreground/15 text-foreground/85"
+                            >
+                                {s}
+                            </span>
+                        ))}
+                    </div>
+                    <p
+                        data-lead-statcount
+                        data-reveal
+                        className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70 tabular-nums"
+                    >
+                        {String(CLOUDFLARE_SERVICES.length).padStart(2, '0')}{' '}
+                        services · solo-shipped
+                    </p>
+                </div>
+            </div>
+
+            <div
+                data-lead-globe
+                style={{ opacity: 0 }}
+                className="order-1 md:order-2 flex items-center justify-center"
+            >
+                <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />
+            </div>
+        </div>
+    </div>
+);
+
+// WORKS heading stage (z-40): Phase E で SplitChars が char 単位で reveal、Phase F の
+// 1 個目で project 01 へ crossfade で抜ける。
+const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
+    <div
+        data-stage="works"
+        className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12"
+    >
+        <div className="max-w-7xl mx-auto">
+            <div className="flex items-center gap-4 mb-6 md:mb-8">
+                <span
+                    aria-hidden
+                    data-trans-rule="left"
+                    className="h-px bg-foreground/40 origin-right flex-1"
+                    style={{ transform: reduced ? undefined : 'scaleX(0)' }}
+                />
+                <p
+                    data-trans-sublabel
+                    data-reveal
+                    className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap"
+                >
+                    <span className="text-accent">+</span>
+                    <span className="ml-3">Section 02 / In Production</span>
+                </p>
+                <span
+                    aria-hidden
+                    data-trans-rule="right"
+                    className="h-px bg-foreground/40 origin-left flex-1"
+                    style={{ transform: reduced ? undefined : 'scaleX(0)' }}
+                />
+            </div>
+
+            <h2
+                data-trans-heading
+                className="font-sans font-black text-foreground text-center text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]"
+            >
+                <SplitChars text="WORKS" className="block overflow-hidden" dataAnim />
+            </h2>
+
+            <div className="mt-6 md:mt-8 flex flex-col items-center gap-5">
+                <p
+                    data-trans-meta
+                    data-reveal
+                    className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-center"
+                >
+                    03 projects · solo-shipped on Cloudflare
+                </p>
+            </div>
+        </div>
+    </div>
+);
+
+// reduced-motion fallback: pin animation が走らないので 3 プロジェクトを縦に並べて読ませる。
+const ReducedFallback: React.FC = () => (
+    <div className="relative px-6 md:px-12 py-16">
+        <div className="max-w-4xl mx-auto space-y-12">
+            {PROJECTS.map((p) => (
+                <article key={p.id} className="border-l-2 border-accent/40 pl-6">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground mb-2">
+                        Project {p.id} / {p.meta}
+                    </p>
+                    <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
+                        {p.name}
+                    </h3>
+                    <p className="text-foreground/80 leading-relaxed">{p.description}</p>
+                </article>
+            ))}
+        </div>
+    </div>
+);
+
+// 外部から import される唯一の export。
+export const WorksSection: React.FC = () => <WorksLead />;
