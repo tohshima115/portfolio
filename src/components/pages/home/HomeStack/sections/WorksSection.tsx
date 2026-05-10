@@ -13,6 +13,8 @@ import {
     WAVE_GROWBACK,
     TILE_W_VW,
     TIMING,
+    NO_FOLDER_BAND_TOP_VH,
+    NO_FOLDER_BAND_HEIGHT_VH,
 } from './works/constants';
 import { FolderGrid } from './works/FolderGrid';
 import { ProjectStage } from './works/ProjectStage';
@@ -403,12 +405,17 @@ const HeroLayer: React.FC = () => (
 
 // WORKS heading stage (z-40): Phase E で SplitChars が char 単位で reveal、Phase F の
 // 1 個目で project 01 へ crossfade で抜ける。
+// 配置は no-folder band (top row 下端 ↔ bottom row 上端) を親枠として、左寄せで描画。
 const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
     <div
         data-stage="works"
-        className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12"
+        className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
+        style={{
+            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
+            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+        }}
     >
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl w-full">
             <div className="flex items-center gap-4 mb-6 md:mb-8">
                 <span
                     aria-hidden
@@ -434,16 +441,16 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
 
             <h2
                 data-trans-heading
-                className="font-sans font-black text-foreground text-center text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]"
+                className="font-sans font-black text-foreground text-left text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]"
             >
                 <SplitChars text="WORKS" className="block overflow-hidden" dataAnim />
             </h2>
 
-            <div className="mt-6 md:mt-8 flex flex-col items-center gap-5">
+            <div className="mt-6 md:mt-8 flex flex-col items-start gap-5">
                 <p
                     data-trans-meta
                     data-reveal
-                    className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-center"
+                    className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-left"
                 >
                     03 projects · solo-shipped on Cloudflare
                 </p>

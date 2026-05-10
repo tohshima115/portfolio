@@ -23,6 +23,18 @@ export const ROW_COMPRESSED_STRIDE_VH = 14;
 // 中段 stride=14 と組み合わせて 99vh 内に収める: 25*2 + 14*2 + 21 = 99vh
 export const EDGE_GAP_EXTRA_VH = 4;
 
+// ───────────────────────────────────────────────────────────
+// No-folder band — top row の下端 ↔ bottom row の上端 で囲まれる中央帯。
+// 中段 row tile はこの band 内に存在するが、Phase D 以降 wave 外は collapse されるので
+// 視覚的にはほぼ空。WORKS / project stage はこの band を親枠として描画する。
+// ───────────────────────────────────────────────────────────
+const _edgeStrideVh = TILE_H_VH + EDGE_GAP_EXTRA_VH;
+export const NO_FOLDER_BAND_TOP_VH = TILE_H_VH; // 21vh (= top row の下端)
+export const NO_FOLDER_BAND_BOTTOM_VH =
+    _edgeStrideVh * 2 + (FOLDER_ROWS - 3) * ROW_COMPRESSED_STRIDE_VH; // 78vh (= bottom row の上端)
+export const NO_FOLDER_BAND_HEIGHT_VH =
+    NO_FOLDER_BAND_BOTTOM_VH - NO_FOLDER_BAND_TOP_VH; // 57vh
+
 // 1 stack = 4 layer の folder を radial offset で重ねる。
 // front (大きい layer index) → 中心に寄る、back → 外側。
 export const STACK_LAYERS = 4;
