@@ -489,7 +489,7 @@ const WorksLead: React.FC = () => {
                 <div
                     aria-hidden
                     className="absolute inset-0 z-20 pointer-events-none overflow-hidden"
-                    style={{ perspective: '1400px', perspectiveOrigin: '50% 50%' }}
+                    style={{ perspective: '3000px', perspectiveOrigin: '50% 50%' }}
                 >
                     {tiles.map((t, i) => (
                         <FolderTileEl key={`tile-${i}`} tile={t} />
