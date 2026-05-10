@@ -141,6 +141,7 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
             data-mid={isMid ? '1' : '0'}
             data-mid-delay={midDelay}
             data-tile-col={tile.col}
+            data-tile-row={tile.row}
             style={{
                 position: 'absolute',
                 left: `${tile.col * TILE_W_VW}vw`,
@@ -349,22 +350,29 @@ const WorksLead: React.FC = () => {
             // mid tile shrink を col 左→右 / 同 col 内 row 上→下 の順で stagger。
             // 各 tile の data-mid-delay (JSX 側で計算済み) を読んで起点に加算する。
             // シフト後の右端3列 (pre-shift col 4/5/6) は partial collapse で残し、
-            // 「stagger 進行中で止まった」見た目を作る (右に行くほど進捗が浅い)。
+            // 「stagger 進行中で止まった」見た目を作る:
+            //   - 列で base 進捗 (col 4=0.7 / 5=0.45 / 6=0.20)
+            //   - 同列内では row 下に行くほど進捗を ROW_FALLOFF 分減衰させる
+            //   - col 6 row 3 (右下) は progress=0 で「発火直前」相当
+            // progress 1.0 → (scaleX 0.5 / scaleY 0) = 完全潰し
+            // progress 0.0 → (scaleX 1.0 / scaleY 1.0) = 未着手
+            const PARTIAL_BASE: Record<number, number> = {
+                4: 0.70,
+                5: 0.45,
+                6: 0.20,
+            };
+            const ROW_PROGRESS_FALLOFF = 0.10;
             midTiles.forEach((el) => {
                 const d = Number(el.getAttribute('data-mid-delay')) || 0;
                 const col = Number(el.getAttribute('data-tile-col'));
-                let targetX = 0.5;
-                let targetY = 0;
-                if (col === 4) {
-                    targetX = 0.65;
-                    targetY = 0.30;
-                } else if (col === 5) {
-                    targetX = 0.78;
-                    targetY = 0.55;
-                } else if (col === 6) {
-                    targetX = 0.90;
-                    targetY = 0.80;
-                }
+                const row = Number(el.getAttribute('data-tile-row'));
+                const base = PARTIAL_BASE[col];
+                const progress =
+                    base !== undefined
+                        ? Math.max(0, base - ROW_PROGRESS_FALLOFF * (row - 1))
+                        : 1.0;
+                const targetX = 1 - 0.5 * progress;
+                const targetY = 1 - progress;
                 tl.to(
                     el,
                     {
