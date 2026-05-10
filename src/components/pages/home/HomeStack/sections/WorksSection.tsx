@@ -10,7 +10,6 @@ import {
     SECTION_MIN_HEIGHT_VH,
     INITIAL_WAVE_COLS,
     WAVE_PROGRESS,
-    WAVE_DRIFT,
     ROW_PROGRESS_FALLOFF,
     ROW_TOP_BONUS,
     TILE_W_VW,
@@ -147,10 +146,9 @@ const WorksLead: React.FC = () => {
             // mid tile shrink — wave 方式。
             // 各 event (Phase D + 各 project transition) で wave が 1 列ずつ左にスライドし、
             // 画面の visible 右 3 列が常に同じパターン (P0/P1/P2) に見えるようにする。
-            // 各 col の progress 推移を pre-compute し、変化のあった event だけ:
-            //   1) settle tween (短い、強い ease.out) で wave 値に到達
-            //   2) drift tween (長い、緩やか) で +WAVE_DRIFT までゆっくり進ませる
-            //      → 「完全に止まった状態」が出ないように slow continuation を保つ
+            // 各 col の progress 推移を pre-compute し、変化のあった event で settle tween
+            // (短い power3.out) を発行する。連続右シフトが常時動いているので、
+            // settle 後に静止していても「halt」感は出ない。
             const EVENT_TIMES = [
                 TIMING.midShrinkStart,
                 ...TIMING.projectTransitions.map((t) => t.outAt),
@@ -195,13 +193,6 @@ const WorksLead: React.FC = () => {
                     // Phase D は加えて per-tile stagger も乗せる。
                     const settleStart =
                         time + TIMING.shiftSettleOffset + (isPhaseD ? stagger : 0);
-                    const settleEnd = settleStart + TIMING.midShrinkDuration;
-                    const nextEventTime =
-                        entryIdx + 1 < progression.length
-                            ? progression[entryIdx + 1].time
-                            : TIMING.timelineEnd;
-                    const driftDuration = Math.max(0.05, nextEventTime - settleEnd);
-
                     tl.to(
                         el,
                         {
@@ -211,20 +202,6 @@ const WorksLead: React.FC = () => {
                         },
                         settleStart,
                     );
-
-                    // drift は partial 状態でだけ。完全潰し (1.0) なら scaleY:0 のままで不可視。
-                    if (progress < 1.0) {
-                        const driftBase = Math.min(1.0, progress + WAVE_DRIFT);
-                        tl.to(
-                            el,
-                            {
-                                ...scaleVars(rowAdjustedProgress(driftBase, row)),
-                                duration: driftDuration,
-                                ease: 'none',
-                            },
-                            settleEnd,
-                        );
-                    }
                 });
             });
 

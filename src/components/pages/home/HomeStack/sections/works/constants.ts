@@ -52,10 +52,6 @@ export const ROW_PROGRESS_FALLOFF = 0.10;
 // row 1 (中段の最上段) のみ +bonus で上行ほど明確に進んだ波に見せる
 export const ROW_TOP_BONUS = 0.10;
 
-// 各 settle 後に行うドリフトの量。settle で wave 値に到達 → その後 +WAVE_DRIFT まで
-// ゆっくり進行させて「完全に止まった状態」を作らない。
-export const WAVE_DRIFT = 0.10;
-
 // 中段 mid shrink の per-tile stagger (data-mid-delay の係数)
 export const MID_DELAY_COL_STAGGER = 0.15;
 export const MID_DELAY_ROW_STAGGER = 0.04;
