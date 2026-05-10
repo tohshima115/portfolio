@@ -362,14 +362,20 @@ const WorksLead: React.FC = () => {
                 6: 0.20,
             };
             const ROW_PROGRESS_FALLOFF = 0.10;
+            // row 1 (中段の最上段) だけ +0.10 進めて、上行ほど明確に進んだ波に見せる。
+            const ROW_TOP_BONUS = 0.10;
             midTiles.forEach((el) => {
                 const d = Number(el.getAttribute('data-mid-delay')) || 0;
                 const col = Number(el.getAttribute('data-tile-col'));
                 const row = Number(el.getAttribute('data-tile-row'));
                 const base = PARTIAL_BASE[col];
+                const bonus = row === 1 ? ROW_TOP_BONUS : 0;
                 const progress =
                     base !== undefined
-                        ? Math.max(0, base - ROW_PROGRESS_FALLOFF * (row - 1))
+                        ? Math.max(
+                              0,
+                              Math.min(1, base + bonus - ROW_PROGRESS_FALLOFF * (row - 1)),
+                          )
                         : 1.0;
                 const targetX = 1 - 0.5 * progress;
                 const targetY = 1 - progress;
