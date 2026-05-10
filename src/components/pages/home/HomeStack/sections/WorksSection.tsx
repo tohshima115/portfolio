@@ -121,14 +121,16 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
         return TILE_H_VH + (tile.row - 1) * ROW_COMPRESSED_STRIDE_VH;
     })();
 
-    // Phase D で grid 全体が +13vw 右シフトする。シフト後の中央 4 列 (新 pos 2..5)
-    // は元 col 1..4 に該当する。中段 (row 1..N-2) × 元 col 1..4 のスタックを
-    // shrink で消すと、シフト先の center に空白が出来る。
-    const isMid =
-        tile.col >= 1 &&
-        tile.col <= 4 &&
-        tile.row >= 1 &&
-        tile.row <= FOLDER_ROWS - 2;
+    // 中段行 (row 1..N-2) のスタックを shrink で消し、画面中央に WORKS reveal 用の
+    // 横帯を作る。全列を対象にし、shrink 自体は col 左→右、同 col 内では row 上→下
+    // の順で順送りに発火させる (delay は data-mid-delay に書き出して gsap が読む)。
+    const isMid = tile.row >= 1 && tile.row <= FOLDER_ROWS - 2;
+    // col -1..7 を 0..1 に正規化 (col + 1) / FOLDER_COLS
+    // row 1..(N-2) を 0..1 に正規化 (row - 1) / (FOLDER_ROWS - 3)
+    const midDelay = isMid
+        ? ((tile.col + 1) / FOLDER_COLS) * 0.10
+        + ((tile.row - 1) / Math.max(1, FOLDER_ROWS - 3)) * 0.025
+        : 0;
 
     return (
         <div
@@ -136,6 +138,7 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
             data-from-left={tile.fromLeft ? '1' : '0'}
             data-tile-delay={tile.delay}
             data-mid={isMid ? '1' : '0'}
+            data-mid-delay={midDelay}
             style={{
                 position: 'absolute',
                 left: `${tile.col * TILE_W_VW}vw`,
@@ -341,16 +344,21 @@ const WorksLead: React.FC = () => {
                 },
                 0.66,
             );
-            tl.to(
-                midTiles,
-                {
-                    scaleX: 0.5,
-                    scaleY: 0,
-                    duration: 0.14,
-                    ease: 'power3.inOut',
-                },
-                0.66,
-            );
+            // mid tile shrink を col 左→右 / 同 col 内 row 上→下 の順で stagger。
+            // 各 tile の data-mid-delay (JSX 側で計算済み) を読んで起点に加算する。
+            midTiles.forEach((el) => {
+                const d = Number(el.getAttribute('data-mid-delay')) || 0;
+                tl.to(
+                    el,
+                    {
+                        scaleX: 0.5,
+                        scaleY: 0,
+                        duration: 0.07,
+                        ease: 'power3.inOut',
+                    },
+                    0.66 + d,
+                );
+            });
             tl.to(
                 heroLayer,
                 {
