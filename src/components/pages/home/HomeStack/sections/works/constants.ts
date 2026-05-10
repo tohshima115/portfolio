@@ -80,15 +80,14 @@ export const MID_DELAY_ROW_STAGGER = 0.04;
 
 // ───────────────────────────────────────────────────────────
 // Pin & section dimensions
-// outro の bio fade-in 終端 = pin 解除タイミングに合わせて pin scroll を 870vh に短縮
-// (timeline 1 unit ≈ 256vh、ほぼ元のスクロール感を維持)
+// pin scroll range を短くして、AboutSection への遷移タイミングを早める。
+// timeline 全体長 (= TIMING.outroEnd 3.30) を pin scroll 700vh にマップする。
 // ───────────────────────────────────────────────────────────
-export const PIN_SCROLL_END = '+=870%';
-// gsap で translate Y などを vh で計算する用 (PIN_SCROLL_END と一致させる)
-export const PIN_SCROLL_RANGE_VH = 870;
-// pin spacer (= PIN_SCROLL_RANGE_VH + pin-inner.height = 970) を覆える最小値。
-// AboutSection は margin-top:-100vh で flow を 870vh に補正、その後の content は max で section を伸ばす。
-export const SECTION_MIN_HEIGHT_VH = 970;
+export const PIN_SCROLL_END = '+=700%';
+// gsap で計算用 (PIN_SCROLL_END と一致させる)
+export const PIN_SCROLL_RANGE_VH = 700;
+// pin spacer (= pin range 700 + pin-inner.height 100 = 800) を覆える最小値
+export const SECTION_MIN_HEIGHT_VH = 800;
 
 // ───────────────────────────────────────────────────────────
 // Timeline labels
