@@ -10,6 +10,7 @@ import {
     SECTION_MIN_HEIGHT_VH,
     INITIAL_WAVE_COLS,
     WAVE_PROGRESS,
+    WAVE_GROWBACK,
     ROW_PROGRESS_FALLOFF,
     ROW_TOP_BONUS,
     TILE_W_VW,
@@ -160,6 +161,7 @@ const WorksLead: React.FC = () => {
             };
             const rowAdjustedProgress = (base: number, row: number): number => {
                 if (base >= 1.0) return 1.0;
+                if (base <= 0) return 0; // 縮小なしの状態は row 変動も適用しない
                 const bonus = row === 1 ? ROW_TOP_BONUS : 0;
                 return Math.max(
                     0,
@@ -193,6 +195,7 @@ const WorksLead: React.FC = () => {
                     // Phase D は加えて per-tile stagger も乗せる。
                     const settleStart =
                         time + TIMING.shiftSettleOffset + (isPhaseD ? stagger : 0);
+                    const settleEnd = settleStart + TIMING.midShrinkDuration;
                     tl.to(
                         el,
                         {
@@ -202,6 +205,27 @@ const WorksLead: React.FC = () => {
                         },
                         settleStart,
                     );
+
+                    // growback drift: partial collapse 状態の col のみ、settle 後に
+                    // progress を WAVE_GROWBACK ぶん減らして tile を「ある程度大きく」する。
+                    // 0 (縮小なし) や 1.0 (完全潰し) には適用しない。
+                    if (progress > 0 && progress < 1.0) {
+                        const nextEventTime =
+                            entryIdx + 1 < progression.length
+                                ? progression[entryIdx + 1].time
+                                : TIMING.timelineEnd;
+                        const driftDuration = Math.max(0.05, nextEventTime - settleEnd);
+                        const growbackTarget = Math.max(0, progress - WAVE_GROWBACK);
+                        tl.to(
+                            el,
+                            {
+                                ...scaleVars(rowAdjustedProgress(growbackTarget, row)),
+                                duration: driftDuration,
+                                ease: 'none',
+                            },
+                            settleEnd,
+                        );
+                    }
                 });
             });
 
