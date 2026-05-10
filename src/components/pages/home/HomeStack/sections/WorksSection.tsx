@@ -40,8 +40,8 @@ const STACK_LAYERS = 4;
 // stack の入場中 (--travel: 0..1) は initial direction (= 左から流入なので
 // 全 stack 右向き = +x) と final direction (= radial) を補間し、移動中も
 // 「front が viewport center を向く」状態を維持する。
-const STACK_OFFSET_X_PX = 10;
-const STACK_OFFSET_Y_PX = 6;
+const STACK_OFFSET_X_PX = 18;
+const STACK_OFFSET_Y_PX = 11;
 
 // public/folder.svg と同じパスを inline。fill: currentColor で theme color を載せる。
 const FolderShape: React.FC<{ className?: string }> = ({ className }) => (
