@@ -7,7 +7,6 @@ import { GlobeBackground } from '../visuals/GlobeBackground';
 import { CLOUDFLARE_SERVICES, PROJECTS } from './works/data';
 import {
     PIN_SCROLL_END,
-    PIN_SCROLL_RANGE_VH,
     SECTION_MIN_HEIGHT_VH,
     INITIAL_WAVE_COLS,
     WAVE_PROGRESS_GRID,
@@ -21,7 +20,6 @@ import {
 } from './works/constants';
 import { FolderGrid } from './works/FolderGrid';
 import { ProjectStage } from './works/ProjectStage';
-import { AboutSection } from './AboutSection';
 
 // WorksLead = 1 つの pin セクションで以下を順送り表示する:
 //   Phase A (~0.05–0.30): Cloudflare hero reveal
@@ -339,22 +337,6 @@ const WorksLead: React.FC = () => {
                 );
             });
 
-            // AboutSection wrapper は折り紙 grid の下 (z-auto < FolderGrid z-20) に常駐し、
-            // pin 開始時点から viewport 上端に貼り付くよう translate Y を線形 (-PIN_SCROLL_RANGE_VH → 0)
-            // で動かす。folder が覆っているうちは見えず、Phase G sweep で folder が消えるたびに
-            // 発掘されるように現れる。pin 解除時には translate Y=0 で自然位置に着地。
-            const aboutWrapper = container.querySelector<HTMLElement>(
-                '[data-about-wrapper]',
-            );
-            if (aboutWrapper) {
-                gsap.set(aboutWrapper, { y: `-${PIN_SCROLL_RANGE_VH}vh` });
-                tl.to(
-                    aboutWrapper,
-                    { y: 0, duration: TIMING.outroEnd, ease: 'none' },
-                    0,
-                );
-            }
-
             // 終端ダミー: timeline 全体長を outroEnd まで確保し、pin scroll が outro 完了まで届くようにする。
             tl.to({}, { duration: 0.01 }, TIMING.outroEnd);
         },
@@ -384,21 +366,6 @@ const WorksLead: React.FC = () => {
                 {!reduced && PROJECTS.map((p) => (
                     <ProjectStage key={p.id} project={p} reduced={reduced} />
                 ))}
-            </div>
-
-            {/* AboutSection 本体。 pin 内では translate Y で viewport 上端に貼り付き、
-                folder grid (z-20) の下のレイヤー (z-auto) に常駐。Phase G で folder が
-                rotateX:90/scale:0 で消えるたびに発掘されるように現れ、pin 解除時には
-                translate Y=0 で自然位置に着地、そのまま通常スクロールへ流れる。
-                wrapper の margin-top:-100vh は pinSpacer の trailing space (pin-inner.height 分)
-                を相殺して、自然位置 = pin release scroll に揃える。
-                reduced mode では pin / 補正どちらも不要 (margin なしで pin-inner 直下に配置)。 */}
-            <div
-                data-about-wrapper
-                className="relative"
-                style={{ marginTop: reduced ? undefined : '-100vh' }}
-            >
-                <AboutSection />
             </div>
 
             {/* reduced-motion 用 static fallback: 3 プロジェクトを通常スクロールで読めるリストに */}
