@@ -3,9 +3,6 @@ import { CornerLabel } from '../primitives/CornerLabel';
 import { SplitChars } from '../primitives/SplitChars';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
-import { WorksFlagshipPart } from './WorksFlagshipPart';
-import { WorksOpsCarousel } from './WorksOpsCarousel';
-import { DividerMarker } from '../visuals/DividerMarker';
 import { GlobeBackground } from '../visuals/GlobeBackground';
 
 // 本番投入している Cloudflare サービス。
@@ -18,10 +15,35 @@ const CLOUDFLARE_SERVICES = [
     'Zero Trust',
 ];
 
-const PROJECT_PINS = [
-    { id: '01', label: 'AIChatClip', meta: 'Flagship · 1 paid · multi-surface' },
-    { id: '02', label: 'PL Dashboard', meta: 'Cloudflare D1 · 社内運用' },
-    { id: '03', label: 'Swept', meta: '起業準備 · プロダクトデザイン' },
+interface Project {
+    id: string;
+    name: string;
+    meta: string;
+    description: string;
+}
+
+const PROJECTS: Project[] = [
+    {
+        id: '01',
+        name: 'AIChatClip',
+        meta: 'Flagship · 1 paid · multi-surface',
+        description:
+            'AI チャット会話を Obsidian に自動同期する SaaS。1 人で企画 / 設計 / UI / 実装 / 運用までを Cloudflare スタックで出荷している。',
+    },
+    {
+        id: '02',
+        name: 'PL Dashboard',
+        meta: 'Cloudflare D1 · 社内運用',
+        description:
+            '見にくい Excel を Cloudflare D1 に乗せ換えた業務改善ダッシュボード。デザイン事務所内で月次運用中、Zero Trust で限定公開。',
+    },
+    {
+        id: '03',
+        name: 'Swept',
+        meta: '起業準備 · プロダクトデザイン',
+        description:
+            '起業準備中のプロダクト。MVP のプロダクトデザインから検証を進め、Cloudflare 上で 0 → 1 を立ち上げ中。',
+    },
 ];
 
 // 横 8 × 縦 5 = 40 stack。中段は 3 行 (row 1..3)。
@@ -259,13 +281,24 @@ const WorksLead: React.FC = () => {
                 '[data-trans-heading] [data-split-chars][data-anim] > span',
             );
             const meta = container.querySelector('[data-trans-meta]');
-            const pins = container.querySelectorAll('[data-trans-pin]');
+
+            // Phase F: 3 project stages (WORKS の次に順送りで表示)
+            const worksStage = container.querySelector<HTMLElement>('[data-stage="works"]');
+            const projectStages = container.querySelectorAll<HTMLElement>(
+                '[data-stage="project"]',
+            );
+            const projectStage = (id: string) =>
+                container.querySelector<HTMLElement>(`[data-project-id="${id}"]`);
+            const projectRules = (id: string) =>
+                container.querySelectorAll<HTMLElement>(
+                    `[data-project-id="${id}"] [data-project-rule]`,
+                );
 
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: container,
                     start: 'top top',
-                    end: '+=300%',
+                    end: '+=700%',
                     pin: pinTarget,
                     pinSpacing: true,
                     scrub: 0.7,
@@ -433,11 +466,42 @@ const WorksLead: React.FC = () => {
                 { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' },
                 0.90,
             );
-            tl.to(
-                pins,
-                { opacity: 1, y: 0, stagger: 0.025, duration: 0.10, ease: 'power2.out' },
-                0.92,
-            );
+
+            // Phase F: WORKS hold → Project 1 → Project 2 → Project 3
+            // WORKS hold: 1.10 ~ 1.30 (タイムラインに何も置かない = scrub で停滞)
+            // 各 transition は前 stage を fade out しつつ次 stage を fade in、rule scaleX 1。
+            projectStages.forEach((el) => {
+                gsap.set(el, { opacity: 0, y: 18 });
+            });
+
+            const TRANSITIONS = [
+                { id: '01', outAt: 1.30, outTarget: worksStage, inAt: 1.36 },
+                { id: '02', outAt: 1.80, outTarget: projectStage('01'), inAt: 1.86 },
+                { id: '03', outAt: 2.30, outTarget: projectStage('02'), inAt: 2.36 },
+            ];
+
+            TRANSITIONS.forEach(({ id, outAt, outTarget, inAt }) => {
+                const inTarget = projectStage(id);
+                if (outTarget) {
+                    tl.to(
+                        outTarget,
+                        { opacity: 0, y: -18, duration: 0.10, ease: 'power2.in' },
+                        outAt,
+                    );
+                }
+                if (inTarget) {
+                    tl.to(
+                        inTarget,
+                        { opacity: 1, y: 0, duration: 0.14, ease: 'power3.out' },
+                        inAt,
+                    );
+                    tl.to(
+                        projectRules(id),
+                        { scaleX: 1, duration: 0.10, ease: 'power2.out' },
+                        inAt + 0.02,
+                    );
+                }
+            });
         },
     });
 
@@ -445,7 +509,7 @@ const WorksLead: React.FC = () => {
         <section
             ref={containerRef}
             className="relative w-full"
-            style={{ minHeight: reduced ? '100vh' : '400vh' }}
+            style={{ minHeight: reduced ? '100vh' : '800vh' }}
         >
             <div
                 data-pin-inner
@@ -536,7 +600,10 @@ const WorksLead: React.FC = () => {
                 </div>
 
                 {/* z-40: WORKS hero center content (folder shrink で空いた領域に出現) */}
-                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12">
+                <div
+                    data-stage="works"
+                    className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12"
+                >
                     <div className="max-w-7xl mx-auto">
                         <div className="flex items-center gap-4 mb-6 md:mb-8">
                             <span
@@ -584,44 +651,93 @@ const WorksLead: React.FC = () => {
                             >
                                 03 projects · solo-shipped on Cloudflare
                             </p>
-                            <ul className="flex flex-wrap justify-center gap-x-6 md:gap-x-10 gap-y-3">
-                                {PROJECT_PINS.map((p) => (
-                                    <li
-                                        key={p.id}
-                                        data-trans-pin
-                                        data-reveal
-                                        className="flex items-baseline gap-3 font-mono text-[11px] uppercase tracking-[0.25em] text-foreground/85"
-                                    >
-                                        <span className="text-accent tabular-nums">
-                                            {p.id}
-                                        </span>
-                                        <span className="font-sans font-bold tracking-tight text-foreground">
-                                            {p.label}
-                                        </span>
-                                        <span className="text-muted-foreground/60 hidden md:inline">
-                                            / {p.meta}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
                         </div>
                     </div>
                 </div>
+
+                {/* z-40: 3 project stages — WORKS と同じ位置に重ねて opacity で切替。
+                    reduced mode は scrollScene 無効なので opacity 0 のまま不可視。
+                    reduced mode の閲覧用には pin-inner の下に static fallback を置く。 */}
+                {!reduced && PROJECTS.map((p) => (
+                    <div
+                        key={p.id}
+                        data-stage="project"
+                        data-project-id={p.id}
+                        className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-40 px-6 md:px-12"
+                        style={{ opacity: 0 }}
+                    >
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex items-center gap-4 mb-6 md:mb-8">
+                                <span
+                                    aria-hidden
+                                    data-project-rule="left"
+                                    className="h-px bg-foreground/40 origin-right flex-1"
+                                    style={{
+                                        transform: reduced ? undefined : 'scaleX(0)',
+                                    }}
+                                />
+                                <p
+                                    className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap"
+                                >
+                                    <span className="text-accent">+</span>
+                                    <span className="ml-3">
+                                        Project {p.id} / {p.meta}
+                                    </span>
+                                </p>
+                                <span
+                                    aria-hidden
+                                    data-project-rule="right"
+                                    className="h-px bg-foreground/40 origin-left flex-1"
+                                    style={{
+                                        transform: reduced ? undefined : 'scaleX(0)',
+                                    }}
+                                />
+                            </div>
+
+                            <h2 className="font-sans font-black text-foreground text-center text-[clamp(2.75rem,11vw,9rem)] leading-[0.9] tracking-[-0.03em]">
+                                {p.name}
+                            </h2>
+
+                            <div className="mt-6 md:mt-8 flex flex-col items-center gap-5">
+                                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 text-center max-w-2xl leading-relaxed">
+                                    {p.description}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                ))}
             </div>
+
+            {/* reduced-motion 用の static fallback: pin animation が走らないので
+                3 プロジェクトを通常スクロールで読めるリストとして並べる。 */}
+            {reduced && (
+                <div className="relative px-6 md:px-12 py-16">
+                    <div className="max-w-4xl mx-auto space-y-12">
+                        {PROJECTS.map((p) => (
+                            <article
+                                key={p.id}
+                                className="border-l-2 border-accent/40 pl-6"
+                            >
+                                <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground mb-2">
+                                    Project {p.id} / {p.meta}
+                                </p>
+                                <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
+                                    {p.name}
+                                </h3>
+                                <p className="text-foreground/80 leading-relaxed">
+                                    {p.description}
+                                </p>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            )}
         </section>
     );
 };
 
-// Works = WorksLead (Cloudflare anchor + folder cover + WORKS reveal を 1 pin に統合)
-//       → WorksFlagshipPart (AIChatClip)
-//       → WorksOpsCarousel (PL Dashboard / Expense / Schedule)
+// Works = WorksLead に集約。
+// Cloudflare hero → folder cover → WORKS heading → 3 project stage を 1 pin で順送り表示する。
 export const WorksSection: React.FC = () => {
-    return (
-        <>
-            <WorksLead />
-            <WorksFlagshipPart />
-            <DividerMarker py={48} />
-            <WorksOpsCarousel />
-        </>
-    );
+    return <WorksLead />;
 };
