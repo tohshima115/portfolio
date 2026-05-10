@@ -7,6 +7,7 @@ import { GlobeBackground } from '../visuals/GlobeBackground';
 import { CLOUDFLARE_SERVICES, PROJECTS } from './works/data';
 import {
     PIN_SCROLL_END,
+    PIN_SCROLL_RANGE_VH,
     SECTION_MIN_HEIGHT_VH,
     INITIAL_WAVE_COLS,
     WAVE_PROGRESS_GRID,
@@ -338,22 +339,19 @@ const WorksLead: React.FC = () => {
                 );
             });
 
-            // BioIntroStage (pin 内 z-40) を opacity で fade in。
-            // pin 解除後は pin-inner (BioIntroStage を内包) が自然位置に戻って viewport
-            // 外に去り、代わりに WorksSection 内の AboutSection wrapper が viewport 上端
-            // に来るので、視覚的に「Bio teaser → 詳細 About」へバトンタッチされる。
-            const bioStage = container.querySelector<HTMLElement>('[data-stage="bio"]');
-            if (bioStage) {
-                gsap.set(bioStage, { opacity: 0, y: 18 });
+            // AboutSection wrapper は折り紙 grid の下 (z-auto < FolderGrid z-20) に常駐し、
+            // pin 開始時点から viewport 上端に貼り付くよう translate Y を線形 (-PIN_SCROLL_RANGE_VH → 0)
+            // で動かす。folder が覆っているうちは見えず、Phase G sweep で folder が消えるたびに
+            // 発掘されるように現れる。pin 解除時には translate Y=0 で自然位置に着地。
+            const aboutWrapper = container.querySelector<HTMLElement>(
+                '[data-about-wrapper]',
+            );
+            if (aboutWrapper) {
+                gsap.set(aboutWrapper, { y: `-${PIN_SCROLL_RANGE_VH}vh` });
                 tl.to(
-                    bioStage,
-                    {
-                        opacity: 1,
-                        y: 0,
-                        duration: TIMING.outroBioFadeInDuration,
-                        ease: 'power3.out',
-                    },
-                    TIMING.outroBioFadeInAt,
+                    aboutWrapper,
+                    { y: 0, duration: TIMING.outroEnd, ease: 'none' },
+                    0,
                 );
             }
 
@@ -386,20 +384,15 @@ const WorksLead: React.FC = () => {
                 {!reduced && PROJECTS.map((p) => (
                     <ProjectStage key={p.id} project={p} reduced={reduced} />
                 ))}
-
-                {/* z-40: Bio intro stage (Phase G outro で fade in)。
-                    AboutSection 本体への teaser として、Section 03 / About ラベル + 巨大 BIO +
-                    AboutSection と同じ intro 文 + scroll hint を no-folder band に配置。
-                    pin 解除と同時に pin-inner ごと viewport 外に去り、下の AboutSection 本体に
-                    自然にバトンタッチされる。 */}
-                {!reduced && <BioIntroStage />}
             </div>
 
-            {/* AboutSection 本体。pin 解除直後に viewport 上端に着地できるよう wrapper の
-                margin-top:-100vh で GSAP pinSpacer の trailing space (= pin-inner.height 分) を相殺。
-                アニメは AboutSection 自体の framer-motion (TimelineItem の inView reveal) に任せ、
-                ここでは pin / opacity / translate 系の介入はしない。
-                reduced mode では pin が無いので margin 補正は不要だが、付けても layout に影響なし。 */}
+            {/* AboutSection 本体。 pin 内では translate Y で viewport 上端に貼り付き、
+                folder grid (z-20) の下のレイヤー (z-auto) に常駐。Phase G で folder が
+                rotateX:90/scale:0 で消えるたびに発掘されるように現れ、pin 解除時には
+                translate Y=0 で自然位置に着地、そのまま通常スクロールへ流れる。
+                wrapper の margin-top:-100vh は pinSpacer の trailing space (pin-inner.height 分)
+                を相殺して、自然位置 = pin release scroll に揃える。
+                reduced mode では pin / 補正どちらも不要 (margin なしで pin-inner 直下に配置)。 */}
             <div
                 data-about-wrapper
                 className="relative"
@@ -539,47 +532,6 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
                     className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-left"
                 >
                     03 projects · solo-shipped on Cloudflare
-                </p>
-            </div>
-        </div>
-    </div>
-);
-
-// Bio intro stage (z-40): Phase G の終盤 (folder sweep 後) に fade in する AboutSection
-// への teaser。WORKS / Project stage と同じ no-folder band 左寄せレイアウトに揃え、
-// AboutSection 本体の左 column の intro paragraph と同じ文をここでも見せて連続感を作る。
-// 末尾に「scroll for timeline / stack」hint を入れて、pin 解除後にスクロールで詳細に
-// 進む流れを示唆する。
-const BioIntroStage: React.FC = () => (
-    <div
-        data-stage="bio"
-        className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
-        style={{
-            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
-            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
-            opacity: 0,
-        }}
-    >
-        <div className="max-w-7xl w-full">
-            <div className="flex items-center gap-4 mb-6 md:mb-8">
-                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
-                    <span className="text-accent">+</span>
-                    <span className="ml-3">Section 03 / About</span>
-                </p>
-                <span aria-hidden className="h-px bg-foreground/40 flex-1" />
-            </div>
-
-            <h2 className="font-sans font-black text-foreground text-left text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]">
-                BIO
-            </h2>
-
-            <div className="mt-6 md:mt-8 flex flex-col items-start gap-4">
-                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 text-left max-w-2xl leading-relaxed">
-                    経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
-                </p>
-                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-muted-foreground/70">
-                    <span className="text-accent">↓</span>
-                    <span className="ml-3">Scroll for Timeline / Stack</span>
                 </p>
             </div>
         </div>

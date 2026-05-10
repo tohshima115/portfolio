@@ -153,11 +153,8 @@ export const TIMING = {
     outroSweepStart: 2.70,
     outroSweepStaggerWindow: 0.40,
     outroSweepFadeDuration: 0.20,
-    // sweep の終盤 (last tile fade ~3.10-3.30) と overlap させ、
-    // 「folder が消え終わる頃には About がほぼ見えている」体感に。
-    outroBioFadeInAt: 3.10,
-    outroBioFadeInDuration: 0.30,
-    // outroEnd = bio fade-in 終端。ここで pin が解除され、以降は AboutSection が
-    // 通常スクロールに戻る (hold 期間を持たないことで「まだ pin されてる」体感を消す)。
-    outroEnd: 3.40,
+    // outroEnd = sweep last tile fade end。ここで pin が解除され、AboutSection が
+    // 通常スクロールに戻る。AboutSection は折り紙の下のレイヤー (z-auto) に常駐していて
+    // sweep で folder が rotateX/scale 0 になるたびに発掘されていく。
+    outroEnd: 3.30,
 } as const;
