@@ -7,7 +7,6 @@ import { GlobeBackground } from '../visuals/GlobeBackground';
 import { CLOUDFLARE_SERVICES, PROJECTS } from './works/data';
 import {
     PIN_SCROLL_END,
-    PIN_SCROLL_RANGE_VH,
     SECTION_MIN_HEIGHT_VH,
     INITIAL_WAVE_COLS,
     WAVE_PROGRESS_GRID,
@@ -301,8 +300,9 @@ const WorksLead: React.FC = () => {
             // ─── Phase G: Outro ───
             // 1) Swept (project 03) を fade out
             // 2) 全 folder tile を col 左→右の stagger で scale:0 + rotateX:90 に collapse (mid shrink と同じ方式)
-            // 3) cleared 画面に下にある AboutSection を translate Y で持ち上げつつ fade in
-            // 4) pin 終了時には translate Y=0 で AboutSection が自然位置に着地、通常スクロールへ
+            // 3) pin 内 BioIntroStage (= AboutSection の lite teaser) を fade in
+            // 4) pin 終了 → 下にある AboutSection 本体 (timeline / stack 詳細) が
+            //    natural flow で viewport に入ってきて、ユーザは普通にスクロールして読み進める
             const sweptStage = projectStage('03');
             if (sweptStage) {
                 tl.to(
@@ -338,41 +338,18 @@ const WorksLead: React.FC = () => {
                 );
             });
 
-            // AboutSection wrapper を fade in。pin 内では自然位置 (= pin release scroll
-            // = 950vh from WorksSection.top, wrapper の margin-top で調整済み) より上に
-            // 引き上げる必要があるので、translate Y を負値 → 0 で animate しつつ opacity 0→1。
-            // 線形 ease (none) と pin scroll の線形 mapping により、translate Y は
-            // viewport 上端への張り付きを保ちつつ pin 終了時に 0 で着地する。
-            const aboutWrapper = container.querySelector<HTMLElement>(
-                '[data-about-wrapper]',
-            );
-            if (aboutWrapper) {
-                // outroBioFadeInAt 時点での viewport ↔ AboutSection 自然位置の vh 距離。
-                // = (1 - outroBioFadeInAt/outroEnd) * pin scroll range
-                const initialTranslateVh =
-                    -((TIMING.outroEnd - TIMING.outroBioFadeInAt) / TIMING.outroEnd) *
-                    PIN_SCROLL_RANGE_VH;
-
-                // 初期状態: opacity 0 + translate Y を -initialOffset に固定。
-                // これで scrub timeline 序盤も translate が確定値となり ChromeImmediateRender 揺らぎを排除。
-                gsap.set(aboutWrapper, {
-                    opacity: 0,
-                    y: `${initialTranslateVh}vh`,
-                });
-
+            // BioIntroStage (pin 内 z-40) を opacity で fade in。
+            // pin 解除後は pin-inner (BioIntroStage を内包) が自然位置に戻って viewport
+            // 外に去り、代わりに WorksSection 内の AboutSection wrapper が viewport 上端
+            // に来るので、視覚的に「Bio teaser → 詳細 About」へバトンタッチされる。
+            const bioStage = container.querySelector<HTMLElement>('[data-stage="bio"]');
+            if (bioStage) {
+                gsap.set(bioStage, { opacity: 0, y: 18 });
                 tl.to(
-                    aboutWrapper,
-                    {
-                        y: 0,
-                        duration: TIMING.outroEnd - TIMING.outroBioFadeInAt,
-                        ease: 'none',
-                    },
-                    TIMING.outroBioFadeInAt,
-                );
-                tl.to(
-                    aboutWrapper,
+                    bioStage,
                     {
                         opacity: 1,
+                        y: 0,
                         duration: TIMING.outroBioFadeInDuration,
                         ease: 'power3.out',
                     },
@@ -409,18 +386,24 @@ const WorksLead: React.FC = () => {
                 {!reduced && PROJECTS.map((p) => (
                     <ProjectStage key={p.id} project={p} reduced={reduced} />
                 ))}
+
+                {/* z-40: Bio intro stage (Phase G outro で fade in)。
+                    AboutSection 本体への teaser として、Section 03 / About ラベル + 巨大 BIO +
+                    AboutSection と同じ intro 文 + scroll hint を no-folder band に配置。
+                    pin 解除と同時に pin-inner ごと viewport 外に去り、下の AboutSection 本体に
+                    自然にバトンタッチされる。 */}
+                {!reduced && <BioIntroStage />}
             </div>
 
-            {/* AboutSection は WorksLead の pin 内 outro で translate Y + opacity で fade in する。
-                pin 解除時に自然位置 (pin 終了 viewport 位置) に着地し、そのまま通常スクロールへ。
-                wrapper の margin-top:-100vh は GSAP pinSpacer の高さが
-                「pin range (950vh) + pin-inner.height (100vh) = 1050vh」になる挙動を打ち消し、
-                AboutSection.top を pin release scroll (= 950vh from WorksSection.top) に一致させる。
-                z-index: 50 で pin-inner より上に重ねる (folder grid z-20 / stages z-40)。 */}
+            {/* AboutSection 本体。pin 解除直後に viewport 上端に着地できるよう wrapper の
+                margin-top:-100vh で GSAP pinSpacer の trailing space (= pin-inner.height 分) を相殺。
+                アニメは AboutSection 自体の framer-motion (TimelineItem の inView reveal) に任せ、
+                ここでは pin / opacity / translate 系の介入はしない。
+                reduced mode では pin が無いので margin 補正は不要だが、付けても layout に影響なし。 */}
             <div
                 data-about-wrapper
                 className="relative"
-                style={{ marginTop: '-100vh', zIndex: 50 }}
+                style={{ marginTop: reduced ? undefined : '-100vh' }}
             >
                 <AboutSection />
             </div>
@@ -556,6 +539,47 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
                     className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-left"
                 >
                     03 projects · solo-shipped on Cloudflare
+                </p>
+            </div>
+        </div>
+    </div>
+);
+
+// Bio intro stage (z-40): Phase G の終盤 (folder sweep 後) に fade in する AboutSection
+// への teaser。WORKS / Project stage と同じ no-folder band 左寄せレイアウトに揃え、
+// AboutSection 本体の左 column の intro paragraph と同じ文をここでも見せて連続感を作る。
+// 末尾に「scroll for timeline / stack」hint を入れて、pin 解除後にスクロールで詳細に
+// 進む流れを示唆する。
+const BioIntroStage: React.FC = () => (
+    <div
+        data-stage="bio"
+        className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
+        style={{
+            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
+            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+            opacity: 0,
+        }}
+    >
+        <div className="max-w-7xl w-full">
+            <div className="flex items-center gap-4 mb-6 md:mb-8">
+                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
+                    <span className="text-accent">+</span>
+                    <span className="ml-3">Section 03 / About</span>
+                </p>
+                <span aria-hidden className="h-px bg-foreground/40 flex-1" />
+            </div>
+
+            <h2 className="font-sans font-black text-foreground text-left text-[clamp(4rem,18vw,16rem)] leading-[0.85] tracking-[-0.04em]">
+                BIO
+            </h2>
+
+            <div className="mt-6 md:mt-8 flex flex-col items-start gap-4">
+                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 text-left max-w-2xl leading-relaxed">
+                    経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
+                </p>
+                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.4em] text-muted-foreground/70">
+                    <span className="text-accent">↓</span>
+                    <span className="ml-3">Scroll for Timeline / Stack</span>
                 </p>
             </div>
         </div>
