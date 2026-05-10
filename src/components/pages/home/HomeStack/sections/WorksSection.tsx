@@ -338,22 +338,30 @@ const WorksLead: React.FC = () => {
                 );
             });
 
-            // AboutSection を fade in。pin 内では自然位置 (= pin 終了時の viewport 位置) より
-            // 下にあるので、translate Y で viewport 上端まで引き上げつつ opacity 0→1。
-            // pin 終了時には translate Y=0 で自然位置に着地して、jump なく通常スクロールへ。
-            const aboutEl = document.querySelector<HTMLElement>('[data-section="about"]');
-            if (aboutEl) {
-                // outroBioFadeInAt 時点での viewport ↔ AboutSection 自然位置の vh 距離
-                // (timeline は線形に scroll に対応するため static に算出可能)
+            // AboutSection wrapper を fade in。pin 内では自然位置 (= pin release scroll
+            // = 950vh from WorksSection.top, wrapper の margin-top で調整済み) より上に
+            // 引き上げる必要があるので、translate Y を負値 → 0 で animate しつつ opacity 0→1。
+            // 線形 ease (none) と pin scroll の線形 mapping により、translate Y は
+            // viewport 上端への張り付きを保ちつつ pin 終了時に 0 で着地する。
+            const aboutWrapper = container.querySelector<HTMLElement>(
+                '[data-about-wrapper]',
+            );
+            if (aboutWrapper) {
+                // outroBioFadeInAt 時点での viewport ↔ AboutSection 自然位置の vh 距離。
+                // = (1 - outroBioFadeInAt/outroEnd) * pin scroll range
                 const initialTranslateVh =
                     -((TIMING.outroEnd - TIMING.outroBioFadeInAt) / TIMING.outroEnd) *
                     PIN_SCROLL_RANGE_VH;
 
-                gsap.set(aboutEl, { opacity: 0, zIndex: 50, position: 'relative' });
+                // 初期状態: opacity 0 + translate Y を -initialOffset に固定。
+                // これで scrub timeline 序盤も translate が確定値となり ChromeImmediateRender 揺らぎを排除。
+                gsap.set(aboutWrapper, {
+                    opacity: 0,
+                    y: `${initialTranslateVh}vh`,
+                });
 
-                tl.fromTo(
-                    aboutEl,
-                    { y: `${initialTranslateVh}vh` },
+                tl.to(
+                    aboutWrapper,
                     {
                         y: 0,
                         duration: TIMING.outroEnd - TIMING.outroBioFadeInAt,
@@ -362,7 +370,7 @@ const WorksLead: React.FC = () => {
                     TIMING.outroBioFadeInAt,
                 );
                 tl.to(
-                    aboutEl,
+                    aboutWrapper,
                     {
                         opacity: 1,
                         duration: TIMING.outroBioFadeInDuration,
@@ -405,8 +413,17 @@ const WorksLead: React.FC = () => {
 
             {/* AboutSection は WorksLead の pin 内 outro で translate Y + opacity で fade in する。
                 pin 解除時に自然位置 (pin 終了 viewport 位置) に着地し、そのまま通常スクロールへ。
-                reduced mode では scrollScene 無効なので AboutSection は通常 flow で見える。 */}
-            <AboutSection />
+                wrapper の margin-top:-100vh は GSAP pinSpacer の高さが
+                「pin range (950vh) + pin-inner.height (100vh) = 1050vh」になる挙動を打ち消し、
+                AboutSection.top を pin release scroll (= 950vh from WorksSection.top) に一致させる。
+                z-index: 50 で pin-inner より上に重ねる (folder grid z-20 / stages z-40)。 */}
+            <div
+                data-about-wrapper
+                className="relative"
+                style={{ marginTop: '-100vh', zIndex: 50 }}
+            >
+                <AboutSection />
+            </div>
 
             {/* reduced-motion 用 static fallback: 3 プロジェクトを通常スクロールで読めるリストに */}
             {reduced && <ReducedFallback />}
