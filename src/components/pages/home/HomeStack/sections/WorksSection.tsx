@@ -337,6 +337,25 @@ const WorksLead: React.FC = () => {
                 );
             });
 
+            // BioIntroStage (pin 内 z-40) を opacity で fade in。
+            // sweep の終盤と overlap して、folder が消え終わる頃にはほぼ可視になっている。
+            // pin 解除後は pin-inner ごと viewport 外に去り、下の AboutSection 本体に
+            // 通常スクロールで自然に繋がる。
+            const bioStage = container.querySelector<HTMLElement>('[data-stage="bio"]');
+            if (bioStage) {
+                gsap.set(bioStage, { opacity: 0, y: 18 });
+                tl.to(
+                    bioStage,
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: TIMING.outroBioFadeInDuration,
+                        ease: 'power3.out',
+                    },
+                    TIMING.outroBioFadeInAt,
+                );
+            }
+
             // 終端ダミー: timeline 全体長を outroEnd まで確保し、pin scroll が outro 完了まで届くようにする。
             tl.to({}, { duration: 0.01 }, TIMING.outroEnd);
         },
@@ -366,6 +385,11 @@ const WorksLead: React.FC = () => {
                 {!reduced && PROJECTS.map((p) => (
                     <ProjectStage key={p.id} project={p} reduced={reduced} />
                 ))}
+
+                {/* z-40: Bio intro stage — Phase G outro 終盤で fade in する AboutSection への teaser。
+                    no-folder band に写真 placeholder + 名前 + 短い intro + scroll hint を配置。
+                    pin 解除後は下にある AboutSection 本体 (timeline / stack) に自然に繋がる。 */}
+                {!reduced && <BioIntroStage />}
             </div>
 
             {/* reduced-motion 用 static fallback: 3 プロジェクトを通常スクロールで読めるリストに */}
@@ -500,6 +524,60 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
                 >
                     03 projects · solo-shipped on Cloudflare
                 </p>
+            </div>
+        </div>
+    </div>
+);
+
+// Bio intro stage (z-40): Phase G outro 終盤で fade in する AboutSection への teaser。
+// 左に写真 placeholder (後で <img /> に置換予定)、右に Section ラベル + 名前 + 短い intro +
+// 「scroll for timeline / stack」hint を配置。
+// pin 解除後は下の AboutSection (timeline + stack の詳細) に通常スクロールで繋がる。
+const BioIntroStage: React.FC = () => (
+    <div
+        data-stage="bio"
+        className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
+        style={{
+            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
+            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+            opacity: 0,
+        }}
+    >
+        <div className="max-w-7xl w-full">
+            <div className="flex items-center gap-4 mb-6 md:mb-8">
+                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
+                    <span className="text-accent">+</span>
+                    <span className="ml-3">Section 03 / About</span>
+                </p>
+                <span aria-hidden className="h-px bg-foreground/40 flex-1" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-8 md:gap-12 items-start">
+                {/* 写真 placeholder。後で <img src="/path/to/photo.jpg" /> に差し替える想定。
+                    比率 4:5 (W:H) で縦長、accent の小さい四角を tag として右上に配置。 */}
+                <div className="relative w-[160px] h-[200px] md:w-[200px] md:h-[260px] flex-shrink-0 border border-foreground/30 bg-foreground/5 overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="font-mono text-2xl font-bold tracking-[0.2em] text-foreground/30">
+                            S.T.
+                        </span>
+                    </div>
+                    <span aria-hidden className="absolute -top-1 -right-1 w-2 h-2 bg-accent" />
+                </div>
+
+                <div>
+                    <h2 className="font-sans font-black text-foreground text-left text-[clamp(2.5rem,7vw,5rem)] leading-[0.95] tracking-tight">
+                        Shogo<br />Toyoshima
+                    </h2>
+
+                    <p className="mt-5 md:mt-6 font-sans text-[14px] md:text-[16px] text-foreground/80 leading-relaxed max-w-xl">
+                        経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
+                    </p>
+
+                    <p className="mt-5 md:mt-6 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/70">
+                        <span className="text-accent">↓</span>
+                        <span className="ml-3">Scroll for Timeline / Stack</span>
+                    </p>
+                </div>
             </div>
         </div>
     </div>
