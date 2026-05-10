@@ -343,7 +343,7 @@ const WorksLead: React.FC = () => {
                 {
                     x: '13vw',
                     duration: 0.14,
-                    ease: 'expo.inOut',
+                    ease: 'power4.inOut',
                 },
                 0.66,
             );
@@ -385,7 +385,7 @@ const WorksLead: React.FC = () => {
                         scaleX: targetX,
                         scaleY: targetY,
                         duration: 0.07,
-                        ease: 'expo.inOut',
+                        ease: 'power4.inOut',
                     },
                     0.66 + d,
                 );
