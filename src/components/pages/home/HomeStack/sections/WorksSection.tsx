@@ -369,7 +369,13 @@ const WorksLead: React.FC = () => {
         >
             <div
                 data-pin-inner
-                className="relative w-full h-screen overflow-hidden bg-background"
+                // isolate で独立 stacking context を作る。
+                // pin が建つ前 (= ScrollTrigger.create 前 / hydrate 直後) は
+                // position:relative + z-auto なので stacking context が立たず、
+                // 内部の HeroLayer(z-10) / FolderGrid(z-20) / 各 stage(z-40) が
+                // root stacking context に漏れ、index.astro の boot overlay を
+                // 上から潰してフォルダーが一瞬可視になる。isolate で常時独立化。
+                className="relative w-full h-screen overflow-hidden bg-background isolate"
             >
                 {/* z-10: Cloudflare hero (folders に覆われ Phase D で fade out) */}
                 <HeroLayer />
