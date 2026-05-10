@@ -129,8 +129,8 @@ const FolderTileEl: React.FC<{ tile: FolderTile }> = ({ tile }) => {
     // col -1..7 を 0..1 に正規化 (col + 1) / FOLDER_COLS
     // row 1..(N-2) を 0..1 に正規化 (row - 1) / (FOLDER_ROWS - 3)
     const midDelay = isMid
-        ? ((tile.col + 1) / FOLDER_COLS) * 0.10
-        + ((tile.row - 1) / Math.max(1, FOLDER_ROWS - 3)) * 0.025
+        ? ((tile.col + 1) / FOLDER_COLS) * 0.15
+        + ((tile.row - 1) / Math.max(1, FOLDER_ROWS - 3)) * 0.04
         : 0;
 
     return (
@@ -342,7 +342,7 @@ const WorksLead: React.FC = () => {
                 tileEls,
                 {
                     x: '13vw',
-                    duration: 0.14,
+                    duration: 0.22,
                     ease: 'power4.inOut',
                 },
                 0.66,
@@ -384,7 +384,7 @@ const WorksLead: React.FC = () => {
                     {
                         scaleX: targetX,
                         scaleY: targetY,
-                        duration: 0.07,
+                        duration: 0.11,
                         ease: 'power4.inOut',
                     },
                     0.66 + d,
@@ -394,7 +394,7 @@ const WorksLead: React.FC = () => {
                 heroLayer,
                 {
                     opacity: 0,
-                    duration: 0.14,
+                    duration: 0.22,
                     ease: 'power2.out',
                 },
                 0.66,
