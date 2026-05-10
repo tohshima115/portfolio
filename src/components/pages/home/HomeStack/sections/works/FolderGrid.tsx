@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
     FOLDER_COLS,
     FOLDER_ROWS,
+    HIDDEN_LEFT_COLS,
     TILE_W_VW,
     TILE_H_VH,
     ROW_COMPRESSED_STRIDE_VH,
@@ -152,14 +153,16 @@ export const FolderGrid: React.FC = () => {
     const tiles = useMemo<FolderTile[]>(() => {
         const arr: FolderTile[] = [];
         for (let r = 0; r < FOLDER_ROWS; r++) {
-            // 左に追加される hidden col (col -1)。Phase B では左外、Phase D で右シフト時
-            // に新 col 0 のポジションへ入る。
-            arr.push({
-                row: r,
-                col: -1,
-                fromLeft: true,
-                delay: 1.0, // waterfall 上は最後尾扱い (見た目には影響しない)
-            });
+            // 左外の hidden cols (col -HIDDEN_LEFT_COLS .. -1)。
+            // Phase D / Phase F の右シフトに合わせて 1 列ずつ visible 領域に滑り込む。
+            for (let h = HIDDEN_LEFT_COLS; h >= 1; h--) {
+                arr.push({
+                    row: r,
+                    col: -h,
+                    fromLeft: true,
+                    delay: 1.0, // waterfall は最後尾扱い (見た目には影響しない)
+                });
+            }
             for (let c = 0; c < FOLDER_COLS; c++) {
                 // 全 folder は左から入場。最終的に右に着地する (= col 大) ものほど早く
                 // 出発し、画面を横切って奥に積まれていく waterfall 順。

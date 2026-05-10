@@ -10,6 +10,11 @@ export const FOLDER_ROWS = 5;
 export const TILE_W_VW = 13; // 13 × 8 = 104vw
 export const TILE_H_VH = 21;
 
+// 左外に予備として持つ hidden col の数。
+// Phase D の右シフト (1 回) + Phase F の各 project transition での右シフト (3 回)
+// 合計 4 回シフトする間に左から新しい列が滑り込めるよう、4 列ぶん左に余分を確保。
+export const HIDDEN_LEFT_COLS = 4;
+
 // 中段 (row 1..N-2 間) は ROW_COMPRESSED_STRIDE で詰める。
 // LAYER_SCALE_Y × TILE_H 未満にすれば overlap が発生 = ユーザ指定の「マイナス間隔」。
 export const ROW_COMPRESSED_STRIDE_VH = 14;

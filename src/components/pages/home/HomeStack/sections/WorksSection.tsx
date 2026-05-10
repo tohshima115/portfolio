@@ -11,6 +11,7 @@ import {
     PARTIAL_BASE,
     ROW_PROGRESS_FALLOFF,
     ROW_TOP_BONUS,
+    TILE_W_VW,
     TIMING,
 } from './works/constants';
 import { FolderGrid } from './works/FolderGrid';
@@ -127,9 +128,15 @@ const WorksLead: React.FC = () => {
             // ─── Phase C: 全被覆ホールド ─── (タイムラインに何も置かない = scrub 停滞)
 
             // ─── Phase D: 全 tile 右シフト + 中段 shrink + hero fade ───
+            // 右シフトは TILE_W_VW (=1 列ぶん) 単位で +=。Phase F の各 transition でも
+            // 同じ +=TILE_W_VW を加算するので、累積的に左から hidden cols が滑り込む。
             tl.to(
                 tileEls,
-                { x: '13vw', duration: TIMING.folderShiftDuration, ease: 'power4.inOut' },
+                {
+                    x: `+=${TILE_W_VW}vw`,
+                    duration: TIMING.folderShiftDuration,
+                    ease: 'power4.inOut',
+                },
                 TIMING.folderShiftStart,
             );
 
@@ -198,6 +205,17 @@ const WorksLead: React.FC = () => {
             }));
 
             transitions.forEach(({ id, outAt, outTarget, inAt }) => {
+                // 各 transition で folder grid を 1 列ぶん右へシフト。Phase D と同じ
+                // duration / ease で滑り込ませる。
+                tl.to(
+                    tileEls,
+                    {
+                        x: `+=${TILE_W_VW}vw`,
+                        duration: TIMING.folderShiftDuration,
+                        ease: 'power4.inOut',
+                    },
+                    outAt,
+                );
                 if (outTarget) {
                     tl.to(
                         outTarget,
