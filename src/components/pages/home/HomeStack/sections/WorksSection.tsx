@@ -368,11 +368,7 @@ const WorksLead: React.FC = () => {
         >
             <div
                 data-pin-inner
-                // z-10 を明示しないと、about-wrapper が transform で stacking context を持った時に
-                // DOM 後の about-wrapper が pin-inner の上に重なる (両者 z-auto で stacking 同条件)。
-                // pin-inner に正の z-index を付けて、その内側の folder grid (z-20) / stages (z-40) が
-                // 必ず about-wrapper より前に来るようにする。
-                className="relative z-10 w-full h-screen overflow-hidden bg-background"
+                className="relative w-full h-screen overflow-hidden bg-background"
             >
                 {/* z-10: Cloudflare hero (folders に覆われ Phase D で fade out) */}
                 <HeroLayer />
