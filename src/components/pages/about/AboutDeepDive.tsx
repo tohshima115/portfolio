@@ -202,33 +202,27 @@ const ModalShell: React.FC<ModalShellProps> = ({
 const HistoryContent: React.FC = () => {
     const history = [
         {
-            period: "2025.07 — 2026.07〜08 (退職予定)",
-            role: "デザイン事務所 (アルバイト・バイトリーダー)",
-            body: "Web サイト制作のクライアントワーク約20件をデザインから実装まで並行管理。社内では「Photoshop で Web デザイン → HTML + jQuery → FTP 公開」だった運用を経営陣と段階的に合意しながら Figma + Astro + Cloudflare の構成へ刷新。デザイナーと実装者の橋渡し（環境構築・Cloudflare デプロイ伴走、デザイン⇄コードの相互翻訳）と、業務改善（PL ダッシュボード / 金額入力自動化 / Schedule Distributor）も並行して自発的に実施。",
+            period: "2026.01 — Present",
+            role: "個人開発「AIChatClip」",
+            body: "AI チャットの会話をクリップしたくて作りました。Chrome / Firefox 拡張と Web + API の SaaS として公開中です。",
             active: true,
         },
         {
-            period: "2026.01 — Present",
-            role: "個人開発「AIChatClip」",
-            body: "AIチャットの会話を Obsidian / Notion / Webhook へ自動同期するマルチサーフェス SaaS。Chrome / Firefox ストア公開済み、課金実装、有料ユーザー獲得。",
+            period: "2025.07 — Present",
+            role: "デザイン事務所 (アルバイト)",
+            body: "デザインと実装のクライアントワークを担当しています。最初はデザインだけでしたが、自分の設計を自分で実装した方が速いと気づいてから、環境の構成ごと引き受けるようになりました。",
             active: true,
         },
         {
             period: "2024 — 2026.01",
-            role: "社会起業チーム「Swept」 — デザイナー → 実装まで一気通貫",
-            body: "3人チームに当初デザイナーとして参画。ロゴ・ブランド・名刺・Web の設計を担当する中で「自分の設計は自分で実装した方が速い」と判断し、Cursor 等の AI コーディングツール勃興期に乗って実装まで担当範囲を拡張。Phase 1 (旅行) でユーザーインタビューと撤退判断を経験、Phase 2 (愛着) で Web まで実装。方向性の違いから 2026 年 1 月に離脱。",
-            active: false,
-        },
-        {
-            period: "2023",
-            role: "新卒入社・退職",
-            body: "正社員として就職するも 3 ヶ月で退職。プロダクト開発を軸に置きたいという自分の指向が明確になった転換点。",
+            role: "社会起業チーム「Swept」",
+            body: "3人チームにデザイナーとして入りました。ロゴや UI を作りながら、自分の設計を自分でかたちにしたくなって実装まで手を伸ばしました。ちょうど Cursor が出てきた時期で、タイミングが良かったです。方向性の違いから 2026 年 1 月に離れました。",
             active: false,
         },
         {
             period: "〜 2023",
             role: "東京理科大学 経営学部 卒業",
-            body: "事業視点（課金検証を先にやる、PLダッシュボードを自発的に作る）の土台はこの学部時代に。",
+            body: "経営学部でした。事業の考え方に触れたのはここからです。",
             active: false,
         },
     ];
