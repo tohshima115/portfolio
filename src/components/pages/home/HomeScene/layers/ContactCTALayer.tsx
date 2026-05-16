@@ -27,17 +27,17 @@ export const ContactCTALayer = ({ progress }: Props) => {
             */}
             <div className="relative border border-white/60 bg-white/45 px-6 sm:px-12 py-10 sm:py-14 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18)]">
                 <div className="font-mono text-2xs tracking-[0.3em] uppercase text-accent mb-4">
-                    + STATUS / 05
+                    + CONTACT / 04
                 </div>
 
-                <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-[1] mb-5">
-                    2026 年 7〜8 月退職予定。
+                <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-[1.1] mb-5">
+                    2026 年夏に今の仕事を辞めます。
                     <br />
-                    9 月以降の入社が可能です。
+                    <span className="text-foreground/60 text-2xl sm:text-4xl">その後のことは、探しながら決めています。</span>
                 </h2>
 
-                <p className="text-sm sm:text-base text-foreground/80 leading-relaxed max-w-xl mx-auto mb-10">
-                    プロダクトエンジニア / コーポレートエンジニア の枠でお話しできる方、カジュアル面談を歓迎します。スカウトもお待ちしています。
+                <p className="text-sm sm:text-base text-foreground/70 leading-relaxed max-w-xl mx-auto mb-10">
+                    連絡してみたいと思ったら、してみてください。
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">

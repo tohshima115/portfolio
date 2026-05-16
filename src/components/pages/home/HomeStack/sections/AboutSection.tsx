@@ -24,7 +24,7 @@ const TIMELINE: TimelineRow[] = [
     { year: '2025.07 —', title: 'デザイン事務所アルバイト', detail: 'Web デザイン → 業務改善 → プロダクト開発へ重心移動' },
     { year: '2026.01 —', title: 'AIChatClip 課金実装 / 本格運用', detail: 'Cloudflare スタックでマルチサーフェス出荷' },
     { year: '2026.07 — 2026.08', title: '退職予定', detail: 'デザイン事務所からの離脱' },
-    { year: '2026.09 —', title: 'Available', detail: 'プロダクトエンジニア / コーポレートエンジニアでお話歓迎', highlight: true },
+    { year: '2026.09 —', title: '退職後', detail: '次の場所を探しているところ', highlight: true },
 ];
 
 const STACK_FRONTEND = [

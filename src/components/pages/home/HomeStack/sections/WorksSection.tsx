@@ -576,7 +576,7 @@ const BioIntroStage: React.FC = () => (
                 </h2>
 
                 <p className="font-sans text-sm md:text-base text-foreground/80 leading-relaxed max-w-xl">
-                    経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
+                    デザイナーとして始まって、気づいたら実装もやるようになっていた。
                 </p>
 
                 <p className="mt-2 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground/70">
