@@ -7,8 +7,8 @@ interface Props {
 const facts = [
     { k: 'Background', v: '東京理科大学 経営学部卒 → デザイナー → 個人開発' },
     { k: 'Stack', v: 'Cloudflare · TypeScript · React Router v7 · Astro · Hono' },
-    { k: 'Stance', v: '個人開発・スタートアップに優しい Cloudflare を主戦場に / 新しいものはまず触る / 流行では入れない' },
-    { k: 'Currently', v: 'AIChatClip 運用 + デザイン事務所（2026 夏退職予定 / 9 月以降入社可能）' },
+    { k: 'Likes', v: 'Cloudflare の新機能 / UX 寄りの設計 / 新しいツールはまず触る性格' },
+    { k: 'Currently', v: 'AIChatClip 運用中 + デザイン事務所（2026 夏退職予定 / 9 月以降入社可能）' },
 ];
 
 export const AboutLayer = ({ progress }: Props) => {
@@ -42,13 +42,13 @@ export const AboutLayer = ({ progress }: Props) => {
                 </div>
 
                 <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-[1.05] mb-4">
-                    Product を最後まで出荷する。
+                    Cloudflare が好きな 26 歳。
                     <br />
-                    設計から運用まで 1 人で完結する Product Engineer。
+                    デザイナー出身で、使いやすさを考えるのが好き。
                 </h2>
 
                 <p className="text-sm sm:text-base text-foreground/80 leading-relaxed max-w-2xl mb-6">
-                    個人開発 SaaS<strong className="text-foreground">「AIChatClip」</strong>を Cloudflare スタックで運用中。Chrome / Firefox 拡張・Web・API・Obsidian Plugin のマルチサーフェスを 1 人で出荷し、有料ユーザーも獲得しています。経営学部とデザインの経験を、プロダクトの判断軸に持ち込むタイプ。
+                    個人プロダクトを Cloudflare スタックで作っています。いまは <strong className="text-foreground">「AIChatClip」</strong>という Chrome / Firefox 拡張 + Web + API + Obsidian Plugin の SaaS を運用中。Cloudflare の新しい機能が出ると一通り試したくなる性格で、デザインはアートというより「こうしたら使いやすくなるよね」を考える方が好きです。
                 </p>
 
                 <dl className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-x-6 gap-y-3 text-sm mb-8">
