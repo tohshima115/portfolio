@@ -78,11 +78,7 @@ posts.forEach(post => {
             </div>
 
             <!-- Decorative Line -->
-            <div class="mt-8 flex items-center gap-4">
-                <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-                <span class="font-mono text-2xs text-muted-foreground tracking-[0.3em] uppercase">Index</span>
-                <div class="h-px w-16 bg-border"></div>
-            </div>
+            <div class="mt-8 h-px bg-gradient-to-r from-border to-transparent"></div>
         </header>
 
         <!-- Main Content Area -->
@@ -90,7 +86,7 @@ posts.forEach(post => {
             <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
                 
                 <!-- Left Column: Blogs List -->
-                <div class="flex-1 w-full lg:max-w-4xl">
+                <div class="flex-1 min-w-0">
                     <!-- Active Filter Banner -->
                     <div id="filter-banner" class="hidden mb-6 flex items-center gap-3 p-3 bg-accent/10 border border-accent/30 font-mono text-xs animate-slide-from-right">
                         <span class="text-muted-foreground uppercase tracking-wider">Filter:</span>
@@ -208,7 +204,7 @@ posts.forEach(post => {
                 </div>
 
                 <!-- Right Column: System Graph -->
-                <div class="w-full lg:w-[400px] xl:w-[500px] h-[500px] lg:h-[calc(100vh-200px)] lg:sticky lg:top-8 self-start flex-shrink-0 animate-slide-from-right" style="animation-delay: 0.3s;">
+                <div class="w-full lg:w-[400px] xl:w-[460px] h-[360px] lg:h-[400px] xl:h-[460px] lg:sticky lg:top-8 self-start flex-shrink-0 animate-slide-from-right" style="animation-delay: 0.3s;">
                     <!-- Window Header Decor -->
                     <div class="flex items-center justify-between border-t border-x border-border bg-muted/30 px-3 py-1.5">
                         <span class="font-mono text-3xs uppercase tracking-[0.2em] text-muted-foreground">Relation_Graph</span>
