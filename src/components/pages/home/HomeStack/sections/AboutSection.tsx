@@ -19,12 +19,9 @@ interface TimelineRow {
 
 const TIMELINE: TimelineRow[] = [
     { year: '〜2022', title: '東京理科大学 経営学部卒', detail: '23歳卒業 / PL・事業構造の基礎' },
-    { year: '2022', title: '正社員として就職 → 3 ヶ月で退職', detail: '別の道筋を選ぶ判断' },
     { year: '2022 — 2024', title: '起業準備 (Swept)', detail: '友人 2 人と 2〜3 年。リーン / ユーザーインタビューを実装' },
-    { year: '2025.07 —', title: 'デザイン事務所アルバイト', detail: 'Web デザイン → 業務改善 → プロダクト開発へ重心移動' },
-    { year: '2026.01 —', title: 'AIChatClip 課金実装 / 本格運用', detail: 'Cloudflare スタックでマルチサーフェス出荷' },
-    { year: '2026.07 — 2026.08', title: '退職予定', detail: 'デザイン事務所からの離脱' },
-    { year: '2026.09 —', title: '退職後', detail: '次の場所を探しているところ', highlight: true },
+    { year: '2025.07 —', title: 'デザイン事務所', detail: 'Web デザイン → 業務改善 → プロダクト開発へ重心移動' },
+    { year: '2026.01 —', title: 'AIChatClip 開発開始', detail: 'Cloudflare スタックでマルチサーフェス出荷', highlight: true },
 ];
 
 const STACK_FRONTEND = [
