@@ -1,7 +1,7 @@
 ---
 import { getEntry } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { AboutDeepDive } from "@/components/pages/about/AboutDeepDive";
+
 
 const entry = await getEntry("_pages", "about");
 if (!entry) {
@@ -113,19 +113,6 @@ const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
                     </div>
                 </section>
             )}
-
-            <!-- Deep Dive (Modals) -->
-            <section class="mb-16">
-                <h2
-                    class="text-2xl md:text-3xl font-bold mb-3 border-l-4 border-accent pl-4"
-                >
-                    Deep Dive
-                </h2>
-                <p class="text-muted-foreground mb-8 pl-5 leading-relaxed text-sm md:text-base">
-                    詳細を読みたい方向け。クリックで展開、Esc または背景クリックで閉じます。
-                </p>
-                <AboutDeepDive client:load />
-            </section>
 
             <!-- Status -->
             {statusText && (
