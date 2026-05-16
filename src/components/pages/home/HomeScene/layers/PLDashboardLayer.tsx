@@ -1,4 +1,5 @@
 import { motion, useTransform, type MotionValue } from 'framer-motion';
+import { Button, MicroLabel } from '../../../../ui';
 
 interface Props {
     progress: MotionValue<number>;
@@ -32,19 +33,15 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                 className="border border-foreground/15 bg-background/70 px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent">
-                        + INTERNAL TOOL / 02
-                    </span>
+                    <MicroLabel className="text-accent">+ INTERNAL TOOL / 02</MicroLabel>
                     <span className="h-px flex-1 bg-border" />
-                    <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
-                        2025.11 / 約 2 週間
-                    </span>
+                    <MicroLabel>2025.11 / 約 2 週間</MicroLabel>
                 </div>
 
                 <div className="flex items-center gap-4 mb-5">
                     <div
                         aria-hidden
-                        className="w-12 h-12 rounded-lg border border-accent/40 bg-accent/5 flex items-center justify-center font-mono text-[10px] tracking-[0.15em] text-accent"
+                        className="w-12 h-12 rounded-lg border border-accent/40 bg-accent/5 flex items-center justify-center font-mono text-2xs tracking-[0.15em] text-accent"
                     >
                         PL
                     </div>
@@ -66,7 +63,7 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                 <dl className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-x-6 gap-y-3 text-sm mb-8">
                     {tldr.map((row) => (
                         <div key={row.k} className="contents">
-                            <dt className="font-mono text-[10px] tracking-[0.25em] uppercase text-muted-foreground pt-1">
+                            <dt className="font-mono text-2xs tracking-[0.25em] uppercase text-muted-foreground pt-1">
                                 {row.k}
                             </dt>
                             <dd className="text-foreground/85 leading-relaxed">
@@ -77,10 +74,7 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                 </dl>
 
                 <div className="flex items-center gap-4">
-                    <a
-                        href="/projects/pl-dashboard"
-                        className="group inline-flex items-center gap-2 px-5 h-10 bg-foreground text-background font-mono text-[10px] tracking-[0.3em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
-                    >
+                    <Button as="a" href="/projects/pl-dashboard" variant="primary" size="md">
                         Open Case Study
                         <svg
                             className="w-3 h-3 group-hover:translate-x-1 transition-transform"
@@ -95,13 +89,10 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                                 d="M14 5l7 7m0 0l-7 7m7-7H3"
                             />
                         </svg>
-                    </a>
-                    <a
-                        href="/projects"
-                        className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    </Button>
+                    <MicroLabel as="a" href="/projects">
                         All Projects →
-                    </a>
+                    </MicroLabel>
                 </div>
             </motion.div>
         </motion.div>

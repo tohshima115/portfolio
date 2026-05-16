@@ -599,7 +599,7 @@ const SnapHud = ({ gauge, sectionIndex, sectionCount, onJump }: SnapHudProps) =>
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground"
+                        className="font-mono text-2xs tracking-[0.3em] uppercase text-muted-foreground"
                     >
                         {active
                             ? gauge > 0

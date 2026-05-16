@@ -118,7 +118,7 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
 
                         <h1
                             className="text-[6rem] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85] select-none"
-                            style={{ textShadow: '0 0 1px rgba(0,0,0,0.1)', fontWeight: 900 }}
+                            style={{ textShadow: '0 0 1px rgba(0,0,0,0.1)' }}
                         >
                             TOYO<br />SHIMA
                         </h1>
@@ -154,7 +154,6 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                 >
                     <h1
                         className="text-[12vw] font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-foreground to-foreground/60 leading-[0.85]"
-                        style={{ fontWeight: 900 }}
                     >
                         SHOGO<br />TOYOSHIMA
                     </h1>

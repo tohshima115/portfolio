@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cn } from '@/utils/cn';
+import { Button } from '@/components/ui';
 
 const LLMS_TXT_URL = 'https://toyoshima.work/llms.txt';
 
@@ -91,7 +92,7 @@ export function MarkdownActions() {
                     role="status"
                     aria-live="polite"
                     className={cn(
-                        'absolute bottom-full right-0 mb-3 px-3 py-2 border whitespace-nowrap uppercase tracking-widest text-[10px]',
+                        'absolute bottom-full right-0 mb-3 px-3 py-2 border whitespace-nowrap uppercase tracking-widest text-2xs',
                         toast.kind === 'success'
                             ? 'bg-yellow-400 text-black border-yellow-400'
                             : 'bg-red-500 text-white border-red-500',
@@ -108,7 +109,7 @@ export function MarkdownActions() {
                     className="absolute bottom-full right-0 mb-3 min-w-[220px] bg-neutral-950 border border-neutral-800 shadow-2xl"
                 >
                     <div className="flex items-center justify-between px-3 py-1.5 border-b border-neutral-800 bg-neutral-900/60">
-                        <span className="text-[9px] uppercase tracking-[0.25em] text-neutral-500">
+                        <span className="text-3xs uppercase tracking-[0.25em] text-neutral-500">
                             AI_Export
                         </span>
                         <div className="flex gap-1">
@@ -117,30 +118,32 @@ export function MarkdownActions() {
                             <span className="w-1.5 h-1.5 bg-yellow-400" />
                         </div>
                     </div>
-                    <button
-                        type="button"
+                    <Button
+                        variant="menu"
+                        size="sm"
                         role="menuitem"
                         onClick={handleView}
-                        className="block w-full text-left px-4 py-3 text-neutral-300 hover:bg-yellow-400 hover:text-black transition-colors uppercase tracking-widest text-[11px] border-b border-neutral-900"
+                        className="border-b border-neutral-900"
                     >
                         View as Markdown
-                    </button>
-                    <button
-                        type="button"
+                    </Button>
+                    <Button
+                        variant="menu"
+                        size="sm"
                         role="menuitem"
                         onClick={handleCopyMarkdown}
-                        className="block w-full text-left px-4 py-3 text-neutral-300 hover:bg-yellow-400 hover:text-black transition-colors uppercase tracking-widest text-[11px] border-b border-neutral-900"
+                        className="border-b border-neutral-900"
                     >
                         Copy as Markdown
-                    </button>
-                    <button
-                        type="button"
+                    </Button>
+                    <Button
+                        variant="menu"
+                        size="sm"
                         role="menuitem"
                         onClick={handleCopyLlmsUrl}
-                        className="block w-full text-left px-4 py-3 text-neutral-300 hover:bg-yellow-400 hover:text-black transition-colors uppercase tracking-widest text-[11px]"
                     >
                         Copy llms.txt URL
-                    </button>
+                    </Button>
                 </div>
             ) : null}
 
@@ -150,7 +153,7 @@ export function MarkdownActions() {
                 aria-expanded={open}
                 onClick={() => setOpen((prev) => !prev)}
                 className={cn(
-                    'flex items-center gap-2 px-3 py-2 bg-neutral-950/95 backdrop-blur border uppercase tracking-[0.2em] text-[10px] transition-colors shadow-lg cursor-pointer',
+                    'flex items-center gap-2 px-3 py-2 bg-neutral-950/95 backdrop-blur border uppercase tracking-[0.2em] text-2xs transition-colors shadow-lg cursor-pointer',
                     open
                         ? 'border-yellow-400 text-yellow-400'
                         : 'border-neutral-800 text-neutral-300 hover:border-yellow-400 hover:text-yellow-400',

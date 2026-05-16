@@ -61,7 +61,7 @@ export const AboutDeepDive: React.FC = () => {
                         className="group relative border border-border bg-background/60 backdrop-blur-sm p-5 hover:border-accent/60 transition-colors text-left flex items-center justify-between"
                     >
                         <div>
-                            <div className="font-mono text-[10px] text-accent tracking-widest uppercase mb-2">
+                            <div className="font-mono text-2xs text-accent tracking-widest uppercase mb-2">
                                 [ {b.code} ]
                             </div>
                             <div className="text-base font-bold text-foreground">
@@ -153,13 +153,13 @@ const ModalShell: React.FC<ModalShellProps> = ({
                             <div className="w-1.5 h-1.5 rounded-full bg-border" />
                             <div className="w-1.5 h-1.5 rounded-full bg-border" />
                         </div>
-                        <span className="font-mono text-[10px] text-muted-foreground tracking-[0.2em] uppercase truncate">
+                        <span className="font-mono text-2xs text-muted-foreground tracking-[0.2em] uppercase truncate">
                             {code}
                         </span>
                     </div>
                     <button
                         onClick={onClose}
-                        className="font-mono text-[10px] text-muted-foreground hover:text-accent tracking-widest uppercase transition-colors"
+                        className="font-mono text-2xs text-muted-foreground hover:text-accent tracking-widest uppercase transition-colors"
                         aria-label="Close modal"
                     >
                         [ ESC ]

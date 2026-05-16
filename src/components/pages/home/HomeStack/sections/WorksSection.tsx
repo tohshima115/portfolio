@@ -412,7 +412,7 @@ const HeroLayer: React.FC = () => (
         </div>
         <div
             aria-hidden
-            className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:block font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground/40"
+            className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:block font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground/40"
             style={{ writingMode: 'vertical-rl' }}
         >
             GLOBAL EDGE / 220+ POPS
@@ -423,7 +423,7 @@ const HeroLayer: React.FC = () => (
                 <p
                     data-lead-sublabel
                     data-reveal
-                    className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-5 flex items-center gap-3"
+                    className="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-5 flex items-center gap-3"
                 >
                     <span className="text-accent">+</span>
                     <span>Global Edge / Solo Shipper</span>
@@ -440,7 +440,7 @@ const HeroLayer: React.FC = () => (
                     <p
                         data-lead-statbadge
                         data-reveal
-                        className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground mb-3 flex items-center gap-3"
+                        className="font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground mb-3 flex items-center gap-3"
                     >
                         <span className="text-accent">+</span>
                         <span>Cloudflare Stack — In Production</span>
@@ -451,7 +451,7 @@ const HeroLayer: React.FC = () => (
                                 key={s}
                                 data-lead-stat
                                 data-reveal
-                                className="font-mono text-[11px] uppercase tracking-[0.2em] px-3 py-1.5 border border-foreground/15 text-foreground/85"
+                                className="font-mono text-xs uppercase tracking-[0.2em] px-3 py-1.5 border border-foreground/15 text-foreground/85"
                             >
                                 {s}
                             </span>
@@ -460,7 +460,7 @@ const HeroLayer: React.FC = () => (
                     <p
                         data-lead-statcount
                         data-reveal
-                        className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/70 tabular-nums"
+                        className="mt-3 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground/70 tabular-nums"
                     >
                         {String(CLOUDFLARE_SERVICES.length).padStart(2, '0')}{' '}
                         services · solo-shipped
@@ -502,7 +502,7 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
                 <p
                     data-trans-sublabel
                     data-reveal
-                    className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap"
+                    className="font-mono text-2xs md:text-xs uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap"
                 >
                     <span className="text-accent">+</span>
                     <span className="ml-3">Section 02 / In Production</span>
@@ -526,7 +526,7 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
                 <p
                     data-trans-meta
                     data-reveal
-                    className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.35em] text-muted-foreground/80 text-left"
+                    className="font-mono text-xs md:text-xs uppercase tracking-[0.35em] text-muted-foreground/80 text-left"
                 >
                     03 projects · solo-shipped on Cloudflare
                 </p>
@@ -552,7 +552,7 @@ const BioIntroStage: React.FC = () => (
         <div className="max-w-3xl w-full mx-auto">
             <div className="flex items-center gap-4 mb-6 md:mb-8">
                 <span aria-hidden className="h-px bg-foreground/40 flex-1" />
-                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
+                <p className="font-mono text-2xs md:text-xs uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
                     <span className="text-accent">+</span>
                     <span className="ml-3">Section 03 / About</span>
                 </p>
@@ -575,11 +575,11 @@ const BioIntroStage: React.FC = () => (
                     Shogo Toyoshima
                 </h2>
 
-                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 leading-relaxed max-w-xl">
+                <p className="font-sans text-sm md:text-base text-foreground/80 leading-relaxed max-w-xl">
                     経営学部出身、デザイナー起点で個人プロダクトを Cloudflare 上に出荷する Product Engineer。
                 </p>
 
-                <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/70">
+                <p className="mt-2 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground/70">
                     <span className="text-accent">↓</span>
                     <span className="ml-3">Scroll for Timeline / Stack</span>
                 </p>
@@ -594,7 +594,7 @@ const ReducedFallback: React.FC = () => (
         <div className="max-w-4xl mx-auto space-y-12">
             {PROJECTS.map((p) => (
                 <article key={p.id} className="border-l-2 border-accent/40 pl-6">
-                    <p className="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground mb-2">
+                    <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
                         Project {p.id} / {p.meta}
                     </p>
                     <h3 className="font-sans font-bold text-foreground text-3xl mb-3">

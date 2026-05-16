@@ -26,7 +26,7 @@ export const ContactCTALayer = ({ progress }: Props) => {
               見え方は変わらず、blur のレイヤー数を減らせる)。
             */}
             <div className="relative border border-white/60 bg-white/45 px-6 sm:px-12 py-10 sm:py-14 text-center shadow-[0_30px_80px_-30px_rgba(0,0,0,0.18)]">
-                <div className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent mb-4">
+                <div className="font-mono text-2xs tracking-[0.3em] uppercase text-accent mb-4">
                     + STATUS / 05
                 </div>
 
@@ -43,7 +43,7 @@ export const ContactCTALayer = ({ progress }: Props) => {
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-8">
                     <a
                         href="/contact"
-                        className="group inline-flex items-center gap-2 px-6 h-11 bg-foreground text-background font-mono text-[10px] tracking-[0.3em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="group inline-flex items-center gap-2 px-6 h-11 bg-foreground text-background font-mono text-2xs tracking-[0.3em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                         Open Channel
                         <svg
@@ -62,13 +62,13 @@ export const ContactCTALayer = ({ progress }: Props) => {
                     </a>
                     <a
                         href="/about"
-                        className="inline-flex items-center gap-2 px-6 h-11 border border-foreground/30 font-mono text-[10px] tracking-[0.3em] uppercase hover:border-accent hover:text-accent transition-colors"
+                        className="inline-flex items-center gap-2 px-6 h-11 border border-foreground/30 font-mono text-2xs tracking-[0.3em] uppercase hover:border-accent hover:text-accent transition-colors"
                     >
                         About / Profile
                     </a>
                 </div>
 
-                <div className="flex items-center justify-center gap-6 font-mono text-[10px] tracking-[0.25em] uppercase text-muted-foreground">
+                <div className="flex items-center justify-center gap-6 font-mono text-2xs tracking-[0.25em] uppercase text-muted-foreground">
                     <a
                         href="https://github.com/tohshima115"
                         target="_blank"

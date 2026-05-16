@@ -78,12 +78,12 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                 {/* Left Area: Navigation Links */}
                 <div className="hidden md:flex justify-start flex-1 items-center gap-6 pr-6 min-w-max">
                     <a href="/" className="group flex flex-col items-start transition-colors">
-                        <span className="text-[10px] text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">RETURN TO</span>
+                        <span className="text-2xs text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">RETURN TO</span>
                         <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">HOME</span>
                     </a>
                     <div className="w-[1px] h-8 bg-gray-300"></div>
                     <a href="/projects" className="group flex flex-col items-start transition-colors">
-                        <span className="text-[10px] text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">INDEX OF</span>
+                        <span className="text-2xs text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">INDEX OF</span>
                         <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">PROJECTS</span>
                     </a>
                 </div>
@@ -141,7 +141,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                                         {/* 'NOW' Overlay for Current Project */}
                                         {isActive && (
                                             <div className="absolute inset-0 bg-black/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
-                                                <span className="text-[8px] font-black text-yellow-400 tracking-widest leading-none">NOW</span>
+                                                <span className="text-4xs font-black text-yellow-400 tracking-widest leading-none">NOW</span>
                                             </div>
                                         )}
                                     </div>
@@ -149,7 +149,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                                     {/* Tooltip Title on Hover (PC only) - Only show for non-active items */}
                                     {!isActive && (
                                         <div className="hidden md:block absolute -bottom-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                                            <div className="bg-black border border-gray-700 px-2 py-1 text-[10px] text-white font-mono tracking-wider shadow-lg rounded-md">
+                                            <div className="bg-black border border-gray-700 px-2 py-1 text-2xs text-white font-mono tracking-wider shadow-lg rounded-md">
                                                 {project.title.toUpperCase()}
                                             </div>
                                         </div>
@@ -161,7 +161,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                 </motion.ul>
 
                 {/* Current Project Info (Top Right) */}
-                <div className="hidden md:flex justify-end flex-1 flex-col items-end text-[10px] text-gray-500 font-mono pl-6">
+                <div className="hidden md:flex justify-end flex-1 flex-col items-end text-2xs text-gray-500 font-mono pl-6">
                     <span>STATUS: ACTIVE</span>
                     <span>MODE: VIEW_ARCHIVE</span>
                 </div>

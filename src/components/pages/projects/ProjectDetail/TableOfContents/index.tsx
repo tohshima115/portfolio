@@ -108,7 +108,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
                                     )}
                                 >
                                     <span>{heading.text}</span>
-                                    <span className={cn('text-[10px] opacity-0 group-hover:opacity-100', isActive && 'opacity-100')}>0{index + 1}</span>
+                                    <span className={cn('text-2xs opacity-0 group-hover:opacity-100', isActive && 'opacity-100')}>0{index + 1}</span>
                                 </button>
                                 <div className={cn('absolute left-0 top-0 h-full bg-black transition-all duration-200', isActive ? 'w-1' : 'w-0 group-hover:w-1')} />
                             </li>
@@ -137,14 +137,14 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
                     </div>
                 )}
 
-                <div className="mt-4 flex justify-between text-[10px] font-bold">
+                <div className="mt-4 flex justify-between text-2xs font-bold">
                     <span>COORD: 34.05N</span>
                     <span>SEC: A-01</span>
                 </div>
             </div>
 
             {/* Background decoration */}
-            <div className="absolute -right-12 bottom-20 text-[120px] font-black opacity-10 pointer-events-none rotate-90 whitespace-nowrap">
+            <div className="absolute -right-12 bottom-20 text-[7.5rem] font-black opacity-10 pointer-events-none rotate-90 whitespace-nowrap">
                 ARCHIVE
             </div>
 
@@ -169,7 +169,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
                         {/* Header */}
                         <div className="flex items-center justify-between border-b-2 border-black bg-yellow-400 px-6 py-3">
                             <div className="flex items-center gap-3 min-w-0">
-                                <span className="font-mono text-[10px] uppercase tracking-[0.2em] font-bold opacity-70 shrink-0">SECTION</span>
+                                <span className="font-mono text-2xs uppercase tracking-[0.2em] font-bold opacity-70 shrink-0">SECTION</span>
                                 <h2 className="font-black text-lg uppercase tracking-tight truncate">{section.title}</h2>
                             </div>
                             <button
@@ -201,8 +201,8 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
 
                         {/* Footer */}
                         <div className="border-t-2 border-black bg-white px-6 py-2 flex items-center justify-between">
-                            <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">ESC to close</span>
-                            <span className="font-mono text-[10px] uppercase tracking-[0.2em] opacity-60">#{activeSlug}</span>
+                            <span className="font-mono text-2xs uppercase tracking-[0.2em] opacity-60">ESC to close</span>
+                            <span className="font-mono text-2xs uppercase tracking-[0.2em] opacity-60">#{activeSlug}</span>
                         </div>
                     </div>
                 </div>

@@ -160,7 +160,7 @@ export const ScrollTransition = () => {
                         />
                     </div>
 
-                    <div className="font-mono text-[10px] tracking-widest uppercase flex items-center justify-center min-w-[280px]">
+                    <div className="font-mono text-2xs tracking-widest uppercase flex items-center justify-center min-w-[280px]">
                         <AnimatePresence mode="popLayout">
                             {!isTransitioning ? (
                                 <motion.span

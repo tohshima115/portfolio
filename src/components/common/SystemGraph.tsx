@@ -269,7 +269,7 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
                             {/* Labels */}
                             {(isActive || node.type === 'projects' || node.type === 'tag' || node.type === 'blog') && (
                                 <div
-                                    className={`absolute pointer-events-none font-mono text-[9px] uppercase tracking-wider whitespace-nowrap mt-1 flex items-center justify-center ${isActive ? 'text-accent font-bold drop-shadow-md' : 'text-muted-foreground'}`}
+                                    className={`absolute pointer-events-none font-mono text-3xs uppercase tracking-wider whitespace-nowrap mt-1 flex items-center justify-center ${isActive ? 'text-accent font-bold drop-shadow-md' : 'text-muted-foreground'}`}
                                     style={{
                                         left: node.x,
                                         top: node.y + (style.size / 2) + 2,

@@ -7,7 +7,7 @@ export const StatusBadges = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         <div className="self-end flex flex-col sm:flex-row gap-3 items-end sm:items-center mt-20 mr-10 opacity-80 hover:opacity-100 transition-opacity pointer-events-auto">
             <a href="/rss.xml" className="group px-3 py-1.5 bg-background/50 border border-foreground/10 rounded-full backdrop-blur-md shadow-sm hover:border-accent transition-colors flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-orange-500 rounded-full group-hover:animate-pulse shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                <span className="flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground group-hover:text-accent tracking-widest">
+                <span className="flex items-center gap-1.5 font-mono text-3xs text-muted-foreground group-hover:text-accent tracking-widest">
                     <Rss className="w-3 h-3" />
                     SIGNAL_FEED
                 </span>
@@ -20,7 +20,7 @@ export const StatusBadges = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></span>
                     </span>
-                    <span className="flex items-center gap-1.5 font-mono text-[9px] text-muted-foreground group-hover:text-accent tracking-widest transition-colors">
+                    <span className="flex items-center gap-1.5 font-mono text-3xs text-muted-foreground group-hover:text-accent tracking-widest transition-colors">
                         <Activity className="w-3 h-3" />
                         SYSTEM ONLINE
                     </span>
@@ -29,7 +29,7 @@ export const StatusBadges = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 {/* Dropdown Content */}
                 <div className="absolute right-0 mt-2 w-64 bg-background/80 backdrop-blur-md border border-foreground/10 shadow-lg rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right group-hover:translate-y-0 translate-y-2 pointer-events-none group-hover:pointer-events-auto">
                     <div className="px-4 py-2 border-b border-foreground/10 bg-muted/30">
-                        <h3 className="font-mono text-[10px] text-foreground/80 tracking-widest flex items-center gap-1.5">
+                        <h3 className="font-mono text-2xs text-foreground/80 tracking-widest flex items-center gap-1.5">
                             <Clock className="w-3 h-3" />
                             LATEST UPDATES
                         </h3>
@@ -40,10 +40,10 @@ export const StatusBadges = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                                 <a href={update.url} className="flex flex-col px-4 py-2 hover:bg-muted/50 transition-colors">
                                     <span className="text-xs text-foreground font-medium truncate">{update.title}</span>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-mono ${update.type === 'blog' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
+                                        <span className={`text-3xs px-1.5 py-0.5 rounded font-mono ${update.type === 'blog' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'}`}>
                                             {update.type.toUpperCase()}
                                         </span>
-                                        <span className="text-[10px] text-muted-foreground font-mono">
+                                        <span className="text-2xs text-muted-foreground font-mono">
                                             {new Date(update.date).toISOString().split('T')[0]}
                                         </span>
                                     </div>

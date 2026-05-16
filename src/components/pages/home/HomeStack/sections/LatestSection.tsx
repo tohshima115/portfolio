@@ -38,7 +38,7 @@ export const LatestSection: React.FC<Props> = ({ updates }) => {
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
                     <div className="flex items-start justify-between mb-12">
                         <CornerLabel label="LATEST" id="03" />
-                        <span className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground/60">
+                        <span className="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground/60">
                             {updates.length} entries
                         </span>
                     </div>
@@ -89,10 +89,10 @@ const UpdateRow: React.FC<RowProps> = ({ update, index, inView, reduced }) => {
                 className="block py-5 md:py-6 group hover:bg-foreground/[0.02] transition-colors"
             >
                 <div className="grid grid-cols-[max-content_max-content_1fr] md:grid-cols-[110px_80px_1fr_auto] gap-x-3 md:gap-x-6 gap-y-1 items-baseline">
-                    <span className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground tabular-nums">
+                    <span className="font-mono text-xs tracking-[0.2em] text-muted-foreground tabular-nums">
                         {formatDate(update.date)}
                     </span>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">
+                    <span className="font-mono text-2xs uppercase tracking-[0.3em] text-accent">
                         {tag}
                     </span>
                     <span className="col-span-3 md:col-span-1 font-sans text-foreground/90 group-hover:text-foreground text-sm md:text-base leading-snug">

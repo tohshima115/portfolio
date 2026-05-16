@@ -27,7 +27,7 @@ export const ProjectStage: React.FC<{ project: Project; reduced: boolean }> = ({
                     className="h-px bg-foreground/40 origin-right flex-1"
                     style={{ transform: reduced ? undefined : 'scaleX(0)' }}
                 />
-                <p className="font-mono text-[10px] md:text-[11px] uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
+                <p className="font-mono text-2xs md:text-xs uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
                     <span className="text-accent">+</span>
                     <span className="ml-3">
                         Project {project.id} / {project.meta}
@@ -46,7 +46,7 @@ export const ProjectStage: React.FC<{ project: Project; reduced: boolean }> = ({
             </h2>
 
             <div className="mt-6 md:mt-8 flex flex-col items-start gap-5">
-                <p className="font-sans text-[14px] md:text-[16px] text-foreground/80 text-left max-w-2xl leading-relaxed">
+                <p className="font-sans text-sm md:text-base text-foreground/80 text-left max-w-2xl leading-relaxed">
                     {project.description}
                 </p>
             </div>

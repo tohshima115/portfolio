@@ -69,7 +69,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
 
                 {/* Roles Block */}
                 <div className="relative border-l-2 border-gray-200 pl-4 py-1 hover:border-yellow-400 transition-colors duration-300">
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2 flex items-center gap-2">
+                    <h3 className="text-2xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-2 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-yellow-400 rotate-45"></span>
                         Role / Function
                     </h3>
@@ -84,7 +84,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
 
                 {/* Duration Block */}
                 <div className="relative border-l-2 border-gray-200 pl-4 py-1 hover:border-yellow-400 transition-colors duration-300">
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2 flex items-center gap-2">
+                    <h3 className="text-2xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-2 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-gray-300 rotate-45"></span>
                         Timeline
                     </h3>
@@ -95,7 +95,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
 
                 {/* Tech Stack Block - More Visual with Hover Context */}
                 <div className="relative border-l-2 border-gray-200 pl-4 py-1 hover:border-yellow-400 transition-colors duration-300">
-                    <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-3 flex items-center gap-2">
+                    <h3 className="text-2xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-3 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 bg-gray-300 rotate-45"></span>
                         System / Stack
                     </h3>
@@ -128,7 +128,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
 
                                                 {/* Popover Header */}
                                                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">
-                                                    <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                                                    <span className="text-2xs uppercase font-bold text-gray-400 tracking-wider">
                                                         Related Projects
                                                     </span>
                                                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
@@ -175,7 +175,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
                                                                     {/* 'NOW' Overlay for Current Project */}
                                                                     {isCurrent && (
                                                                         <div className="absolute inset-0 bg-gray-900/90 flex items-center justify-center opacity-0 group-hover/icon:opacity-100 transition-opacity duration-200 z-10">
-                                                                            <span className="text-[8px] font-black text-yellow-400 tracking-widest">NOW</span>
+                                                                            <span className="text-4xs font-black text-yellow-400 tracking-widest">NOW</span>
                                                                         </div>
                                                                     )}
                                                                 </a>
@@ -203,7 +203,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
                 <div className="mt-8 grid grid-cols-2 gap-2 opacity-50 pointer-events-none">
                     <div className="h-1 bg-gray-200 w-full" />
                     <div className="h-1 bg-gray-200 w-1/2" />
-                    <div className="text-[10px] font-mono text-gray-400 col-span-2">
+                    <div className="text-2xs font-mono text-gray-400 col-span-2">
                         SYSTEM_STATUS: ONLINE<br />
                         RENDER_MODE: HIGH_FIDELITY
                     </div>

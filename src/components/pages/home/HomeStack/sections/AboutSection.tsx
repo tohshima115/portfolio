@@ -61,7 +61,7 @@ export const AboutSection: React.FC = () => {
                         <CornerLabel label="ABOUT" id="02" />
                     </div>
 
-                    <h3 className="font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
+                    <h3 className="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
                         <span className="text-accent">+</span>
                         <span>TIMELINE</span>
                         <span className="flex-1 h-px bg-foreground/10" />
@@ -73,7 +73,7 @@ export const AboutSection: React.FC = () => {
                         ))}
                     </ol>
 
-                    <h3 className="mt-20 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
+                    <h3 className="mt-20 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
                         <span className="text-accent">+</span>
                         <span>STACK</span>
                         <span className="flex-1 h-px bg-foreground/10" />
@@ -131,7 +131,7 @@ const TimelineItem: React.FC<{ row: TimelineRow; index: number }> = ({
             />
             <div className="flex items-baseline gap-3 mb-1">
                 <span
-                    className={`font-mono text-[11px] uppercase tracking-[0.25em] tabular-nums ${
+                    className={`font-mono text-xs uppercase tracking-[0.25em] tabular-nums ${
                         row.highlight ? 'text-accent' : 'text-muted-foreground'
                     }`}
                 >
@@ -161,13 +161,13 @@ const StackBlock: React.FC<{ label: string; items: string[] }> = ({
     items,
 }) => (
     <div>
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-muted-foreground/80 block mb-4 border-l border-accent pl-3">
+        <span className="font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground/80 block mb-4 border-l border-accent pl-3">
             {label}
         </span>
-        <ul className="space-y-1.5 font-mono text-[13px] text-foreground/85">
+        <ul className="space-y-1.5 font-mono text-sm text-foreground/85">
             {items.map((it) => (
                 <li key={it} className="flex items-center gap-2">
-                    <span className="text-accent text-[10px]">▸</span>
+                    <span className="text-accent text-2xs">▸</span>
                     <span>{it}</span>
                 </li>
             ))}

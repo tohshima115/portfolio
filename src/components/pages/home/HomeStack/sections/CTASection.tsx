@@ -104,7 +104,7 @@ export const CTASection: React.FC = () => {
                                 : { opacity: 0, y: 12 }
                         }
                         transition={{ duration: 0.6, delay: 0.1 }}
-                        className="font-mono text-[11px] uppercase tracking-[0.4em] text-muted-foreground mb-8"
+                        className="font-mono text-xs uppercase tracking-[0.4em] text-muted-foreground mb-8"
                     >
                         STATUS · NOW HIRING / FOR PRODUCT ENGINEER ROLE
                     </motion.p>
@@ -198,7 +198,7 @@ export const CTASection: React.FC = () => {
                         initial={reduced ? false : { opacity: 0 }}
                         animate={inView || reduced ? { opacity: 1 } : { opacity: 0 }}
                         transition={{ duration: 0.6, delay: 0.95 }}
-                        className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-[11px] tracking-[0.2em] text-muted-foreground"
+                        className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-xs tracking-[0.2em] text-muted-foreground"
                     >
                         <a
                             href="https://github.com/tohshima115"

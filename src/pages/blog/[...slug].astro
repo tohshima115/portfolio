@@ -103,7 +103,7 @@ currentTags.forEach((tech: string) => {
                 {
                     post.data.tags &&
                         post.data.tags.map((tag: string) => (
-                            <span class="inline-block px-2 py-1 text-[10px] font-mono tracking-wide text-accent bg-accent/10 border border-accent/20">
+                            <span class="inline-block px-2 py-1 text-2xs font-mono tracking-wide text-accent bg-accent/10 border border-accent/20">
                                 {tag}
                             </span>
                         ))
@@ -121,7 +121,7 @@ currentTags.forEach((tech: string) => {
             </div>
 
             <div
-                class="flex items-center gap-4 text-muted-foreground font-mono text-[11px] mt-6 tracking-widest uppercase"
+                class="flex items-center gap-4 text-muted-foreground font-mono text-xs mt-6 tracking-widest uppercase"
             >
                 <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
                 <time datetime={new Date(post.data.pubDate).toISOString()}>
@@ -141,7 +141,7 @@ currentTags.forEach((tech: string) => {
                 class="xl:col-span-3 hidden xl:block order-2 xl:order-1 sticky top-24"
             >
                 <div
-                    class="mb-6 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"
+                    class="mb-6 font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"
                 >
                     <div class="w-1.5 h-1.5 bg-accent"></div>
                     Page_Index
@@ -190,7 +190,7 @@ currentTags.forEach((tech: string) => {
                     class="flex items-center justify-between border-t border-x border-border bg-muted/30 px-3 py-1.5"
                 >
                     <span
-                        class="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground"
+                        class="font-mono text-3xs uppercase tracking-[0.2em] text-muted-foreground"
                         >Context_Graph</span
                     >
                     <div class="flex gap-1.5">
@@ -234,7 +234,7 @@ currentTags.forEach((tech: string) => {
             class="mt-20 flex items-center justify-center pt-8 border-t border-border opacity-50 max-w-7xl mx-auto w-full"
         >
             <span
-                class="font-mono text-[10px] uppercase tracking-[0.5em] text-muted-foreground"
+                class="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground"
                 >End_of_Record</span
             >
         </div>

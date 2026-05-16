@@ -36,11 +36,11 @@ export const AIChatClipLayer = ({ progress }: Props) => {
                 className="border border-foreground/15 bg-background/70 px-6 sm:px-10 py-8 sm:py-10 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]"
             >
                 <div className="flex items-center gap-3 mb-6">
-                    <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent">
+                    <span className="font-mono text-2xs tracking-[0.3em] uppercase text-accent">
                         + FLAGSHIP / 01
                     </span>
                     <span className="h-px flex-1 bg-border" />
-                    <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground">
+                    <span className="font-mono text-2xs tracking-[0.3em] uppercase text-muted-foreground">
                         2026.01 — Ongoing
                     </span>
                 </div>
@@ -71,7 +71,7 @@ export const AIChatClipLayer = ({ progress }: Props) => {
                 <dl className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-x-6 gap-y-3 text-sm mb-8">
                     {tldr.map((row) => (
                         <div key={row.k} className="contents">
-                            <dt className="font-mono text-[10px] tracking-[0.25em] uppercase text-muted-foreground pt-1">
+                            <dt className="font-mono text-2xs tracking-[0.25em] uppercase text-muted-foreground pt-1">
                                 {row.k}
                             </dt>
                             <dd className="text-foreground/85 leading-relaxed">
@@ -84,7 +84,7 @@ export const AIChatClipLayer = ({ progress }: Props) => {
                 <div className="flex items-center gap-4">
                     <a
                         href="/projects/aichatclip"
-                        className="group inline-flex items-center gap-2 px-5 h-10 bg-foreground text-background font-mono text-[10px] tracking-[0.3em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="group inline-flex items-center gap-2 px-5 h-10 bg-foreground text-background font-mono text-2xs tracking-[0.3em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                     >
                         Open Case Study
                         <svg
@@ -105,7 +105,7 @@ export const AIChatClipLayer = ({ progress }: Props) => {
                         href="https://aichatclip.com"
                         target="_blank"
                         rel="noreferrer"
-                        className="font-mono text-[10px] tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition-colors"
+                        className="font-mono text-2xs tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition-colors"
                     >
                         Visit Site ↗
                     </a>

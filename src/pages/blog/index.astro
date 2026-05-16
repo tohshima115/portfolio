@@ -80,7 +80,7 @@ posts.forEach(post => {
             <!-- Decorative Line -->
             <div class="mt-8 flex items-center gap-4">
                 <div class="h-px flex-1 bg-gradient-to-r from-border to-transparent"></div>
-                <span class="font-mono text-[10px] text-muted-foreground tracking-[0.3em] uppercase">Index</span>
+                <span class="font-mono text-2xs text-muted-foreground tracking-[0.3em] uppercase">Index</span>
                 <div class="h-px w-16 bg-border"></div>
             </div>
         </header>
@@ -137,7 +137,7 @@ posts.forEach(post => {
                                                             {post.data.title}
                                                         </h2>
                                                         {post.data.tags && post.data.tags.map((tag: string) => (
-                                                            <span class="inline-block px-1.5 py-0.5 text-[10px] font-mono tracking-wide text-accent bg-accent/10 border border-accent/20 rounded-sm">
+                                                            <span class="inline-block px-1.5 py-0.5 text-2xs font-mono tracking-wide text-accent bg-accent/10 border border-accent/20 rounded-sm">
                                                                 {tag}
                                                             </span>
                                                         ))}
@@ -150,7 +150,7 @@ posts.forEach(post => {
 
                                                 <!-- Date & Arrow -->
                                                 <div class="flex-shrink-0 flex items-center gap-4">
-                                                    <div class="hidden md:flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+                                                    <div class="hidden md:flex items-center gap-2 font-mono text-xs text-muted-foreground">
                                                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-accent/60"></span>
                                                         <time datetime={isoDate}>
                                                             {formattedDate}
@@ -167,7 +167,7 @@ posts.forEach(post => {
                                             </div>
 
                                             {/* Mobile Date (falls below description on very small screens if needed, but mostly flex handles it) */}
-                                            <div class="md:hidden flex items-center gap-2 font-mono text-[10px] text-muted-foreground py-2 border-t border-border mt-2">
+                                            <div class="md:hidden flex items-center gap-2 font-mono text-2xs text-muted-foreground py-2 border-t border-border mt-2">
                                                 <span class="inline-block w-1 h-1 rounded-full bg-accent/60"></span>
                                                 <time datetime={isoDate}>
                                                     {formattedDate}
@@ -200,7 +200,7 @@ posts.forEach(post => {
                     <!-- Footer / System Info -->
                     <div class="mt-20 flex items-center gap-4">
                         <div class="h-px flex-1 bg-border"></div>
-                        <span class="font-mono text-[10px] text-muted-foreground tracking-[0.3em] uppercase">
+                        <span class="font-mono text-2xs text-muted-foreground tracking-[0.3em] uppercase">
                             End_of_Logs
                         </span>
                         <div class="h-px flex-1 bg-border"></div>
@@ -211,7 +211,7 @@ posts.forEach(post => {
                 <div class="w-full lg:w-[400px] xl:w-[500px] h-[500px] lg:h-[calc(100vh-200px)] lg:sticky lg:top-8 self-start flex-shrink-0 animate-slide-from-right" style="animation-delay: 0.3s;">
                     <!-- Window Header Decor -->
                     <div class="flex items-center justify-between border-t border-x border-border bg-muted/30 px-3 py-1.5">
-                        <span class="font-mono text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Relation_Graph</span>
+                        <span class="font-mono text-3xs uppercase tracking-[0.2em] text-muted-foreground">Relation_Graph</span>
                         <div class="flex gap-1.5">
                             <div class="w-1.5 h-1.5 rounded-full bg-border"></div>
                             <div class="w-1.5 h-1.5 rounded-full bg-border"></div>

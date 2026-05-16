@@ -24,7 +24,7 @@ const isActive = (href: string) => {
         >
             <a
                 href="/"
-                class="flex items-center gap-2 font-mono text-[11px] tracking-[0.25em] uppercase text-foreground hover:text-accent transition-colors"
+                class="flex items-center gap-2 font-mono text-xs tracking-[0.25em] uppercase text-foreground hover:text-accent transition-colors"
                 aria-label="Home"
             >
                 <span class="inline-block w-2 h-2 rounded-full bg-accent shadow-[0_0_10px_currentColor]"></span>
@@ -38,7 +38,7 @@ const isActive = (href: string) => {
                         <a
                             href={item.href}
                             data-active={isActive(item.href)}
-                            class="site-header__link relative font-mono text-[10px] sm:text-[11px] tracking-[0.2em] uppercase px-2.5 sm:px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors data-[active=true]:text-foreground"
+                            class="site-header__link relative font-mono text-2xs sm:text-xs tracking-[0.2em] uppercase px-2.5 sm:px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors data-[active=true]:text-foreground"
                         >
                             {item.label}
                         </a>
@@ -49,7 +49,7 @@ const isActive = (href: string) => {
             <a
                 href="/contact"
                 data-active={isActive("/contact")}
-                class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-mono text-[10px] tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-mono text-2xs tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
             >
                 Contact
                 <svg
@@ -86,17 +86,17 @@ const isActive = (href: string) => {
     /* Dark backgrounds (e.g. ProjectLayout) — invert the glass tint */
     :global(body.bg-neutral-950) .site-header__glass,
     :global(.dark) .site-header__glass {
-        background-color: rgba(20, 20, 20, 0.45);
-        border-color: rgba(255, 255, 255, 0.12);
-        color: #fff;
+        background-color: oklch(0.22 0.005 100 / 0.45);
+        border-color: oklch(1 0 0 / 0.12);
+        color: var(--color-background);
     }
     :global(body.bg-neutral-950) .site-header__glass a,
     :global(.dark) .site-header__glass a {
-        color: rgba(255, 255, 255, 0.85);
+        color: oklch(1 0 0 / 0.85);
     }
     :global(body.bg-neutral-950) .site-header__cta,
     :global(.dark) .site-header__cta {
-        background-color: #fff;
-        color: #000;
+        background-color: var(--color-background);
+        color: var(--color-foreground);
     }
 </style>

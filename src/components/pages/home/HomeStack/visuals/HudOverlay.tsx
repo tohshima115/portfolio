@@ -34,7 +34,7 @@ export const HudOverlay: React.FC = () => {
     return (
         <div
             aria-hidden
-            className="fixed inset-0 z-[80] pointer-events-none font-mono uppercase text-[10px] tracking-[0.3em] text-muted-foreground"
+            className="fixed inset-0 z-[80] pointer-events-none font-mono uppercase text-2xs tracking-[0.3em] text-muted-foreground"
         >
             {/* 右上: section name + ID */}
             <div className="absolute top-4 right-6 hidden md:flex items-center gap-2">

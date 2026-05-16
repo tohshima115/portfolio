@@ -14,7 +14,7 @@ export const CornerLabel: React.FC<Props> = ({
 }) => {
     return (
         <span
-            className={`inline-flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.4em] text-muted-foreground ${className ?? ''}`}
+            className={`inline-flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground ${className ?? ''}`}
         >
             <span className="text-accent">+</span>
             <span>{label}</span>
