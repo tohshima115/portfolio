@@ -55,6 +55,41 @@
   --color-accent: oklch(0.82 0.18 85);
   --color-accent-foreground: oklch(0.20 0.02 100);
 
+  /* Surface / Neutral extensions (kept inside @theme so any change here cascades) */
+  --color-surface-deep: oklch(0.16 0.005 100);     /* ≈ #0a0a0a 系の暗背景 */
+  --color-surface-raised: oklch(0.22 0.005 100);   /* ≈ #2a2c30 */
+  --color-neutral-100: oklch(0.96 0.005 100);      /* ≈ #eef1f5 */
+  --color-neutral-500: oklch(0.55 0.005 100);      /* ≈ #888 */
+  --color-neutral-600: oklch(0.45 0.005 100);      /* ≈ #555 */
+  --color-neutral-700: oklch(0.32 0.005 100);      /* ≈ #333 */
+  --color-neutral-750: oklch(0.28 0.01 260);       /* ≈ #3a3f4a */
+
+  /* Text Scale - 0.125rem 刻みで管理。1点書き換えで全テキストサイズが追従する */
+  --text-4xs: 0.5rem;       /* 8px  */
+  --text-4xs--line-height: 0.75rem;
+  --text-3xs: 0.5625rem;    /* 9px  */
+  --text-3xs--line-height: 0.875rem;
+  --text-2xs: 0.625rem;     /* 10px */
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.6875rem;     /* 11px */
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.8125rem;     /* 13px */
+  --text-sm--line-height: 1.125rem;
+  --text-base: 0.9375rem;   /* 15px */
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.0625rem;     /* 17px */
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.25rem;       /* 20px */
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;       /* 24px */
+  --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem;     /* 30px */
+  --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.25rem;      /* 36px */
+  --text-4xl--line-height: 2.5rem;
+  --text-5xl: 3rem;         /* 48px */
+  --text-5xl--line-height: 1;
+
   /* Utilities */
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -64,6 +99,22 @@
   --radius-full: 9999px;
   /* Transitions / Easings */
   --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+}
+
+/* -----------------------------------------------------------------------------
+   Shared UI utilities (Astro と React の両方から同じクラス名で参照する)
+   ----------------------------------------------------------------------------- */
+@utility ui-tag-tech {
+  @apply inline-flex items-center px-2 py-0.5 text-3xs font-mono tracking-wider uppercase border border-border text-muted-foreground;
+}
+@utility ui-tag-role {
+  @apply inline-flex items-center px-2 py-0.5 text-3xs font-mono tracking-wider uppercase border border-border text-muted-foreground bg-muted;
+}
+@utility ui-navlink {
+  @apply font-mono text-2xs tracking-[0.25em] uppercase px-3 py-2 border-b-2 border-transparent hover:border-accent transition-colors;
+}
+@utility ui-micro-label {
+  @apply font-mono text-2xs tracking-[0.3em] uppercase text-muted-foreground;
 }
 
 /* -----------------------------------------------------------------------------
@@ -153,102 +204,11 @@
 }
 
 /* -----------------------------------------------------------------------------
-   Home Page Animation Keyframes
-   CSS-driven for compositor-thread optimization (avoids main-thread JS per frame)
+   Home ページ専用 CSS (keyframes / reveal 初期状態 / intro skip) は
+   src/styles/home.css へ分離し、Home レイアウトからのみ import している。
+   未使用だった warn-blink / available-pulse は削除済み (Badge.pulse は
+   Tailwind 標準の animate-pulse で代替)。
    ----------------------------------------------------------------------------- */
-@keyframes logo-clip-reveal {
-  from {
-    /* 外周セルの内側エッジ (5 / 21 = 約23.8%) から開始し、空白期間をなくす */
-    clip-path: inset(23.8%);
-  }
-
-  to {
-    clip-path: inset(-1%);
-  }
-}
-
-/* HomeStack: ScanLines 走査エフェクト (画面上→下を 1 本の細いラインが移動) */
-@keyframes scan-down {
-  from {
-    transform: translate3d(0, -100%, 0);
-  }
-  to {
-    transform: translate3d(0, 100vh, 0);
-  }
-}
-
-/* HomeStack: CTA 等で使うリングパルス (同心円の opacity 振幅) */
-@keyframes pulse-ring {
-  0%,
-  100% {
-    opacity: 0.05;
-  }
-  50% {
-    opacity: 0.12;
-  }
-}
-
-/* HomeIntro 案 A: 四隅 WARN マーカーの点滅 */
-@keyframes warn-blink {
-  0%,
-  100% {
-    opacity: 0.35;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-/* HomeStack: About の Available 行ハイライト (accent パルス) */
-@keyframes available-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb, 218 178 64), 0);
-  }
-  50% {
-    box-shadow: 0 0 0 4px rgba(var(--color-accent-rgb, 218 178 64), 0.18);
-  }
-}
-
-/* -----------------------------------------------------------------------------
-   HomeStack: scroll-driven reveal の初期状態
-   GSAP ScrollTrigger で opacity / transform をアニメするまで隠しておく。
-   reduced-motion 環境では JS scene 自体が組まれないので、CSS で最終状態に戻す。
-   ----------------------------------------------------------------------------- */
-[data-home-stack] [data-reveal] {
-  opacity: 0;
-  transform: translateY(24px);
-  will-change: opacity, transform;
-}
-[data-home-stack] [data-reveal-x] {
-  opacity: 0;
-  transform: translateX(-12px);
-  will-change: opacity, transform;
-}
-[data-home-stack] [data-split-chars][data-anim] > span {
-  opacity: 0;
-  transform: translateY(-110%);
-  will-change: opacity, transform;
-}
-@media (prefers-reduced-motion: reduce) {
-  [data-home-stack] [data-reveal],
-  [data-home-stack] [data-reveal-x],
-  [data-home-stack] [data-split-chars][data-anim] > span {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* -----------------------------------------------------------------------------
-   Intro skip overrides
-   2 回目以降の訪問では <html> に .prts-skip-intro が付与される (index.astro 参照)。
-   SSR HTML の inline style に焼き付いた CSS animation を !important で上書きし、
-   ブラウザが描画する瞬間から最終状態を表示する。
-   ----------------------------------------------------------------------------- */
-html.prts-skip-intro [data-prts-logo] {
-  animation: none !important;
-  clip-path: inset(-1%) !important;
-}
 
 /* -----------------------------------------------------------------------------
    View Transitions API: ページ遷移は WebGLTransition (R3F + GSAP) に一元化したため、

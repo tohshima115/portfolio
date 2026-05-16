@@ -1,0 +1,81 @@
+/* =============================================================================
+   Home Page Specific CSS
+   - global.css から TOP ページ (HomeIntro / HomeStack / PrtsInterface) 専用の
+     keyframes と reveal 初期状態を分離。Home 系レイアウト (src/pages/index.astro)
+     からのみ import する。
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   Home Page Animation Keyframes
+   CSS-driven for compositor-thread optimization (avoids main-thread JS per frame)
+   ----------------------------------------------------------------------------- */
+@keyframes logo-clip-reveal {
+  from {
+    /* 外周セルの内側エッジ (5 / 21 = 約23.8%) から開始し、空白期間をなくす */
+    clip-path: inset(23.8%);
+  }
+  to {
+    clip-path: inset(-1%);
+  }
+}
+
+/* HomeStack: ScanLines 走査エフェクト (画面上→下を 1 本の細いラインが移動) */
+@keyframes scan-down {
+  from {
+    transform: translate3d(0, -100%, 0);
+  }
+  to {
+    transform: translate3d(0, 100vh, 0);
+  }
+}
+
+/* HomeStack: CTA 等で使うリングパルス (同心円の opacity 振幅) */
+@keyframes pulse-ring {
+  0%,
+  100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.12;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   HomeStack: scroll-driven reveal の初期状態
+   GSAP ScrollTrigger で opacity / transform をアニメするまで隠しておく。
+   reduced-motion 環境では JS scene 自体が組まれないので、CSS で最終状態に戻す。
+   ----------------------------------------------------------------------------- */
+[data-home-stack] [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  will-change: opacity, transform;
+}
+[data-home-stack] [data-reveal-x] {
+  opacity: 0;
+  transform: translateX(-12px);
+  will-change: opacity, transform;
+}
+[data-home-stack] [data-split-chars][data-anim] > span {
+  opacity: 0;
+  transform: translateY(-110%);
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-home-stack] [data-reveal],
+  [data-home-stack] [data-reveal-x],
+  [data-home-stack] [data-split-chars][data-anim] > span {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Intro skip overrides
+   2 回目以降の訪問では <html> に .prts-skip-intro が付与される (index.astro 参照)。
+   SSR HTML の inline style に焼き付いた CSS animation を !important で上書きし、
+   ブラウザが描画する瞬間から最終状態を表示する。
+   ----------------------------------------------------------------------------- */
+html.prts-skip-intro [data-prts-logo] {
+  animation: none !important;
+  clip-path: inset(-1%) !important;
+}
