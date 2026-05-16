@@ -12,23 +12,23 @@ export const PROJECTS: Project[] = [
     {
         id: '01',
         name: 'AIChatClip',
-        meta: 'Flagship · 1 paid · multi-surface',
+        meta: '個人開発 · Chrome / Firefox · Ongoing',
         description:
-            'AI チャット会話を Obsidian に自動同期する SaaS。1 人で企画 / 設計 / UI / 実装 / 運用までを Cloudflare スタックで出荷している。',
+            'AI チャットの回答って、放っておくと履歴の海に沈んでいく。それが気になって、ワンクリックで Obsidian に送り込む拡張機能を作った。Cloudflare で一人で動かしている。',
     },
     {
         id: '02',
         name: 'PL Dashboard',
         meta: 'Cloudflare D1 · 社内運用',
         description:
-            '見にくい Excel を Cloudflare D1 に乗せ換えた業務改善ダッシュボード。デザイン事務所内で月次運用中、Zero Trust で限定公開。',
+            '先輩が毎月 Excel で確認していた PL シートが見づらくて、自発的に Cloudflare D1 のダッシュボードに乗せ換えた。今も月次で使われている。',
     },
     {
         id: '03',
         name: 'Swept',
-        meta: '起業準備 · プロダクトデザイン',
+        meta: '社会起業 · チームプロジェクト · 2024–2026',
         description:
-            '起業準備中のプロダクト。MVP のプロダクトデザインから検証を進め、Cloudflare 上で 0 → 1 を立ち上げ中。',
+            '3人チームの社会起業プロジェクトに約2年関わった。デザイナーとして入って、途中から実装も担うようになった。方向性の違いで 2026 年初頭に離脱。',
     },
 ];
 
