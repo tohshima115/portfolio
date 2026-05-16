@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-type ModalKey = "history" | "stance" | "bio";
+type ModalKey = "history" | "bio";
 
 interface ButtonDef {
     key: ModalKey;
@@ -18,16 +18,10 @@ const buttons: ButtonDef[] = [
         sub: "学歴・職歴・起業準備の2年",
     },
     {
-        key: "stance",
-        code: "+ OPEN_STANCE",
-        label: "技術選びの考え方",
-        sub: "Cloudflare 好き / 新しいもの好き / 採用しなかったやつ",
-    },
-    {
         key: "bio",
         code: "+ OPEN_BIO",
         label: "もう少し詳しい自己紹介",
-        sub: "キャリアの流れ / 大事にしてる感覚 / 起業準備で得たもの",
+        sub: "どんな人間か / 大事にしてる感覚 / 作業スタイル",
     },
 ];
 
@@ -103,7 +97,6 @@ export const AboutDeepDive: React.FC = () => {
                         onClose={() => setOpen(null)}
                     >
                         {open === "history" && <HistoryContent />}
-                        {open === "stance" && <StanceContent />}
                         {open === "bio" && <BioContent />}
                     </ModalShell>
                 )}
@@ -244,113 +237,27 @@ const HistoryContent: React.FC = () => {
     );
 };
 
-const StanceContent: React.FC = () => {
-    return (
-        <div className="space-y-10 text-base text-foreground/90 leading-relaxed">
-            {/* 軸 1 */}
-            <section>
-                <h3 className="text-lg font-bold mb-3 tracking-tight">
-                    1. Cloudflare が好きでよく使っています
-                </h3>
-                <p>
-                    Cloudflare Workers / D1 / R2 / Durable Objects / Workers AI / Zero Trust をよく使っています。
-                    <strong className="text-foreground">
-                        2025 年夏過ぎから本番で使いはじめて、いまはほぼ手癖で選んでいる
-                    </strong>
-                    感覚です。
-                </p>
-                <p className="mt-3">
-                    「優れているから採用」というより、個人開発者・スタートアップにここまで優しいサービスは他に無いなあと感じているのが大きいです。SQLite ベースの D1 が React Router v7 / Astro と素直に噛み合うこと、Vercel のように裏でよしなにやってくれる代わりに
-                    <strong className="text-foreground">
-                        「なぜ動かないか / なぜ動くか」を自分で追える難易度
-                    </strong>
-                    であることが性に合っています。SSR / SSG / CSR の境界は最初は何度も詰まりましたが、Cloudflare に載せたことで Vercel が裏で吸収してくれていた区別が明確に必要になり、結果として自分の理解を引き上げる訓練になりました（このあたりはいまも勉強中です）。
-                </p>
-                <p className="mt-3">
-                    Cloudflare スタックの中での選定も、必要な特性を満たすものだけを採用する方針です。たとえば R2 はアップロード型ストレージが必要になったら、KV はキャッシュ層が要るタイミングで採用しますが、現状の AIChatClip にはどちらも必要なかったので入れていません。
-                </p>
-                <p className="mt-3 text-sm text-muted-foreground">
-                    参考: AWS は触ったがコスト構造の見通しが立たず投げ出した経験あり。GCP は Google アカウント連携などでスポット的に利用。ホスティングは現状 Cloudflare 一択です。
-                </p>
-            </section>
-
-            {/* 軸 2 */}
-            <section>
-                <h3 className="text-lg font-bold mb-3 tracking-tight">
-                    2. 新しいものはまず触る、ただし「引き出し」として
-                </h3>
-                <p>
-                    新しいツール・技術が出ると <strong className="text-foreground">まず触ってみる</strong>
-                    のが性質で、AI 時代の「毎週新しいものが出る」サイクルと噛み合っているのは正直ラッキーだと感じています。
-                </p>
-                <p className="mt-3">
-                    直近の動きでは、Cursor / Antigravity を勃興初期から本番投入、Affinity が Canva に買収されて無料化された日に切り替え、音声入力は Aqua Voice に課金、自作キーボードと大西配列で入力速度の上限を上げる、といった切り替えを意識的に行ってきました。
-                    <strong className="text-foreground"> スイッチングコストを雑に見積もって積極的に乗り換える</strong>のが、ここ数年の AI / ツール変化のテンポへの自分なりの対応です。
-                </p>
-                <p className="mt-3">
-                    ただし触ること自体が目的ではなく、
-                    <strong className="text-foreground">
-                        「困ったときに引き出しから取り出せる状態を作る」
-                    </strong>
-                    のが目的。仕事で採用するときは、そのとき本当に必要かを別軸で判断します。
-                </p>
-            </section>
-
-            {/* 軸 3 */}
-            <section>
-                <h3 className="text-lg font-bold mb-3 tracking-tight">
-                    3. 流行ってるからは入れない（採用見送りの実例）
-                </h3>
-                <p>
-                    例: 2025〜2026 年に話題の <strong className="text-foreground">OpenClaw</strong>
-                    （AIエージェントを自前マシンで動かし、メッセージングプラットフォーム経由でシェル / ブラウザ / ファイル操作を実行できるツール）。
-                </p>
-                <p className="mt-3">触ってみたうえでの判断は採用見送り。理由は3つ：</p>
-                <ul className="mt-3 space-y-2 pl-4 border-l border-border">
-                    <li className="text-sm">
-                        <strong className="text-foreground">権限の広さ</strong>:
-                        シェル実行を含む操作面が広く、認証トークン盗難やコマンド/プロンプトインジェクション系の脆弱性 (CVE-2026-25253 等) が報告されている。
-                    </li>
-                    <li className="text-sm">
-                        <strong className="text-foreground">サプライチェーン汚染</strong>:
-                        外部スキルマーケット (ClawHub) 経由で配布されるスキル 10,700 件のうち、約 820 件が悪意あるものと判定されている (2026 年初頭時点)。
-                    </li>
-                    <li className="text-sm">
-                        <strong className="text-foreground">代替手段の存在</strong>:
-                        やりたいことの大半は「メッセージング → Webhook → 既存スクリプト」の組み合わせで実装でき、わざわざこのリスクを背負う必要はないと判断。
-                    </li>
-                </ul>
-                <p className="mt-4 text-sm text-muted-foreground">
-                    Meta はじめ複数の主要企業が社内利用禁止に動いている事実も含め、「流行ってる + 自分の引き出しに増やす」と「実プロダクトに入れる」は別軸で考える、というのを意識的にやっています。
-                </p>
-            </section>
-        </div>
-    );
-};
-
 const BioContent: React.FC = () => {
     return (
         <div className="space-y-6 text-base text-foreground/90 leading-relaxed">
             <p>
-                行き当たりばったりな人間です。思いつきでバッと動いて、毎回どこか変な場所にいます。大学を卒業してから好き勝手やるようにしていったら、気づいたら社会のレールからだいぶ外れていました。ただ、
-                <strong className="text-foreground">衝動のままに動いているときが一番前に進める</strong>
-                気がしているので、これからもたぶんそうしていくと思います。
+                行き当たりばったりな人間です。思いつきでバッと動いて、毎回どこか変な場所にいます。大学を卒業してから好き勝手やるようにしていったら、気づいたら社会のレールからだいぶ外れていました。ただ、衝動のままに動いているときが一番前に進める気がしているので、これからもたぶんそうしていくと思います。
             </p>
 
             <p>
-                キャリアは<strong className="text-foreground">デザイナー</strong>で始まりました。Illustrator / Photoshop / Figma で UI とビジュアルを作るところから入って、社会起業チーム「Swept」でプロダクトに関わったのを境に「自分の設計を自分でかたちにしたい」と思って実装まで手を伸ばしました。ちょうど Cursor 等の AI コーディングツールが出始めた時期で、良いタイミングでした。
+                キャリアはデザイナーで始まりました。Figma / Illustrator で UI やビジュアルを作るところから入って、「自分の設計を自分でかたちにしたい」と思って実装まで手を伸ばしました。ちょうど Cursor が出てきた時期で、タイミングが良かったです。
             </p>
 
             <p>
-                Cloudflare に出会ってから、いまはほぼ手癖で選んでいます。お金をかけずに何でも実験できる感じが好きで、Discord コミュニティでリリースを追いながら少しずつ知識を広げています。D1 は最初「むず」と思いましたが、慣れたら「めっちゃ便利」に変わりました。
+                Cloudflare に出会ってからはほぼ手癖で選んでいます。D1 を最初に触ったとき「むず」と思いましたが、慣れたら「めっちゃ便利」に変わりました。お金をかけずに何でも実験できる感じが好きで、Discord コミュニティでリリースを追いながら少しずつ知識を広げています。
             </p>
 
             <p className="pt-3 border-t border-border">
-                こだわりは「<strong className="text-foreground">ちょうどいい、ジャストフィット</strong>」を探すこと。最高スペックを買うのではなく、自分の要求水準にぴったりのものを選ぶ。買ったけど使っていないものがほぼないのはそのおかげだと思っています。キーボードも、入力配列も、ツールも、全部この感覚で選んでいます。
+                こだわりは「ちょうどいい、ジャストフィット」を探すこと。最高スペックを買うのではなく、自分の要求水準にぴったりのものを選ぶ感覚です。キーボードも入力配列もツールも、全部この感覚で選んでいます。買ったけど使っていないものがほぼないのはそのおかげだと思っています。
             </p>
 
             <p>
-                経営学部 → 起業準備 → デザイン → 個人開発と歩いてきた。それぞれで身についたもの ── 事業視点、検証の習慣、設計の理論 ── が今の個人開発の道具として残っている気がします（デザインは引き続き勉強中です）。
+                作業は一人でやる方が好きです。通話しながら作業しようとすると通話に集中してしまって何も進まないので、通話するときは最初から「今日は雑談の時間」と決めています。
             </p>
         </div>
     );
