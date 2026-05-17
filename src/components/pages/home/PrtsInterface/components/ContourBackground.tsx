@@ -1,43 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { animate, type MotionValue } from 'framer-motion';
+import { type MotionValue } from 'framer-motion';
 import * as THREE from 'three';
 import { contourVertex, contourFragment } from '../shaders/contour';
-import { dollyScale, dollyBlurPxBg, dollyOpacity } from '../../HomeIntro/dollyCurves';
 
 interface Props {
-    /** イントロアニメをスキップするか (sessionStorage 由来) */
-    skipIntro?: boolean;
-    /**
-     * カメラ追従用の X 軸回転 (deg)。任意。
-     *
-     * 重要: 親 DOM に CSS transform + perspective をかけると R3F の Canvas が
-     * `getBoundingClientRect` で post-projection の AABB を読み、framebuffer を
-     * 不当に拡大して画面中央からズレる (2024 年の調査で確認済み)。
-     * そのため transform は ContourBackground 自身が canvas DOM 要素へ直接当てる。
-     * 親側で transform を巻くのは禁止。
-     */
-    rotateX?: MotionValue<number>;
-    /**
-     * マウス連動の Z 軸回転 (deg)。HeroSection の外側 motion.div に当てている
-     * rotateZ と同じ値を渡すと、等高線も画面平面で同じ向きに傾く。
-     */
-    rotateZ?: MotionValue<number>;
-    /**
-     * シーン内の camera 位置 (= シーン全体に当てる逆方向 translate / rotateY)。
-     * 上記の制約で ContourBackground を camera div の子に置けないため、
-     * 同じ値を canvas DOM に直接当てて Hero アンカー位置を再現する。
-     */
-    cameraX?: MotionValue<number>;
-    cameraY?: MotionValue<number>;
-    cameraZ?: MotionValue<number>;
-    cameraRY?: MotionValue<number>;
-    /**
-     * camera Z 軸回転 (deg)。各セクションが画面平面内で異なる "天地" を
-     * 持つ場合、camera が逆回転で打ち消す。Hero アンカーの contour も
-     * 同じだけ回転させてシーンと位相を揃える。
-     */
-    cameraRZ?: MotionValue<number>;
     /**
      * 0..1 の「乱れ」係数。Hero→Statement 遷移演出 (案 A) で進捗連動して
      * shader の uChaos uniform を動かす。
@@ -46,28 +13,11 @@ interface Props {
      * 渡さないと 0 (= 現状の Hero 単体表示) で完全に既存挙動を維持。
      */
     chaos?: MotionValue<number> | number;
-    /**
-     * 0..1 の Hero→Statement dolly 進捗。canvas DOM の scale + filter:blur に反映。
-     * 渡さないと scale=1 / blur=0 で完全に既存挙動を維持。
-     */
-    dolly?: MotionValue<number>;
 }
 
 const TARGET_OPACITY = 0.26;
 // uSpeed が極めて遅いのでフレーム間差分は視覚的に区別できない。24fps まで落としても劣化なし。
 const TARGET_FPS = 24;
-// 親 DOM の perspective は R3F のラッパ越しに canvas へ伝わらないため、canvas 自身の
-// transform に perspective() を組み込んでパース感を出す。値は親の perspective: 1000px と同等。
-const CANVAS_PERSPECTIVE_PX = 1000;
-// イントロアニメ (3D シーンの内側 intro container と同じ値・タイミング)
-// PrtsInterface の inner intro container `initial={{ scale: 1.8, rotateY: -30, rotateX: 20 }}`
-// が delay 3.4s / duration 1.2s / ease-in-out-quint で identity へ animate するのを
-// ContourBackground でも再現する。これがないと等高線だけ「ズームアウト前の傾き」を
-// 反映できず、ロゴアニメ中に取り残されて見える。
-const INTRO_INITIAL = { scale: 1.8, rotateY: -30, rotateX: 20 } as const;
-const INTRO_DELAY_S = 3.4;
-const INTRO_DURATION_S = 1.2;
-const INTRO_EASE = [0.83, 0, 0.17, 1] as const;
 
 const readForegroundColor = (): THREE.Color => {
     if (typeof window === 'undefined') return new THREE.Color('#0a0a0a');
@@ -191,120 +141,11 @@ const ContourScene: React.FC<{
     );
 };
 
-export const ContourBackground: React.FC<Props> = ({
-    skipIntro = false,
-    rotateX,
-    rotateZ,
-    cameraX,
-    cameraY,
-    cameraZ,
-    cameraRY,
-    cameraRZ,
-    chaos,
-    dolly,
-}) => {
+export const ContourBackground: React.FC<Props> = ({ chaos }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const canvasRef = useRef<HTMLCanvasElement | null>(null);
-    const introProgressRef = useRef<number>(skipIntro ? 1 : 0); // 0 = 初期状態, 1 = 終端
     const [reducedMotion, setReducedMotion] = useState(false);
     const [contextLost, setContextLost] = useState(false);
     const [inView, setInView] = useState(true);
-
-    // 親 DOM に transform をかけると R3F が canvas を over-size するので、
-    // rotateX (とイントロ用 transform) はすべて canvas DOM 要素に直接当てる。
-    // - canvas の CSS width/height は変わらない (ResizeObserver は layout 変化のみ検知)
-    //   ので R3F の auto-resize には影響しない。
-    // - perspective() を transform に組み込むことで、親の perspective プロパティに
-    //   依存せず単独でパース感を出す。
-    const applyTransform = useCallback(() => {
-        const c = canvasRef.current;
-        if (!c) return;
-        const mouseX = rotateX?.get() ?? 0;
-        const mouseZ = rotateZ?.get() ?? 0;
-        const cx = cameraX?.get() ?? 0;
-        const cy = cameraY?.get() ?? 0;
-        const cz = cameraZ?.get() ?? 0;
-        const cry = cameraRY?.get() ?? 0;
-        const crz = cameraRZ?.get() ?? 0;
-        const p = introProgressRef.current;
-        // p=0 で initial, p=1 で identity。線形補間。
-        const introX = INTRO_INITIAL.rotateX * (1 - p);
-        const introY = INTRO_INITIAL.rotateY * (1 - p);
-        const introS = INTRO_INITIAL.scale + (1 - INTRO_INITIAL.scale) * p;
-        // Hero→Statement dolly (案 G)。canvas DOM の scale に乗算で重ねる。
-        const d = dolly?.get() ?? 0;
-        const dScale = dollyScale(d);
-        const dBlur = dollyBlurPxBg(d);
-        const dOpa = dollyOpacity(d);
-        // ロゴ側 (HeroSection outer motion.div + 内側 HeroLayer) の実効合成順と
-        // 完全一致させる:
-        //   outer:  rotateX(mouseX) rotateZ(mouseZ) scale(dolly)
-        //   inner:  scale(intro)  rotateY(introY)  rotateX(introX)
-        //   ⇒ 行列積 = rotateX(mouseX)·rotateZ(mouseZ)·scale(dolly)·
-        //              scale(intro)·rotateY(introY)·rotateX(introX)
-        // CSS transform は左から並べた順に行列を左から掛けるので、上記をそのまま
-        // 並べれば point への作用順 (右→左) も一致する。
-        //
-        // mouseX/Z は intro と"別の位置"にあるので合算してはいけない (途中に
-        // rotateY(introY) が挟まると合成順が崩れて、ロゴが浅い角度に見える)。
-        //
-        // camera 系 (HomeScene 用) は本来 outer wrapper として最外側に巻く想定。
-        // ここでは行列順を維持するため、camera を最外側、その内側に Hero local
-        // の合成を並べる。Hero 単独 (HomeIntro 経由) は camera = 0 で無影響。
-        c.style.transform =
-            `perspective(${CANVAS_PERSPECTIVE_PX}px) ` +
-            `rotateZ(${crz}deg) ` +
-            `translate3d(${cx}px, ${cy}px, ${cz}px) ` +
-            `rotateY(${cry}deg) ` +
-            `rotateX(${mouseX}deg) ` +
-            `rotateZ(${mouseZ}deg) ` +
-            `scale(${dScale}) ` +
-            `scale(${introS}) ` +
-            `rotateY(${introY}deg) ` +
-            `rotateX(${introX}deg)`;
-        // blur(0px) でも GPU レイヤを 1 枚作るブラウザがあるので閾値前は filter を空に。
-        c.style.filter = dBlur > 0.05 ? `blur(${dBlur.toFixed(2)}px)` : '';
-        c.style.opacity = dOpa < 0.999 ? dOpa.toFixed(3) : '';
-        c.style.willChange = d > 0.01 ? 'transform, filter, opacity' : '';
-    }, [rotateX, rotateZ, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly]);
-
-    // マウス連動 rotateX/rotateZ + camera motion values + dolly の購読
-    useEffect(() => {
-        applyTransform();
-        const unsubs: Array<() => void> = [];
-        if (rotateX) unsubs.push(rotateX.on('change', applyTransform));
-        if (rotateZ) unsubs.push(rotateZ.on('change', applyTransform));
-        if (cameraX) unsubs.push(cameraX.on('change', applyTransform));
-        if (cameraY) unsubs.push(cameraY.on('change', applyTransform));
-        if (cameraZ) unsubs.push(cameraZ.on('change', applyTransform));
-        if (cameraRY) unsubs.push(cameraRY.on('change', applyTransform));
-        if (cameraRZ) unsubs.push(cameraRZ.on('change', applyTransform));
-        if (dolly) unsubs.push(dolly.on('change', applyTransform));
-        return () => {
-            for (const u of unsubs) u();
-        };
-    }, [rotateX, rotateZ, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly, applyTransform]);
-
-    // イントロアニメ (3D シーンの inner intro container と同じタイミングで進行)
-    useEffect(() => {
-        if (skipIntro || reducedMotion) {
-            introProgressRef.current = 1;
-            applyTransform();
-            return;
-        }
-        introProgressRef.current = 0;
-        applyTransform();
-        const a = animate(0, 1, {
-            delay: INTRO_DELAY_S,
-            duration: INTRO_DURATION_S,
-            ease: [INTRO_EASE[0], INTRO_EASE[1], INTRO_EASE[2], INTRO_EASE[3]],
-            onUpdate: (v) => {
-                introProgressRef.current = v;
-                applyTransform();
-            },
-        });
-        return () => a.stop();
-    }, [skipIntro, reducedMotion, applyTransform]);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -316,7 +157,6 @@ export const ContourBackground: React.FC<Props> = ({
     }, []);
 
     // hero がスクロールで画面外に抜けたらアニメーションを止める。
-    // hero 自体は h-screen なので、スクロールダウンで完全に外れる。
     useEffect(() => {
         const target = containerRef.current;
         if (!target || typeof IntersectionObserver === 'undefined') return;
@@ -342,12 +182,15 @@ export const ContourBackground: React.FC<Props> = ({
                 gl={{ alpha: true, antialias: false, premultipliedAlpha: false, powerPreference: 'low-power' }}
                 dpr={1}
                 frameloop="demand"
+                // 親に CSS transform (perspective + rotateX + scale) が乗ると
+                // 既定の getBoundingClientRect 経由の auto-resize が post-projection
+                // AABB を読んで canvas を不当に拡大する。offsetSize は CSS transform
+                // の影響を受けない offsetWidth/Height を使うので、親 wrapper で
+                // transform を一括管理できるようになる。
+                resize={{ offsetSize: true }}
                 style={{ width: '100%', height: '100%' }}
                 onCreated={({ gl }) => {
                     const canvas = gl.domElement;
-                    canvasRef.current = canvas;
-                    // 初期 transform を即座に反映 (mount 直後の 1 フレーム空白を防ぐ)
-                    applyTransform();
                     const handleLost = (e: Event) => {
                         e.preventDefault();
                         setContextLost(true);

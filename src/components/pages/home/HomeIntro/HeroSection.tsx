@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
-import { ContourBackground } from '../PrtsInterface/components/ContourBackground';
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
 import type { UpdateItem } from '../HomeScene/types';
@@ -10,28 +9,25 @@ interface Props {
     skipIntro: boolean;
     updates?: UpdateItem[];
     active: boolean;
-    /** 0..1 の遷移進捗。ContourBackground の uChaos uniform にバイパスする */
+    /** ContourBackground の uChaos に流す MotionValue/数値 */
     chaos?: MotionValue<number> | number;
     /**
      * 0..1 の Hero→Statement dolly 進捗 (案 G)。
-     * scale は preserve-3d の「外側」のレイヤに、opacity も外側に当てる。
-     * (内側 motion.div で rotateX + preserve-3d を完結させ、外側で 2D 縮小すれば
-     *  3D 空間内の Z 距離 = translateZ は影響を受けない。これで前景もカメラ引き
-     *  しつつ MainTitle / NavigationLayer の 3D 配置は崩れない)
-     * filter:blur は preserve-3d をフラット化するので前景には当てず、
-     * 背景 (ContourBackground) 側にだけ scale + blur + opacity をかける。
+     * 親 outer motion.div に scale / filter / opacity を当てるので、ContourBackground
+     * を含む全要素が物理的に同じ transform を受ける (= 行列順の手動同期が不要)。
      */
     dolly?: MotionValue<number>;
 }
 
 // Hero 専用のフルスクリーンセクション。
-// カメラを動かさない (新構造では各セクション独立) ため、ContourBackground の
-// camera 系 motion value はすべて省略 (= 内部で 0 として扱われる)。
-// rotateX (= 鳥瞰角の parallax) と HeroLayer の contentX/Y / mouseX/Y のみ生かす。
 //
-// active=false (Hero 非表示) の間は親が display:none で外しているので
-// ContourBackground の IntersectionObserver が inView=false を観測し、
-// frameloop="demand" の rAF ループ自体が止まる。
+// 設計方針 (rev2): 「親 div で transform を一括管理」方式に統一。
+//   旧方式は ContourBackground (R3F canvas) の auto-resize バグ回避のため、
+//   各要素で個別に transform を当てて手動で行列順を同期する形だったが、
+//   preserve-3d の合成順を完全一致させるのが困難でズレが残った。
+//   現方式は ContourBackground の Canvas に resize={{ offsetSize: true }} を
+//   設定して親 transform 影響下でも安定 sizing できるようにし、
+//   intro 用 HeroLayer 内に ContourBackground を同居させて 1 階層で済ませる。
 
 export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos, dolly }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -45,13 +41,6 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
     const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
 
     // dolly: 親が undefined を渡してきても hooks を呼ぶ必要があるので fallback を常に作る。
-    //
-    // 「カメラ位置をスクロールに合わせて引く」をシンプルに表現:
-    //   rotateX + preserve-3d を持つ motion.div に scale + opacity を直接当てる。
-    //   preserve-3d 内 scale で Z 距離も比例して縮むが、それも 'カメラが遠ざかる'
-    //   表現としてまとめて受け入れる方針。
-    //   filter:blur は preserve-3d をフラット化して縦伸びを起こすため、前景には
-    //   当てず ContourBackground (背景) 側だけでブラーをかける。
     const dollyFallback = useMotionValue(0);
     const dollySrc = dolly ?? dollyFallback;
     const heroScale = useTransform(dollySrc, dollyScale);
@@ -83,7 +72,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
     }, []);
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        if (!active) return; // 非表示中は parallax 反応させない
+        if (!active) return;
         const rect = rectRef.current;
         if (!rect) return;
         mouseX.set((e.clientX - rect.left) / rect.width);
@@ -102,17 +91,10 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} rotateZ={rotateZ} chaos={chaos} dolly={dolly} />
-            <HoverBackground hoveredItem={hoveredItem} />
-
-            {/*
-              元の 1 段 motion.div 構造。rotateX + preserve-3d で 3D 鳥瞰角を維持した上で、
-              dolly の scale + opacity をシンプルにかける ('カメラの位置をスクロールに
-              合わせて引く')。preserve-3d 内なので scale で Z 距離も縮むが、その効果も
-              含めて 'カメラ引き' として違和感ないか実視で確認する方針。
-              filter:blur は前景には当てない (preserve-3d をフラット化して縦伸びを引き
-              起こすため。ブラーは ContourBackground 側でだけ実施)。
-            */}
+            {/* HoverBackground は静的な radial gradient + noise だけで intro の影響を
+                受ける必要がないので outer の直下 (HeroLayer の外) に置く。
+                ただし outer の rotateX/rotateZ/scale/filter/opacity は受けるので、
+                マウス連動と dolly の引きには一緒に追従する。 */}
             <motion.div
                 style={{
                     rotateX,
@@ -125,6 +107,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                 }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >
+                <HoverBackground hoveredItem={hoveredItem} />
                 <div
                     className="absolute inset-0 flex items-center justify-center"
                     style={{
@@ -140,6 +123,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                         mouseX={mouseX}
                         mouseY={mouseY}
                         updates={updates}
+                        chaos={chaos}
                     />
                 </div>
             </motion.div>

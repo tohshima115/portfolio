@@ -378,15 +378,7 @@ export const HomeScene = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 className="absolute inset-0 w-full h-full bg-background overflow-hidden flex items-center justify-center shadow-inner"
                 style={{ perspective: '1000px' }}
             >
-                <ContourBackground
-                    skipIntro={skipIntro}
-                    rotateX={rotateX}
-                    cameraX={cameraX}
-                    cameraY={cameraY}
-                    cameraZ={cameraZ}
-                    cameraRY={cameraRY}
-                    cameraRZ={cameraRZ}
-                />
+                <ContourBackground />
                 <HoverBackground hoveredItem={hoveredItem} />
 
                 {/*
