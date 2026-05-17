@@ -41,47 +41,54 @@ const readSkipIntroFlag = (): boolean => {
 };
 
 // ローディング演出の調整値
-const BOOT_MIN_VISIBLE_MS = 600;   // hydrate が早くてもこの時間は loading を見せる
-const BOOT_FADE_DURATION_MS = 400; // overlay opacity 1→0 の transition (index.astro の inline style と一致)
+// - 初回 (intro 演出あり) は「BOOT_SEQUENCE をしっかり見せる」感
+// - skipIntro (リロード / 同セッション内トップ遷移) は「軽く出してすぐ消える」感
+//   理由: hydrate + GSAP pin 確定までのラグで HomeStack の folder grid 等が
+//   覗くのを覆い隠したいが、毎回がっつり待たせると煩わしい。
+const BOOT_MIN_VISIBLE_MS = 600;
+const BOOT_FADE_DURATION_MS = 400;
+const BOOT_MIN_VISIBLE_SKIP_MS = 250;
+const BOOT_FADE_DURATION_SKIP_MS = 200;
 
 export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const [skipIntro] = useState<boolean>(readSkipIntroFlag);
     const [reducedMotion, setReducedMotion] = useState(false);
     // bootDone: BOOT_SEQUENCE overlay が完全に消えて Hero を描画してよい状態。
-    // skipIntro / reducedMotion 時は loading 演出をスキップして即時 true。
+    // reducedMotion 時のみ loading 演出をスキップして即時 true (動きを減らしたい人には
+    // ローディング演出も出さない)。skipIntro 時は短時間表示する。
     const [bootDone, setBootDone] = useState<boolean>(() => {
         if (typeof window === 'undefined') return false;
-        if (readSkipIntroFlag()) return true;
         if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
         return false;
     });
 
     // index.astro が SSR HTML に置く #hero-boot-overlay の制御:
-    //   - 通常 (初回訪問・reduced-motion 無効): 最低 BOOT_MIN_VISIBLE_MS 待ってから
-    //     opacity フェードアウト → display:none → bootDone=true で HeroSection を mount
-    //   - skipIntro / reducedMotion: 即時 display:none + bootDone は最初から true
-    // bootDone=false の間 HeroSection を mount しないことで、ロゴアニメは overlay
-    // フェード完了後に綺麗に立ち上がる (MAIN_TITLE_TIMING_MS の delay はそのまま流用)。
+    //   - 通常 (初回訪問): 最低 600ms 待ってから 400ms fade → bootDone=true
+    //   - skipIntro (2回目以降): 最低 250ms 待ってから 200ms fade → bootDone=true
+    //   - reducedMotion: 即時 display:none + bootDone 最初から true
+    // bootDone=false の間 HeroSection を mount しないことで、ロゴアニメ (skipIntro=false 時)
+    // は overlay フェード完了後に綺麗に立ち上がる。skipIntro=true 時はロゴ最終状態が
+    // overlay 消失後にいきなり現れるが、その間 HomeStack のラグも overlay で覆えている。
     useEffect(() => {
         const overlay = document.getElementById('hero-boot-overlay');
         if (bootDone) {
             if (overlay) overlay.style.display = 'none';
             return;
         }
+        const minVisible = skipIntro ? BOOT_MIN_VISIBLE_SKIP_MS : BOOT_MIN_VISIBLE_MS;
+        const fadeDuration = skipIntro ? BOOT_FADE_DURATION_SKIP_MS : BOOT_FADE_DURATION_MS;
         const mountTime = performance.now();
-        const fadeStartDelay = Math.max(0, BOOT_MIN_VISIBLE_MS - (performance.now() - mountTime));
+        const fadeStartDelay = Math.max(0, minVisible - (performance.now() - mountTime));
         const fadeTimer = window.setTimeout(() => {
             if (overlay) overlay.style.opacity = '0';
             const doneTimer = window.setTimeout(() => {
                 if (overlay) overlay.style.display = 'none';
                 setBootDone(true);
-            }, BOOT_FADE_DURATION_MS);
-            // cleanup 用に inner timer を ref 経由でつかむ簡略版: outer cleanup で外側を止め、
-            // 内側は (短時間なので) そのまま走らせる。実害がないので簡素に。
+            }, fadeDuration);
             return () => window.clearTimeout(doneTimer);
         }, fadeStartDelay);
         return () => window.clearTimeout(fadeTimer);
-    }, [bootDone]);
+    }, [bootDone, skipIntro]);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) return;
