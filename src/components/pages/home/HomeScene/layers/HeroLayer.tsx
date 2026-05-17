@@ -4,6 +4,7 @@ import { ShadowLayer } from '../../PrtsInterface/components/ShadowLayer';
 import { MainTitle } from '../../PrtsInterface/components/MainTitle';
 import { NavigationLayer } from '../../PrtsInterface/components/NavigationLayer';
 import { Decorations } from '../../PrtsInterface/components/Decorations';
+import { ContourBackground } from '../../PrtsInterface/components/ContourBackground';
 import { MAIN_TITLE_TIMING_MS, msToS } from '../../PrtsInterface/config/animationTiming';
 import type { UpdateItem } from '../types';
 
@@ -15,6 +16,8 @@ interface Props {
     mouseX: MotionValue<number>;
     mouseY: MotionValue<number>;
     updates?: UpdateItem[];
+    /** ContourBackground の uChaos に流す MotionValue/数値 */
+    chaos?: MotionValue<number> | number;
 }
 
 export const HeroLayer = ({
@@ -25,6 +28,7 @@ export const HeroLayer = ({
     mouseX,
     mouseY,
     updates,
+    chaos,
 }: Props) => {
     return (
         <motion.div
@@ -42,9 +46,10 @@ export const HeroLayer = ({
             style={{ transformStyle: 'preserve-3d' }}
             className="w-full h-full absolute inset-0 flex items-center justify-center origin-center"
         >
-            {/* ContourBackground (等高線 R3F Canvas) は HomeIntro 直下に常時 mount する
-                方式に変更したので、ここからは除外。loading overlay の裏で WebGL 初期化を
-                先に済ませて、HeroSection mount 時の明滅を防ぐため。 */}
+            {/* 等高線背景: 同じ親 (この intro motion.div) の子として置くことで、
+                rotateY -45 / scale 2.5 → identity の intro 3D animation や、HeroSection の
+                マウス連動 rotateX/Z、dolly の scale/opacity を等高線も一緒に受ける。 */}
+            <ContourBackground chaos={chaos} />
             <FloorPlane />
             <ShadowLayer contentX={contentX} contentY={contentY} />
             <MainTitle skipIntro={skipIntro} />

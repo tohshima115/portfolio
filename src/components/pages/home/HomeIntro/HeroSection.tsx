@@ -9,20 +9,21 @@ interface Props {
     skipIntro: boolean;
     updates?: UpdateItem[];
     active: boolean;
+    /** ContourBackground の uChaos に流す MotionValue/数値 */
+    chaos?: MotionValue<number> | number;
     /**
      * 0..1 の Hero→Statement dolly 進捗。
-     * outer motion.div に scale / filter / opacity を当てる (ロゴ・nav 等の前景のみ)。
-     * 等高線は HomeIntro 直下に常時 mount しているのでここからは影響を受けない。
+     * outer motion.div に scale / filter / opacity を当てる。HeroLayer 内の
+     * ContourBackground もこの transform を一緒に受ける。
      */
     dolly?: MotionValue<number>;
 }
 
-// Hero 専用のフルスクリーンセクション。前景 (HoverBackground + HeroLayer = ロゴ・nav 等) を
-// マウス連動 / dolly transform で動かす。ContourBackground (等高線) は HomeIntro 直下で
-// 常時 mount するので、HeroSection の transform は受けない (= loading 中に裏で WebGL
-// 初期化を完了させて明滅を防ぐため)。
+// Hero 専用のフルスクリーンセクション。HoverBackground (静的背景) を外、outer motion.div
+// (rotateX/rotateZ/scale/filter/opacity) の中に HeroLayer (= ContourBackground + ロゴ + nav)
+// を配置。前景・背景まとめてマウス連動と dolly transform を受ける。
 
-export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, dolly }) => {
+export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos, dolly }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     const mouseX = useMotionValue(0.5);
@@ -116,6 +117,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, dolly
                         mouseX={mouseX}
                         mouseY={mouseY}
                         updates={updates}
+                        chaos={chaos}
                     />
                 </div>
             </motion.div>

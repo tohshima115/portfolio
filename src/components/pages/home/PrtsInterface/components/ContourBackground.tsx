@@ -196,6 +196,17 @@ export const ContourBackground: React.FC<Props> = ({ chaos }) => {
                         setContextLost(true);
                     };
                     canvas.addEventListener('webglcontextlost', handleLost, { once: true });
+                    // 初期化完了 (WebGL Context 作成 + シェーダーコンパイル完了) を window 経由で通知。
+                    // 現状 HomeIntro 側ではこの event を listen していないが、将来 HeroSection を
+                    // 常時 mount して「等高線初期化完了を待ってから bootDone」に切り替えるとき
+                    // のための検知 hook として仕込んでおく。
+                    if (typeof window !== 'undefined') {
+                        try {
+                            window.dispatchEvent(new CustomEvent('home-contour-ready'));
+                        } catch {
+                            /* ignore */
+                        }
+                    }
                 }}
             >
                 <ContourScene

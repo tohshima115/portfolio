@@ -3,7 +3,6 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { HeroSection } from './HeroSection';
-import { ContourBackground } from '../PrtsInterface/components/ContourBackground';
 
 export type { UpdateItem };
 
@@ -46,9 +45,11 @@ const readSkipIntroFlag = (): boolean => {
 // - skipIntro (リロード / 同セッション内トップ遷移) は「軽く出してすぐ消える」感
 //   理由: hydrate + GSAP pin 確定までのラグで HomeStack の folder grid 等が
 //   覗くのを覆い隠したいが、毎回がっつり待たせると煩わしい。
-const BOOT_MIN_VISIBLE_MS = 600;
+// 値は ContourBackground (R3F + WebGL) の初期化が概ね間に合う長さに設定
+// (シェーダーコンパイル + 初回描画で数十〜数百 ms かかるため)。
+const BOOT_MIN_VISIBLE_MS = 800;
 const BOOT_FADE_DURATION_MS = 400;
-const BOOT_MIN_VISIBLE_SKIP_MS = 250;
+const BOOT_MIN_VISIBLE_SKIP_MS = 400;
 const BOOT_FADE_DURATION_SKIP_MS = 200;
 
 export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
@@ -159,14 +160,15 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // mount を遅延することで ContourBackground の Canvas 起動も framer-motion の
     // intro delay の計時もすべて「overlay フェード完了後」に始まる。
 
-    // ContourBackground は HomeIntro 直下に常時 mount しておく:
-    //   - WebGL Context + シェーダーコンパイル + 初回描画は重く (数十〜数百 ms)、
-    //     HeroSection mount と同タイミングで走らせると overlay 消失 → 等高線出現
-    //     の間に空白が見えて明滅する。
-    //   - overlay (z-99) で覆われている loading 中に裏で初期化を完了させておけば、
-    //     bootDone=true で overlay が消えた瞬間には既に等高線が描画されている。
-    //   - 代償として HeroLayer 内 intro animation (scale/rotateY/rotateX) や
-    //     マウス連動 / dolly の transform を等高線が受けなくなるが、明滅防止を優先。
+    // ContourBackground は元通り HeroLayer 内に置く (intro 3D animation / マウス連動 /
+    // dolly 全部の演出を維持)。bootDone gate により HeroSection mount まで ContourBackground
+    // も mount されないので、WebGL 初期化は overlay フェード直後に走る → 多少の明滅が
+    // 起こりうる。最低待ち時間を 800ms (skipIntro 400ms) に伸ばしてカバー範囲を広げてある。
+    //
+    // 将来「初期化完了を検知して bootDone を待つ」完全実装にするには HeroSection 常時 mount +
+    // 各 framer-motion intro の bootDone gate が必要 (大改修)。検知用 hook として
+    // ContourBackground 内で 'home-contour-ready' window event を発火する仕込みは入れて
+    // あるので、いつでも条件に組み込める。
 
     // reduced-motion: dolly 演出なし、Hero は単純な 100vh セクションとして
     // 通常フローで配置 (Statement と縦並び)
@@ -177,7 +179,6 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 onClickCapture={handleLinkClick}
                 data-home-intro
             >
-                <ContourBackground />
                 {bootDone && (
                     <HeroSection
                         skipIntro={skipIntro}
@@ -205,7 +206,6 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 data-home-intro
                 style={{ display: heroDisplay, pointerEvents: heroPointerEvents }}
             >
-                <ContourBackground />
                 {bootDone && (
                     <HeroSection
                         skipIntro={skipIntro}
