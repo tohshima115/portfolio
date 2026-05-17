@@ -5,36 +5,50 @@ import { TRANSITION_EVENT, type PlayTransitionDetail } from './controller';
 /**
  * 遷移コントローラ + クロスフェード制御。
  *
- * - `playWebGLTransition({ url })` を受けて `navigate()` を呼ぶ
- * - ブラウザ非依存のフェードを Astro ライフサイクルフックで組む:
- *     astro:before-preparation で loader を async ラップして、fetch 前に
- *       body の opacity を 0 にフェード
- *     astro:after-swap で新ページの body opacity を 0 から 1 へフェード
- *   View Transitions API を持たない Firefox でも動く。
+ * body 全体の opacity を変えるとヘッダー（position:fixed）も巻き込まれるため、
+ * z-[98] の fixed オーバーレイを使ってフェードを表現する。
+ * ヘッダーは z-[100] にあるためオーバーレイの影響を受けない。
  */
 
 const FADE_DURATION = 180;
+const OVERLAY_ID = 'page-fade-overlay';
+
+function getOverlay(): HTMLDivElement {
+    let el = document.getElementById(OVERLAY_ID) as HTMLDivElement | null;
+    if (!el) {
+        el = document.createElement('div');
+        el.id = OVERLAY_ID;
+        el.style.cssText =
+            'position:fixed;inset:0;z-index:98;background:var(--color-background);pointer-events:none;opacity:0;';
+        document.body.appendChild(el);
+    }
+    return el;
+}
 
 const fadeOut = (): Promise<void> =>
     new Promise<void>((resolve) => {
-        const body = document.body;
-        body.style.transition = `opacity ${FADE_DURATION}ms ease-out`;
-        body.style.opacity = '0';
+        const overlay = getOverlay();
+        overlay.style.transition = `opacity ${FADE_DURATION}ms ease-out`;
+        overlay.style.opacity = '1';
         window.setTimeout(resolve, FADE_DURATION);
     });
 
 const fadeIn = (): void => {
-    const body = document.body;
-    body.style.transition = 'none';
-    body.style.opacity = '0';
+    const overlay = getOverlay();
+    overlay.style.transition = 'none';
+    overlay.style.opacity = '1';
     requestAnimationFrame(() => {
-        body.style.transition = `opacity ${FADE_DURATION}ms ease-in`;
-        body.style.opacity = '1';
+        overlay.style.transition = `opacity ${FADE_DURATION}ms ease-in`;
+        overlay.style.opacity = '0';
     });
 };
 
 export const WebGLTransition: React.FC = () => {
     useEffect(() => {
+        // body に残った旧来の opacity スタイルをリセット
+        document.body.style.opacity = '';
+        document.body.style.transition = '';
+
         const handlePlay = (e: Event) => {
             const detail = (e as CustomEvent<PlayTransitionDetail>).detail;
             if (detail?.url) {
@@ -56,6 +70,7 @@ export const WebGLTransition: React.FC = () => {
         };
 
         const handleAfterSwap = () => {
+            // DOMスワップ後は body の opacity が変わらないのでそのままフェードイン
             fadeIn();
         };
 
