@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'framer-motion';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
 import type { UpdateItem } from '../HomeScene/types';
 import { HeroSection } from './HeroSection';
+import { ContourBackground } from '../PrtsInterface/components/ContourBackground';
 
 export type { UpdateItem };
 
@@ -158,6 +159,15 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     // mount を遅延することで ContourBackground の Canvas 起動も framer-motion の
     // intro delay の計時もすべて「overlay フェード完了後」に始まる。
 
+    // ContourBackground は HomeIntro 直下に常時 mount しておく:
+    //   - WebGL Context + シェーダーコンパイル + 初回描画は重く (数十〜数百 ms)、
+    //     HeroSection mount と同タイミングで走らせると overlay 消失 → 等高線出現
+    //     の間に空白が見えて明滅する。
+    //   - overlay (z-99) で覆われている loading 中に裏で初期化を完了させておけば、
+    //     bootDone=true で overlay が消えた瞬間には既に等高線が描画されている。
+    //   - 代償として HeroLayer 内 intro animation (scale/rotateY/rotateX) や
+    //     マウス連動 / dolly の transform を等高線が受けなくなるが、明滅防止を優先。
+
     // reduced-motion: dolly 演出なし、Hero は単純な 100vh セクションとして
     // 通常フローで配置 (Statement と縦並び)
     if (reducedMotion) {
@@ -167,6 +177,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 onClickCapture={handleLinkClick}
                 data-home-intro
             >
+                <ContourBackground />
                 {bootDone && (
                     <HeroSection
                         skipIntro={skipIntro}
@@ -194,6 +205,7 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 data-home-intro
                 style={{ display: heroDisplay, pointerEvents: heroPointerEvents }}
             >
+                <ContourBackground />
                 {bootDone && (
                     <HeroSection
                         skipIntro={skipIntro}

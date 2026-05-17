@@ -9,27 +9,20 @@ interface Props {
     skipIntro: boolean;
     updates?: UpdateItem[];
     active: boolean;
-    /** ContourBackground の uChaos に流す MotionValue/数値 */
-    chaos?: MotionValue<number> | number;
     /**
-     * 0..1 の Hero→Statement dolly 進捗 (案 G)。
-     * 親 outer motion.div に scale / filter / opacity を当てるので、ContourBackground
-     * を含む全要素が物理的に同じ transform を受ける (= 行列順の手動同期が不要)。
+     * 0..1 の Hero→Statement dolly 進捗。
+     * outer motion.div に scale / filter / opacity を当てる (ロゴ・nav 等の前景のみ)。
+     * 等高線は HomeIntro 直下に常時 mount しているのでここからは影響を受けない。
      */
     dolly?: MotionValue<number>;
 }
 
-// Hero 専用のフルスクリーンセクション。
-//
-// 設計方針 (rev2): 「親 div で transform を一括管理」方式に統一。
-//   旧方式は ContourBackground (R3F canvas) の auto-resize バグ回避のため、
-//   各要素で個別に transform を当てて手動で行列順を同期する形だったが、
-//   preserve-3d の合成順を完全一致させるのが困難でズレが残った。
-//   現方式は ContourBackground の Canvas に resize={{ offsetSize: true }} を
-//   設定して親 transform 影響下でも安定 sizing できるようにし、
-//   intro 用 HeroLayer 内に ContourBackground を同居させて 1 階層で済ませる。
+// Hero 専用のフルスクリーンセクション。前景 (HoverBackground + HeroLayer = ロゴ・nav 等) を
+// マウス連動 / dolly transform で動かす。ContourBackground (等高線) は HomeIntro 直下で
+// 常時 mount するので、HeroSection の transform は受けない (= loading 中に裏で WebGL
+// 初期化を完了させて明滅を防ぐため)。
 
-export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos, dolly }) => {
+export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, dolly }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     const mouseX = useMotionValue(0.5);
@@ -123,7 +116,6 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                         mouseX={mouseX}
                         mouseY={mouseY}
                         updates={updates}
-                        chaos={chaos}
                     />
                 </div>
             </motion.div>
