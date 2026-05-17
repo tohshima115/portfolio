@@ -21,8 +21,9 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
     ];
 
     return (
+        {/* Desktop: 横1列 */}
         <div className="hidden md:block mt-auto mb-20 self-center w-full max-w-3xl px-6 pointer-events-auto">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-4 w-full">
+            <div className="flex flex-row items-end justify-between gap-4 w-full">
                 {navItems.map((item, index) => (
                     <motion.div
                         key={item.label}
@@ -36,6 +37,34 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
                     >
                         <NavButton {...item} onHover={onHoverItem} />
                     </motion.div>
+                ))}
+            </div>
+        </div>
+
+        {/* Mobile: 2×2 グリッド */}
+        <div className="md:hidden mt-auto mb-10 self-center w-full px-6 pointer-events-auto">
+            <div className="grid grid-cols-2 gap-3 w-full">
+                {navItems.map((item, index) => (
+                    <motion.a
+                        key={item.label}
+                        href={item.href}
+                        data-astro-prefetch="load"
+                        initial={skipIntro ? false : { opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={skipIntro ? { duration: 0 } : {
+                            duration: msToS(MAIN_TITLE_TIMING_MS.navigation.appearDuration),
+                            delay: msToS(MAIN_TITLE_TIMING_MS.navigation.appearStart + MAIN_TITLE_TIMING_MS.navigation.stagger * index),
+                            ease: "easeOut"
+                        }}
+                        className={`group flex items-center justify-center gap-2 py-3 px-4 rounded-lg border font-mono text-sm tracking-widest font-bold transition-colors active:scale-95
+                            ${item.highlight
+                                ? 'border-accent text-accent bg-accent/10 active:bg-accent active:text-background'
+                                : 'border-foreground/20 text-foreground bg-background/30 active:bg-accent active:border-accent active:text-background'
+                            }`}
+                    >
+                        {item.customIcon && item.customIcon(null)}
+                        {item.label}
+                    </motion.a>
                 ))}
             </div>
         </div>
