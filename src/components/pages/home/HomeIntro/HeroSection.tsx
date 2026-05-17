@@ -35,21 +35,33 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
     const mouseX = useMotionValue(0.5);
     const mouseY = useMotionValue(0.5);
     const springConfig = { damping: 20, stiffness: 100, mass: 1 };
-    const rotateX = useSpring(useTransform(mouseY, [0, 1], [20, 40]), springConfig);
-    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
-    const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
-    const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
+    // ===== DEBUG-CAMERA-OFF: マウス連動 rotateX/rotateZ をニュートラル固定 (切り分け用) =====
+    // 戻すときは以下 4 行を元に戻す:
+    // const rotateX = useSpring(useTransform(mouseY, [0, 1], [20, 40]), springConfig);
+    // const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
+    // const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
+    // const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
+    const rotateX = useSpring(useTransform(mouseY, [0, 1], [0, 0]), springConfig);
+    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [0, 0]), springConfig);
+    const contentX = useSpring(useTransform(mouseX, [0, 1], [0, 0]), springConfig);
+    const contentY = useSpring(useTransform(mouseY, [0, 1], [0, 0]), springConfig);
+    // ===== /DEBUG-CAMERA-OFF =====
 
     // dolly: 親が undefined を渡してきても hooks を呼ぶ必要があるので fallback を常に作る。
     const dollyFallback = useMotionValue(0);
     const dollySrc = dolly ?? dollyFallback;
-    const heroScale = useTransform(dollySrc, dollyScale);
-    const heroFilter = useTransform(dollySrc, (p: number) => {
-        const px = dollyBlurPxFg(p);
-        // blur(0px) でもレイヤを作るブラウザ対策。閾値前は filter を 'none' に。
-        return px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'none';
-    });
-    const heroOpacity = useTransform(dollySrc, dollyOpacity);
+    // ===== DEBUG-CAMERA-OFF: dolly (scroll-driven scale/blur/opacity) を無効化 =====
+    // 戻すときは以下 3 行を元に戻す:
+    // const heroScale = useTransform(dollySrc, dollyScale);
+    // const heroFilter = useTransform(dollySrc, (p: number) => {
+    //     const px = dollyBlurPxFg(p);
+    //     return px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'none';
+    // });
+    // const heroOpacity = useTransform(dollySrc, dollyOpacity);
+    const heroScale = useTransform(dollySrc, () => 1);
+    const heroFilter = useTransform(dollySrc, () => 'none');
+    const heroOpacity = useTransform(dollySrc, () => 1);
+    // ===== /DEBUG-CAMERA-OFF =====
 
     const viewportRef = useRef<HTMLDivElement>(null);
     const rectRef = useRef<DOMRect | null>(null);
