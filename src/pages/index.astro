@@ -170,17 +170,19 @@ const personSchema = {
 		<SmoothScroll client:only="react" />
 		<!--
 		  HomeIntro は client:only="react" のため SSR HTML に含まれず、
-		  HomeStack (= client:load で SSR される WorksSection) のフォルダーが
-		  hydrate 完了までの一瞬だけ覗いてしまう。それを SSR 段階で覆う初期
-		  オーバーレイ。Tailwind の JIT 抽出に依存すると初回 paint に間に合わない
+		  HomeStack (= client:load で SSR される WorksSection) のフォルダーや
+		  HudOverlay (z-[80] fixed) が hydrate 完了までの間、画面前面に出てしまう
+		  ことがある。それらを SSR 段階で覆う初期オーバーレイ + BOOT_SEQUENCE
+		  ローディング UI。Tailwind の JIT 抽出に依存すると初回 paint に間に合わない
 		  ケースがあるので inline style + var(--color-background) で確実に塗る。
-		  SiteHeader (z-[100]) より下、Hero (z-[5]) より上の z-index:6。
-		  HomeIntro が mount したら React 側で display:none する。
+		  SiteHeader (z-[100]) のすぐ下にあたる z-index:99 で、HomeStack 内の
+		  あらゆる fixed/絶対配置要素 (HudOverlay z-80 含む) より前に出す。
+		  HomeIntro mount → 最低 600ms 待機 → opacity フェード (400ms) → display:none。
 		-->
 		<div
 			id="hero-boot-overlay"
 			aria-hidden="true"
-			style="position:fixed;inset:0;z-index:6;background-color:var(--color-background);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);transition:opacity 400ms ease-out;"
+			style="position:fixed;inset:0;z-index:99;background-color:var(--color-background);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);transition:opacity 400ms ease-out;"
 		>
 			<div
 				style="font-size:11px;letter-spacing:0.4em;color:var(--color-muted-foreground,#737373);text-transform:uppercase;display:flex;align-items:center;gap:8px;"
