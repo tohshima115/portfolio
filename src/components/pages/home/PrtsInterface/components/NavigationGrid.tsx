@@ -42,13 +42,9 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
             </div>
         </div>
 
-        {/* Mobile: 2×2 グリッド。
-            NavigationLayer が translateZ(160px) のため -80px で相殺 → net Z=80px (ロゴと同じ高さ)。
-            XY は画面下寄りに絶対配置。 */}
-        <div
-            className="md:hidden absolute bottom-10 left-0 right-0 px-6 pointer-events-auto"
-            style={{ transform: 'translateZ(-80px)', transformStyle: 'preserve-3d' }}
-        >
+        {/* Mobile: 2×2 グリッド。3D transform は使わず通常フローで配置。
+            translateZ を使うとヒットテストの投影位置がずれてタップが届かなくなる。 */}
+        <div className="md:hidden mt-auto mb-8 self-center w-full px-6 pointer-events-auto">
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full">
                 {navItems.map((item, index) => (
                     <motion.div
