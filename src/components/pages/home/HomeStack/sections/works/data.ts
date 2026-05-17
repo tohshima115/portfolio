@@ -18,10 +18,10 @@ export const PROJECTS: Project[] = [
     },
     {
         id: '02',
-        name: 'PL Dashboard',
-        meta: 'Cloudflare D1 · 社内運用',
+        name: '業務ツールいろいろ',
+        meta: 'Design Office · Cloudflare D1 · 社内運用',
         description:
-            '先輩が毎月 Excel で確認していた PL シートが見づらくて、自発的に Cloudflare D1 のダッシュボードに乗せ換えた。今も月次で使われている。',
+            'Web 制作会社で「これは仕組みで何とかした方が早そう」と思った業務を片手間でツール化してきたやつ。PL ダッシュボード / 経費入力の自動化 / カレンダー+LINE 配信などをまとめている。',
     },
     {
         id: '03',

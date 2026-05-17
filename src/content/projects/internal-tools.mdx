@@ -1,0 +1,84 @@
+---
+title: 業務ツールいろいろ (Design Office)
+meta:
+  date: 2025-12-01
+  duration: 2025秋 — 2026春
+attributes:
+  roles:
+    - frontend-dev
+    - backend-dev
+    - ui-design
+    - ux-research
+  stack:
+    - Cloudflare Workers
+    - Cloudflare D1
+    - Cloudflare Zero Trust
+    - Hono
+    - React
+    - TypeScript
+    - LLM API
+    - Google Apps Script
+---
+
+## TL;DR
+
+Web 制作会社で働いているうちに「これは仕組みで何とかした方が早そう」と思った業務を、片手間で何個かツール化してきたものをまとめています。だいたい AI に投げて作っているので大層なものではないんですけど、地味に効いている気はします。
+
+| 項目 | 内容 |
+|---|---|
+| 期間 | 2025秋 〜 2026春 |
+| 場所 | 在籍中の Web 制作会社 |
+| 公開範囲 | 社内運用（クライアント情報を含むため非公開） |
+
+## 作ったもの
+
+### 1. PL Dashboard
+
+先輩が毎月触っていた Excel 製の PL シートが、月ごとに別シートに切られていて通年で追えなかったり、関数が場当たり的だったりで、「これは見るたびにきついだろうな」という感じの代物でした。
+
+「ダッシュボードにした方が早そう」と思って勝手に作りました。Cloudflare D1 にデータを移して、Hono + React で OOUI 寄りの画面（数字から入るんじゃなくて勘定科目から入る）に組み直しています。社内に閉じておきたいので Cloudflare Zero Trust を被せて、Google Workspace のアカウントだけ通すようにしています。
+
+経営学部だったぶん PL の構造の感覚はあったので、データモデルを決めるところは早かった気がします。
+
+- **Stack**: Cloudflare Workers + D1 + Zero Trust / Hono / React / Tailwind
+- **期間**: 約 2 週間
+
+### 2. 経費入力の自動化
+
+紙の領収書とか取引先 PDF を Spreadsheet に転記する作業が週 3 時間くらいあって、しかも金額なので 1 桁ミスると怖いやつでした。「人間が集中してミスらないように写経する」のは仕事として変だなと思ったので、AI に投げる仕組みに置き換えました。
+
+OCR で読んで → LLM に「これは何の書類で、どこが金額本体か」を判定させて → Apps Script で Spreadsheet に書き込む、という流れ。最後は必ず人間が承認してから本シートに入る作りにして、既存値と差分が大きいときは警告フラグを立てるようにしています。
+
+時間はざっくり **週 3h → 週 20 分**（年換算で 130 時間くらい）になりました。
+
+- **Stack**: TypeScript / LLM API / OCR / Google Apps Script
+- **期間**: 約 1 週間
+
+### 3. Schedule Distributor (Calendar + LINE)
+
+「予定をカレンダーに入れる」+「同じ内容を LINE にも残す」というルールが社内にあって、まじめにやろうとすると 1 日 30 分くらい持っていかれていました。同僚 2 人がそもそも予定登録できていないのを見て、これは仕組みで吸収するしかないなと思って 3 日くらいで組みました。
+
+1 つのフォームに「今日これやる」を自然文で書く（スマホで音声入力もできる）→ LLM が日時 / タイトル / 場所に構造化 → Google Calendar API に書き込み + LINE 用の文面を整形して出す、という Electron アプリです。
+
+正直、今だったら AI チャットサービスだけで済んでしまう気もしますが、当時は AI のカレンダー連携精度が低かったのと、Electron / GCP の連携を一度触っておきたい気持ちもあって作った、勉強寄りの側面が強いやつでもあります。
+
+- **Stack**: TypeScript / LLM / Whisper / Google Calendar API / Electron
+- **期間**: 約 3 日
+
+### 4. Stack Modernization
+
+入社したとき、社内が「Photoshop で Web をデザイン → HTML + jQuery → 社内オンプレに FTP」という構成でした。Web 制作を主業のひとつにしている事務所としてはかなりレガシーな手元だったので、経営陣と相談しながら段階的に Figma + Astro + Cloudflare に寄せていきました。
+
+| 領域 | Before | After |
+|---|---|---|
+| デザイン | Photoshop | Figma（DTP 用途のみ Adobe を残す棲み分け） |
+| フロント | HTML + jQuery | React / Astro |
+| 公開 | 社内オンプレ FTP | Cloudflare Pages / Workers |
+
+経路の選定が一番右往左往したところで、静的書き出し → VPS → セルフホスト PaaS → Vercel → 最終的に Cloudflare Pages / Workers、と順番に試した結果、人数課金がなくて Astro サポートが厚い Cloudflare に落ち着きました。ちょうど Cloudflare が Astro を取得したタイミングで、社内的にも「これに揃えればいい」という空気が作れたのは運も良かったです。
+
+今は社内標準のフレームワークが Astro になって、他のメンバーもそれで書いています。
+
+## まとめ
+
+どれも「言われて作った」というよりは「これだるそうだな」を観察して勝手に作ったやつで、後から「これ便利だね」と言われるパターンが多かったです。プロダクトを作ることと業務改善を作ることが、自分の中ではあんまり区別がついていないのかもしれません。

@@ -74,7 +74,7 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                 </dl>
 
                 <div className="flex items-center gap-4">
-                    <Button as="a" href="/projects/pl-dashboard" variant="primary" size="md">
+                    <Button as="a" href="/projects/internal-tools" variant="primary" size="md">
                         Open Case Study
                         <svg
                             className="w-3 h-3 group-hover:translate-x-1 transition-transform"
