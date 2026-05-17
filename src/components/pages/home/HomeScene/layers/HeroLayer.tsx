@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion, type MotionValue } from 'framer-motion';
 import { FloorPlane } from '../../PrtsInterface/components/FloorPlane';
 import { MainTitle } from '../../PrtsInterface/components/MainTitle';
@@ -5,6 +6,7 @@ import { NavigationLayer } from '../../PrtsInterface/components/NavigationLayer'
 import { Decorations } from '../../PrtsInterface/components/Decorations';
 import { ContourBackground } from '../../PrtsInterface/components/ContourBackground';
 import { MAIN_TITLE_TIMING_MS, msToS } from '../../PrtsInterface/config/animationTiming';
+
 interface Props {
     skipIntro: boolean;
     contentX: MotionValue<number>;
@@ -16,6 +18,13 @@ interface Props {
     chaos?: MotionValue<number> | number;
 }
 
+// PC: scale 3.0 / rotateY -45 / rotateX 30 — 大きく寄ってダイナミックに引く演出。
+// Mobile: scale と rotation を抑えてロゴが画面外に出ないようにする。
+//   scale 3.0 + translateZ(80px) + perspective 1000px + rotateX 30 の組み合わせが
+//   小さい画面では perspective distortion でロゴを画面外に押し出してしまうため。
+const DESKTOP_INITIAL = { scale: 3.0, rotateY: -45, rotateX: 30 };
+const MOBILE_INITIAL  = { scale: 1.8, rotateY: -20, rotateX: 15 };
+
 export const HeroLayer = ({
     skipIntro,
     contentX,
@@ -25,9 +34,17 @@ export const HeroLayer = ({
     mouseY,
     chaos,
 }: Props) => {
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 767px)');
+        setIsMobile(mq.matches);
+    }, []);
+
+    const introInitial = isMobile ? MOBILE_INITIAL : DESKTOP_INITIAL;
+
     return (
         <motion.div
-            initial={skipIntro ? false : { scale: 3.0, rotateY: -45, rotateX: 30 }}
+            initial={skipIntro ? false : introInitial}
             animate={{ scale: 1.15, rotateY: 0, rotateX: 0 }}
             transition={
                 skipIntro
