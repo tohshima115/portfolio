@@ -32,7 +32,7 @@ export const HeroLayer = ({
     return (
         <motion.div
             initial={skipIntro ? false : { scale: 2.5, rotateY: -45, rotateX: 30 }}
-            animate={{ scale: 1, rotateY: 0, rotateX: 0 }}
+            animate={{ scale: 1.15, rotateY: 0, rotateX: 0 }}
             transition={
                 skipIntro
                     ? { duration: 0 }
