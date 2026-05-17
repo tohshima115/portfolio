@@ -125,15 +125,16 @@ export const MID_DELAY_ROW_STAGGER = 0.04;
 
 // ───────────────────────────────────────────────────────────
 // Pin & section dimensions
-// outro に Bio teaser の fade-in 時間を含むため pin scroll を 870vh に。
-// timeline 全体長 (= TIMING.outroEnd 3.40) を pin scroll 870vh にマップ
+// outro に Bio teaser の fade-in 時間を含むため pin scroll を 935vh に。
+// timeline 全体長 (= TIMING.outroEnd 3.65) を pin scroll 935vh にマップ
 // (1 unit ≈ 256vh、earlier phase の感覚を維持)。
+// Phase A hold 延長 (+0.25) に伴い 870 → 935 に増量。
 // ───────────────────────────────────────────────────────────
-export const PIN_SCROLL_END = '+=870%';
+export const PIN_SCROLL_END = '+=935%';
 // gsap で計算用 (PIN_SCROLL_END と一致させる)
-export const PIN_SCROLL_RANGE_VH = 870;
-// pin spacer (= pin range 870 + pin-inner.height 100 = 970) を覆える最小値
-export const SECTION_MIN_HEIGHT_VH = 970;
+export const PIN_SCROLL_RANGE_VH = 935;
+// pin spacer (= pin range 935 + pin-inner.height 100 = 1035) を覆える最小値
+export const SECTION_MIN_HEIGHT_VH = 1035;
 
 // ───────────────────────────────────────────────────────────
 // Timeline labels
@@ -141,7 +142,9 @@ export const SECTION_MIN_HEIGHT_VH = 970;
 // 数値は normalized timeline 上の絶対位置。
 // ───────────────────────────────────────────────────────────
 export const TIMING = {
-    // Phase A: Cloudflare hero reveal (~0.05–0.30)
+    // Phase A: Cloudflare hero reveal (~0.05–0.40)
+    // hero stats (CF products) の全 reveal が 0.40 頃に完了し、0.55 まで hold してから
+    // Phase B (folder waterfall) が始まる。ユーザーが製品名を読む時間を十分確保。
     heroGlobe: 0.05,
     heroSubLabel: 0.10,
     heroHeadline: 0.13,
@@ -149,33 +152,34 @@ export const TIMING = {
     heroStats: 0.23,
     heroStatsCount: 0.30,
 
-    // Phase B: folder waterfall (~0.30–0.62)
-    folderWaterfallStart: 0.30,
+    // Phase B: folder waterfall (~0.55–0.87)
+    // Phase A hold (+0.25 シフト) により 0.30 → 0.55 に移動。
+    folderWaterfallStart: 0.55,
     folderWaterfallSpread: 0.20,
     folderWaterfallDuration: 0.12,
 
-    // Phase D: shift + shrink + hero fade (~0.66–0.86)
-    folderShiftStart: 0.66,
+    // Phase D: shift + shrink + hero fade (~0.91–1.11)
+    folderShiftStart: 0.91,
     folderShiftDuration: 0.22,
-    midShrinkStart: 0.66,
+    midShrinkStart: 0.91,
     midShrinkDuration: 0.11,
-    heroFadeStart: 0.66,
+    heroFadeStart: 0.91,
     heroFadeDuration: 0.22,
 
-    // Phase E: WORKS heading reveal (~0.78–1.10)
-    worksRule: 0.78,
-    worksSubLabel: 0.78,
-    worksHeading: 0.82,
+    // Phase E: WORKS heading reveal (~1.03–1.35)
+    worksRule: 1.03,
+    worksSubLabel: 1.03,
+    worksHeading: 1.07,
     worksHeadingDuration: 0.18,
     worksHeadingStagger: 0.025,
-    worksMeta: 0.90,
+    worksMeta: 1.15,
 
-    // Phase F: project transitions (~1.30–2.60)
+    // Phase F: project transitions (~1.55–2.85)
     // 各 transition は前 stage を fade out (outAt 起点) → 次 stage を fade in (inAt 起点)
     projectTransitions: [
-        { id: '01', outAt: 1.30, inAt: 1.36 },
-        { id: '02', outAt: 1.80, inAt: 1.86 },
-        { id: '03', outAt: 2.30, inAt: 2.36 },
+        { id: '01', outAt: 1.55, inAt: 1.61 },
+        { id: '02', outAt: 2.05, inAt: 2.11 },
+        { id: '03', outAt: 2.55, inAt: 2.61 },
     ],
     projectOutDuration: 0.10,
     projectInDuration: 0.14,
@@ -188,20 +192,20 @@ export const TIMING = {
 
     // wave / 右シフトの終端。F3 settle 後の drift もここで終わる。
     // この時点で Swept project は表示・hold 中。Outro 開始もこの時刻。
-    timelineEnd: 2.70,
+    timelineEnd: 2.95,
 
     // ─── Phase G (Outro): 折り紙を左→右に sweep + Swept fade out + Bio fade in ───
     // sweep は col に応じた stagger で各 tile の opacity を 0 にする。
     // Swept は同時に fade out。両方終わってから (= cleared 画面) Bio が fade in。
-    outroSweptFadeOutAt: 2.70,
+    outroSweptFadeOutAt: 2.95,
     outroSweptFadeOutDuration: 0.22,
-    outroSweepStart: 2.70,
+    outroSweepStart: 2.95,
     outroSweepStaggerWindow: 0.40,
     outroSweepFadeDuration: 0.20,
-    // sweep の終盤 (last tile fade ~3.10-3.30) と overlap させ、folder が消え終わる頃には
+    // sweep の終盤 (last tile fade ~3.35-3.55) と overlap させ、folder が消え終わる頃には
     // BioIntroStage がほぼ見えている体感に。
-    outroBioFadeInAt: 3.10,
+    outroBioFadeInAt: 3.35,
     outroBioFadeInDuration: 0.30,
     // outroEnd = bio fade-in 終端。ここで pin 解除、以降は AboutSection 本体が通常スクロールで登場。
-    outroEnd: 3.40,
+    outroEnd: 3.65,
 } as const;

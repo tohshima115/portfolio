@@ -268,9 +268,10 @@ const ArcLine: React.FC<ArcLineProps> = ({ stateRef, color }) => {
 
 interface GlobeProps {
     reduced: boolean;
+    scrollVelRef: React.MutableRefObject<number>;
 }
 
-const Globe: React.FC<GlobeProps> = ({ reduced }) => {
+const Globe: React.FC<GlobeProps> = ({ reduced, scrollVelRef }) => {
     const groupRef = useRef<THREE.Group>(null);
 
     // 表面塗り用の solid sphere (半径 1.0) と、その外側に被せる wireframe (半径 1.015)。
@@ -320,8 +321,10 @@ const Globe: React.FC<GlobeProps> = ({ reduced }) => {
     useFrame((_, dt) => {
         if (!groupRef.current) return;
         if (!reduced) {
-            // 連続 rotation のみ。entrance は wrapper 側の opacity (GSAP 駆動) に任せる
-            groupRef.current.rotation.y += dt * 0.06; // ~17 sec / rotation
+            // スクロール速度を減衰させながら base rotation に加算する。
+            // wheel/touch で加えられた impulse がここで自然に収束する。
+            scrollVelRef.current *= Math.pow(0.85, dt * 60);
+            groupRef.current.rotation.y += dt * (0.06 + scrollVelRef.current);
         }
     });
 
@@ -358,10 +361,37 @@ interface Props {
 export const GlobeBackground: React.FC<Props> = ({ className }) => {
     const reduced = useReducedMotion();
     const [mounted, setMounted] = useState(false);
+    const scrollVelRef = useRef(0);
 
     useEffect(() => {
         setMounted(true);
-    }, []);
+        if (reduced) return;
+
+        let touchPrevY = 0;
+
+        const onWheel = (e: WheelEvent) => {
+            const impulse = e.deltaY * 0.00015;
+            scrollVelRef.current = Math.max(-0.08, Math.min(0.40, scrollVelRef.current + impulse));
+        };
+        const onTouchStart = (e: TouchEvent) => {
+            touchPrevY = e.touches[0].clientY;
+        };
+        const onTouchMove = (e: TouchEvent) => {
+            const dy = touchPrevY - e.touches[0].clientY;
+            touchPrevY = e.touches[0].clientY;
+            const impulse = dy * 0.0003;
+            scrollVelRef.current = Math.max(-0.08, Math.min(0.40, scrollVelRef.current + impulse));
+        };
+
+        window.addEventListener('wheel', onWheel, { passive: true });
+        window.addEventListener('touchstart', onTouchStart, { passive: true });
+        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        return () => {
+            window.removeEventListener('wheel', onWheel);
+            window.removeEventListener('touchstart', onTouchStart);
+            window.removeEventListener('touchmove', onTouchMove);
+        };
+    }, [reduced]);
 
     if (!mounted) {
         return <div className={className} aria-hidden />;
@@ -376,7 +406,7 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
                 flat
                 gl={{ antialias: true, alpha: true }}
             >
-                <Globe reduced={reduced} />
+                <Globe reduced={reduced} scrollVelRef={scrollVelRef} />
             </Canvas>
         </div>
     );

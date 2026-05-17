@@ -84,6 +84,11 @@ const WorksLead: React.FC = () => {
                     `[data-project-id="${id}"] [data-project-rule]`,
                 );
 
+            // ── Phase A stats 要素の初期 y オフセットをセット ──
+            if (statsBadge) gsap.set(statsBadge, { y: 8 });
+            if (stats.length > 0) gsap.set(stats, { y: 6 });
+            if (statsCount) gsap.set(statsCount, { y: 6 });
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: container,
@@ -388,6 +393,10 @@ const WorksLead: React.FC = () => {
     );
 };
 
+const CF_PRODUCTS = [
+    'Workers', 'D1', 'R2', 'Durable Objects', 'Workers AI', 'Email Routing', 'Zero Trust',
+];
+
 // Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
     <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
@@ -398,13 +407,45 @@ const HeroLayer: React.FC = () => (
         <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
             <div className="order-2 md:order-1">
                 <h2 className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl">
-                    <span data-lead-line data-reveal className="block">
+                    <span data-lead-line data-reveal className="block" style={{ opacity: 0 }}>
                         Cloudflare が好きで、
                     </span>
-                    <span data-lead-line data-reveal className="block text-foreground/70">
+                    <span data-lead-line data-reveal className="block text-foreground/70" style={{ opacity: 0 }}>
                         いろいろ試しながら作っています。
                     </span>
                 </h2>
+
+                {/* CF product stack — staggered reveal in Phase A */}
+                <div
+                    data-lead-statbadge
+                    style={{ opacity: 0 }}
+                    className="mt-5 flex items-center gap-2 font-mono"
+                >
+                    <span className="text-accent text-xs">+</span>
+                    <span className="text-2xs uppercase tracking-[0.4em] text-muted-foreground">CF Products in use</span>
+                    <span aria-hidden className="h-px bg-foreground/15 w-12" />
+                </div>
+
+                <ul className="mt-3 flex flex-wrap gap-1.5">
+                    {CF_PRODUCTS.map((p) => (
+                        <li
+                            key={p}
+                            data-lead-stat
+                            style={{ opacity: 0 }}
+                            className="font-mono text-xs text-foreground/70 border border-foreground/15 px-2 py-0.5 leading-tight"
+                        >
+                            {p}
+                        </li>
+                    ))}
+                </ul>
+
+                <p
+                    data-lead-statcount
+                    style={{ opacity: 0 }}
+                    className="mt-3 font-mono text-2xs uppercase tracking-[0.35em] text-muted-foreground/55"
+                >
+                    {CF_PRODUCTS.length} products · all Cloudflare native
+                </p>
             </div>
 
             <div
