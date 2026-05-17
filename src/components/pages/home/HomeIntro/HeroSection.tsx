@@ -80,6 +80,20 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, active, chaos, dolly }
         mouseY.set(0.5);
     };
 
+    // モバイル: タッチドラッグで傾きを操作（マウスと同じ rotateX/Z に流す）
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (!active) return;
+        const rect = rectRef.current;
+        if (!rect) return;
+        const touch = e.touches[0];
+        mouseX.set((touch.clientX - rect.left) / rect.width);
+        mouseY.set((touch.clientY - rect.top) / rect.height);
+    };
+    const handleTouchEnd = () => {
+        mouseX.set(0.5);
+        mouseY.set(0.5);
+    };
+
     return (
         <div
             ref={viewportRef}
@@ -87,6 +101,8 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, active, chaos, dolly }
             style={{ perspective: '1000px' }}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
         >
             {/* 静的背景レイヤー (radial gradient + noise): カメラ追従の枠外。
                 outer motion.div の外側に置くことで rotateX/rotateZ/scale/filter/opacity

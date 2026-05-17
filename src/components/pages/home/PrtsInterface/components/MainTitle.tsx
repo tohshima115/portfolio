@@ -27,10 +27,9 @@ const GLOW_STYLE: CSSProperties = {
 };
 
 // 中央寄せ + 3D オフセット補正用の共通ラッパスタイル。
-// translateZ だけ呼び出し側で差し替える。
+// marginTop はデスクトップの 3D パース補正のみ (md:-mt-10 で出し分け)。
 const wrapperStyle = (z: number): CSSProperties => ({
     transform: `translate(-50%, -50%) translateZ(${z}px)`,
-    marginTop: '-40px', // 3D パースによる視覚的なズレ補正
     transformStyle: 'preserve-3d',
 });
 
@@ -40,7 +39,7 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
             {/* 床面 (Z=0) のグロー: ロゴが床に落とす影/光 */}
             <div
                 aria-hidden
-                className="absolute left-1/2 top-1/2 pointer-events-none"
+                className="absolute left-1/2 top-1/2 md:-mt-10 pointer-events-none"
                 style={wrapperStyle(0)}
             >
                 <div className="hidden md:block" style={GLOW_STYLE}>
@@ -53,7 +52,7 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
 
             {/* 浮き上がり (Z=80px) の本体ロゴ */}
             <div
-                className="absolute left-1/2 top-1/2 pointer-events-none"
+                className="absolute left-1/2 top-1/2 md:-mt-10 pointer-events-none"
                 style={wrapperStyle(80)}
             >
                 <div className="hidden md:block">

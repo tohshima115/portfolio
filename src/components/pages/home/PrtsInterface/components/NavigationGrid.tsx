@@ -21,7 +21,7 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
     ];
 
     return (
-        <div className="mt-auto mb-20 self-center w-full max-w-3xl px-6 pointer-events-auto">
+        <div className="hidden md:block mt-auto mb-20 self-center w-full max-w-3xl px-6 pointer-events-auto">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-4 w-full">
                 {navItems.map((item, index) => (
                     <motion.div

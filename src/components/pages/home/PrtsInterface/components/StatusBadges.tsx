@@ -14,7 +14,7 @@ const handleReplayIntro = () => {
 
 export const StatusBadges = () => {
     return (
-        <div className="self-end flex flex-col sm:flex-row gap-3 items-end sm:items-center mt-20 mr-10 opacity-80 hover:opacity-100 transition-opacity pointer-events-auto">
+        <div className="hidden md:flex flex-col sm:flex-row gap-3 items-end sm:items-center mt-20 mr-10 opacity-80 hover:opacity-100 transition-opacity pointer-events-auto">
             <button
                 type="button"
                 onClick={handleReplayIntro}
