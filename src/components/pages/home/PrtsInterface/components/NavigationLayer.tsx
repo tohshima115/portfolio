@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { StatusBadges } from './StatusBadges';
-import { SystemGuideLink } from './SystemGuideLink';
+// import { SystemGuideLink } from './SystemGuideLink';
 import { NavigationGrid } from './NavigationGrid';
 
 interface NavigationLayerProps {
@@ -16,7 +16,7 @@ export const NavigationLayer = ({ onHoverItem, skipIntro = false }: NavigationLa
         >
             <div className="relative w-[90vw] max-w-7xl h-[80vh] flex flex-col justify-between pointer-events-none">
                 <StatusBadges />
-                <SystemGuideLink />
+                {/* <SystemGuideLink /> */}
                 <NavigationGrid onHoverItem={onHoverItem} skipIntro={skipIntro} />
             </div>
         </motion.div>
