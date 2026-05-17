@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, type MotionValue } from 'framer-motion';
 import { FloorPlane } from '../../PrtsInterface/components/FloorPlane';
 import { MainTitle } from '../../PrtsInterface/components/MainTitle';
@@ -19,11 +19,14 @@ interface Props {
 }
 
 // PC: scale 3.0 / rotateY -45 / rotateX 30 — 大きく寄ってダイナミックに引く演出。
-// Mobile: scale と rotation を抑えてロゴが画面外に出ないようにする。
-//   scale 3.0 + translateZ(80px) + perspective 1000px + rotateX 30 の組み合わせが
-//   小さい画面では perspective distortion でロゴを画面外に押し出してしまうため。
+// Mobile: scale のみ・回転なし。
+//   rotateY/rotateX + translateZ(80px) + perspective 1000px の組み合わせが
+//   小さい画面では perspective distortion でロゴを画面外に押し出す。
+//   回転を 0 にすることで中央配置を保証する。
+// useState の lazy initializer でマウント前に判定することで、Framer Motion が
+// initial を読む初回レンダリングに確実に正しい値を渡す。
 const DESKTOP_INITIAL = { scale: 3.0, rotateY: -45, rotateX: 30 };
-const MOBILE_INITIAL  = { scale: 1.8, rotateY: -20, rotateX: 15 };
+const MOBILE_INITIAL  = { scale: 1.6, rotateY:   0, rotateX:  0 };
 
 export const HeroLayer = ({
     skipIntro,
@@ -34,11 +37,9 @@ export const HeroLayer = ({
     mouseY,
     chaos,
 }: Props) => {
-    const [isMobile, setIsMobile] = useState(false);
-    useEffect(() => {
-        const mq = window.matchMedia('(max-width: 767px)');
-        setIsMobile(mq.matches);
-    }, []);
+    const [isMobile] = useState<boolean>(
+        () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
+    );
 
     const introInitial = isMobile ? MOBILE_INITIAL : DESKTOP_INITIAL;
 
