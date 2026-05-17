@@ -25,8 +25,10 @@ interface Props {
 //   回転を 0 にすることで中央配置を保証する。
 // useState の lazy initializer でマウント前に判定することで、Framer Motion が
 // initial を読む初回レンダリングに確実に正しい値を渡す。
-const DESKTOP_INITIAL = { scale: 3.0, rotateY: -45, rotateX: 30 };
-const MOBILE_INITIAL  = { scale: 1.6, rotateY:   0, rotateX:  0 };
+const DESKTOP_INITIAL  = { scale: 3.0, rotateY: -45, rotateX: 30 };
+const MOBILE_INITIAL   = { scale: 2.4, rotateY:   0, rotateX:  0 };
+const DESKTOP_FINAL    = { scale: 1.15, rotateY: 0, rotateX: 0 };
+const MOBILE_FINAL     = { scale: 1.4,  rotateY: 0, rotateX: 0 };
 
 export const HeroLayer = ({
     skipIntro,
@@ -42,11 +44,12 @@ export const HeroLayer = ({
     );
 
     const introInitial = isMobile ? MOBILE_INITIAL : DESKTOP_INITIAL;
+    const introFinal   = isMobile ? MOBILE_FINAL   : DESKTOP_FINAL;
 
     return (
         <motion.div
             initial={skipIntro ? false : introInitial}
-            animate={{ scale: 1.15, rotateY: 0, rotateX: 0 }}
+            animate={introFinal}
             transition={
                 skipIntro
                     ? { duration: 0 }
