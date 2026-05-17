@@ -1,17 +1,39 @@
+import type { CSSProperties } from 'react';
 import { SvgLogoTitle } from './SvgLogoTitle';
 
 /**
  * Hero 内のロゴ + タイトル領域。
  *
- * 旧構造は HTML DOM の grid + 各 cell の motion.div + text の motion.div で構成して
- * いたが、Hero の親が `transform-style: preserve-3d` + 3D rotation 状態のときに
- * 「子要素が頻繁に変化する DOM ツリー」は compositor で「3D 投影後の bitmap を毎
- * フレーム再生成」する必要があり、raster pipeline が追いつかず明滅・引き伸ばし・
- * 想定外の形が発生していた (等高線 canvas は 1 テクスチャなので問題なし)。
+ * SvgLogoTitle を 2 枚重ねる:
+ *   1. グロー版 (背後): filter:blur + --color-logo を accent 色に上書き
+ *   2. 本体版 (前面): 通常表示
+ * 両方とも同じ skipIntro でアニメするので cell の reveal や drop down と
+ * グローが同期して光る (静的な div グローだと「アニメ中まだ描かれてない部分」
+ * までグローしてしまう問題を回避)。
  *
+ * 旧構造は HTML DOM の grid + 各 cell の motion.div で組まれていたが、
+ * Hero の親が preserve-3d + 3D rotation 状態のときに頻繁に変化する DOM ツリーは
+ * compositor が毎フレームラスタライズし直して明滅していた。
  * SvgLogoTitle で 1 つの <svg> に統合することで replaced element = 1 テクスチャ
- * 扱いになり、親 3D 変換とのラスタ競合を完全に回避する。
+ * 扱いになり、グロー版の filter:blur も SVG 1 テクスチャに対する GPU 1 パスで済む。
  */
+
+// グロー版コンテナの共通スタイル。
+// --color-logo を accent に上書きすることで SVG 内の `var(--color-logo)` が
+// すべて accent 色に置き換わる (= 色付きのにじんだロゴ)。
+const GLOW_STYLE: CSSProperties = {
+    // CSS カスタムプロパティを TS の CSSProperties に通すための any キャスト相当。
+    ['--color-logo' as never]: 'var(--color-accent)',
+    filter: 'blur(28px)',
+    opacity: 0.55,
+    transform: 'translateZ(0)', // GPU レイヤ化
+    willChange: 'filter',
+    // 本体版とピクセル一致で重ねるため inset:0。
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+};
+
 export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
     return (
         <div
@@ -22,26 +44,20 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                 transformStyle: 'preserve-3d',
             }}
         >
-            {/* Desktop SVG */}
+            {/* Desktop */}
             <div className="relative hidden md:block">
-                {/* 背後のグロー (accent 色のにじみ)。SVG は 1 テクスチャなので
-                    filter:blur を SVG 自身に当てるのは避け、後ろに blur 済みの div を敷く。 */}
-                <div
-                    aria-hidden
-                    className="absolute inset-0 bg-accent/20 blur-3xl rounded-full pointer-events-none"
-                    style={{ transform: 'translateZ(0)' }}
-                />
+                <div aria-hidden style={GLOW_STYLE}>
+                    <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
+                </div>
                 <div className="relative">
                     <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
                 </div>
             </div>
-            {/* Mobile SVG */}
+            {/* Mobile */}
             <div className="relative md:hidden">
-                <div
-                    aria-hidden
-                    className="absolute inset-0 bg-accent/20 blur-3xl rounded-full pointer-events-none"
-                    style={{ transform: 'translateZ(0)' }}
-                />
+                <div aria-hidden style={GLOW_STYLE}>
+                    <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
+                </div>
                 <div className="relative">
                     <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
                 </div>
