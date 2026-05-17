@@ -48,17 +48,16 @@ export const MAIN_TITLE_TIMING_MS = {
     // 3. Mobile (md未満)
     // ==========================================
     mobile: {
-        // テキスト群の出現
-        textAppearStart: 3500,
+        // テキスト群の出現: Desktop と同じタイミング (ロゴマーク完成後)
+        textAppearStart: 3400,
         textAppearDuration: 800,
 
-        // ロゴ後半: 上部両サイドの塗りつぶし
-        logoFillSideStart: 3800,
+        // ロゴ後半: Desktop と同じタイミングに揃えて fill → drop → text の順序を保つ
+        logoFillSideStart: 2400,
         logoFillSideDuration: 300,
-        logoFillSideStagger: 100, // 左右の時差
+        logoFillSideStagger: 100,
 
-        // ロゴ後半: 中央列のドロップダウン
-        logoDropCenterStart: 4200,
+        logoDropCenterStart: 2800,
         logoDropCenterDuration: 800,
     },
 
