@@ -1,21 +1,18 @@
 import type { Project } from './data';
-import { NO_FOLDER_BAND_TOP_VH, NO_FOLDER_BAND_HEIGHT_VH } from './constants';
 
-// 各プロジェクトの carousel stage。WORKS heading と同じ位置に重ね、Phase F で
-// opacity 切替により順送り表示する。WORKS stage と構造が似ているが、こちらは
-// reveal アニメ無し (parent の opacity tween のみ) なのでシンプル。
-// 配置は no-folder band (top row 下端 ↔ bottom row 上端) を親枠として、左寄せで描画。
-export const ProjectStage: React.FC<{ project: Project; reduced: boolean }> = ({
-    project,
-    reduced,
-}) => (
+export const ProjectStage: React.FC<{
+    project: Project;
+    reduced: boolean;
+    bandTopVh: number;
+    bandHeightVh: number;
+}> = ({ project, reduced, bandTopVh, bandHeightVh }) => (
     <div
         data-stage="project"
         data-project-id={project.id}
         className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
         style={{
-            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
-            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+            top: `${bandTopVh}vh`,
+            height: `${bandHeightVh}vh`,
             opacity: 0,
         }}
     >

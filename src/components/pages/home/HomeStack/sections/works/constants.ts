@@ -35,6 +35,51 @@ export const NO_FOLDER_BAND_BOTTOM_VH =
 export const NO_FOLDER_BAND_HEIGHT_VH =
     NO_FOLDER_BAND_BOTTOM_VH - NO_FOLDER_BAND_TOP_VH; // 57vh
 
+// ───────────────────────────────────────────────────────────
+// Grid config — PC / モバイルで切り替えるグリッド幾何パラメータ一式。
+// WorksSection がスクリーン幅に応じていずれかを FolderGrid / アニメへ渡す。
+// ───────────────────────────────────────────────────────────
+export interface GridConfig {
+    cols: number;
+    rows: number;
+    tileWVw: number;
+    tileHVh: number;
+    rowCompressedStrideVh: number;
+    edgeGapExtraVh: number;
+    hiddenLeftCols: number;
+    noFolderBandTopVh: number;
+    noFolderBandHeightVh: number;
+}
+
+export const DESKTOP_GRID_CONFIG: GridConfig = {
+    cols: FOLDER_COLS,
+    rows: FOLDER_ROWS,
+    tileWVw: TILE_W_VW,
+    tileHVh: TILE_H_VH,
+    rowCompressedStrideVh: ROW_COMPRESSED_STRIDE_VH,
+    edgeGapExtraVh: EDGE_GAP_EXTRA_VH,
+    hiddenLeftCols: HIDDEN_LEFT_COLS,
+    noFolderBandTopVh: NO_FOLDER_BAND_TOP_VH,
+    noFolderBandHeightVh: NO_FOLDER_BAND_HEIGHT_VH,
+};
+
+// モバイル: 5 列 × 7 行。列を減らして行を増やし、縦に積み上がった印象に。
+// edgeStride = 15+3 = 18, bandBottom = 18*2 + (7-3)*10 = 76, bandHeight = 76-15 = 61
+const _mobileEdgeStride = 18;
+const _mobileBandBottom = _mobileEdgeStride * 2 + (7 - 3) * 10; // 76
+
+export const MOBILE_GRID_CONFIG: GridConfig = {
+    cols: 5,
+    rows: 7,
+    tileWVw: 20, // 5 × 20 = 100vw
+    tileHVh: 15,
+    rowCompressedStrideVh: 10,
+    edgeGapExtraVh: 3,
+    hiddenLeftCols: HIDDEN_LEFT_COLS,
+    noFolderBandTopVh: 15,
+    noFolderBandHeightVh: _mobileBandBottom - 15, // 61
+};
+
 // 1 stack = 4 layer の folder を radial offset で重ねる。
 // front (大きい layer index) → 中心に寄る、back → 外側。
 export const STACK_LAYERS = 4;

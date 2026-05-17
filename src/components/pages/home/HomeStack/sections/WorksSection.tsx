@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { CornerLabel } from '../primitives/CornerLabel';
 import { SplitChars } from '../primitives/SplitChars';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -11,12 +11,10 @@ import {
     INITIAL_WAVE_COLS,
     WAVE_PROGRESS_GRID,
     WAVE_GROWBACK,
-    TILE_W_VW,
-    FOLDER_COLS,
-    HIDDEN_LEFT_COLS,
     TIMING,
-    NO_FOLDER_BAND_TOP_VH,
-    NO_FOLDER_BAND_HEIGHT_VH,
+    DESKTOP_GRID_CONFIG,
+    MOBILE_GRID_CONFIG,
+    type GridConfig,
 } from './works/constants';
 import { FolderGrid } from './works/FolderGrid';
 import { ProjectStage } from './works/ProjectStage';
@@ -28,19 +26,27 @@ import { ProjectStage } from './works/ProjectStage';
 //   Phase D (~0.66–0.86): 右シフト + 中段 shrink + hero fade
 //   Phase E (~0.78–1.10): WORKS heading reveal
 //   Phase F (~1.30–2.60): WORKS → Project 01 → 02 → 03 を crossfade で順送り
-//
-// 数値は normalized timeline 上の絶対位置 (constants.ts の TIMING)。
-// pin 範囲は PIN_SCROLL_END (~700% 相当)。reduced-motion 時は scrollScene 自体が
-// disabled で、pin の下に static fallback list を表示する。
 const WorksLead: React.FC = () => {
     const containerRef = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
 
+    // モバイル判定: SSR は false、mount 後に実際の幅で更新。
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        setIsMobile(window.innerWidth < 768);
+    }, []);
+
+    const config: GridConfig = isMobile ? MOBILE_GRID_CONFIG : DESKTOP_GRID_CONFIG;
+
     useScrollScene(containerRef, {
         disabled: reduced,
+        deps: [isMobile],
         setup: ({ gsap, container }) => {
             const pinTarget = container.querySelector<HTMLElement>('[data-pin-inner]');
             if (!pinTarget) return;
+
+            const mobile = window.innerWidth < 768;
+            const cfg: GridConfig = mobile ? MOBILE_GRID_CONFIG : DESKTOP_GRID_CONFIG;
 
             // ── Phase A 用 selector ──
             const globe = container.querySelector('[data-lead-globe]');
@@ -107,9 +113,6 @@ const WorksLead: React.FC = () => {
             tl.to(statsCount, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsCount);
 
             // ─── Phase B: folder grid 左から waterfall ───
-            // 全 tile が x:-110vw → 0 で左から滑り込む。delay (data 属性) は「右側着地ほど
-            // 早く出発」なので col 末 → col 0 の順に到着。同時に --travel:0→1 で layer offset
-            // 方向を初期 (右向き) → 最終 (radial) に補間。
             tileEls.forEach((el) => {
                 gsap.set(el, { x: '-110vw', xPercent: 0, '--travel': 0 });
             });
@@ -129,110 +132,100 @@ const WorksLead: React.FC = () => {
                 );
             });
 
-            // ─── Phase C: 全被覆ホールド ─── (タイムラインに何も置かない = scrub 停滞)
-
-            // ─── Phase D: 中段 shrink + hero fade + 連続右シフトの開始 ───
-            // 右シフトは Phase D 開始 → timelineEnd まで 1 本の linear tween で連続的に進む。
-            // 総シフト量 = (Phase D 1 回 + project transition 3 回) × 1 列 = 4 列ぶん = 52vw。
-            // → 段階的でなく「スクロールに合わせて常にゆっくり」シフトする見た目に。
+            // ─── Phase D: 中段 shrink + hero fade + 連続右シフト ───
             const TOTAL_SHIFT_COLS = 1 + TIMING.projectTransitions.length;
             tl.to(
                 tileEls,
                 {
-                    x: `+=${TOTAL_SHIFT_COLS * TILE_W_VW}vw`,
+                    x: `+=${TOTAL_SHIFT_COLS * cfg.tileWVw}vw`,
                     duration: TIMING.timelineEnd - TIMING.midShrinkStart,
                     ease: 'none',
                 },
                 TIMING.midShrinkStart,
             );
 
-            // mid tile shrink — wave 方式。
-            // 各 event (Phase D + 各 project transition) で wave が 1 列ずつ左にスライドし、
-            // 画面の visible 右 3 列が常に同じパターン (P0/P1/P2) に見えるようにする。
-            // 各 col の progress 推移を pre-compute し、変化のあった event で settle tween
-            // (短い power3.out) を発行する。連続右シフトが常時動いているので、
-            // settle 後に静止していても「halt」感は出ない。
-            const EVENT_TIMES = [
-                TIMING.midShrinkStart,
-                ...TIMING.projectTransitions.map((t) => t.outAt),
-            ];
-            // (col, row, event) → progress を返す。
-            // wave 内: WAVE_PROGRESS_GRID から row 別に lookup
-            // wave より右 (画面外へ押し出される側): 0 = 縮小なしのまま (= 最小化しない)
-            // wave より左 (これから入る側): 1.0 = mid 不可視
-            const waveProgressAt = (
-                col: number,
-                row: number,
-                eventIdx: number,
-            ): number => {
-                const waveCols = INITIAL_WAVE_COLS.map((c) => c - eventIdx);
-                const idx = waveCols.indexOf(col);
-                if (idx >= 0) return WAVE_PROGRESS_GRID[idx][row - 1];
-                return col > Math.max(...waveCols) ? 0 : 1.0;
-            };
-            // progress 0 → identity (scale 1, 回転なし)
-            // progress 1 → scale 0 + rotateX 90° (点に縮みつつ奥に倒れて消える)
-            // 親 grid の perspective で 3D に見える。
-            const scaleVars = (progress: number) => ({
-                scale: 1 - progress,
-                rotationX: progress * 90,
-            });
-
-            midTiles.forEach((el) => {
-                const stagger = Number(el.getAttribute('data-mid-delay')) || 0;
-                const col = Number(el.getAttribute('data-tile-col'));
-                const row = Number(el.getAttribute('data-tile-row'));
-
-                // この (col, row) の progress 推移 (変化のある event のみ)
-                const progression: { time: number; progress: number }[] = [];
-                let prev = -1;
-                EVENT_TIMES.forEach((time, idx) => {
-                    const p = waveProgressAt(col, row, idx);
-                    if (p !== prev) {
-                        progression.push({ time, progress: p });
-                        prev = p;
-                    }
-                });
-
-                progression.forEach(({ time, progress }, entryIdx) => {
-                    const isPhaseD = entryIdx === 0 && time === TIMING.midShrinkStart;
-                    // 右シフトの中盤で wave settle が発火するよう shiftSettleOffset を加算。
-                    // Phase D は加えて per-tile stagger も乗せる。
-                    const settleStart =
-                        time + TIMING.shiftSettleOffset + (isPhaseD ? stagger : 0);
-                    const settleEnd = settleStart + TIMING.midShrinkDuration;
+            if (mobile) {
+                // モバイル: 全中段行を一括で完全消去。wave パターンは使わない。
+                midTiles.forEach((el) => {
+                    const stagger = Number(el.getAttribute('data-mid-delay')) || 0;
                     tl.to(
                         el,
                         {
-                            ...scaleVars(progress),
+                            scale: 0,
+                            rotationX: 90,
                             duration: TIMING.midShrinkDuration,
                             ease: 'power3.out',
                         },
-                        settleStart,
+                        TIMING.midShrinkStart + TIMING.shiftSettleOffset + stagger,
                     );
+                });
+            } else {
+                // デスクトップ: wave パターンで右 3 列を残しつつ段階的に collapse。
+                const EVENT_TIMES = [
+                    TIMING.midShrinkStart,
+                    ...TIMING.projectTransitions.map((t) => t.outAt),
+                ];
+                const waveProgressAt = (col: number, row: number, eventIdx: number): number => {
+                    const waveCols = INITIAL_WAVE_COLS.map((c) => c - eventIdx);
+                    const idx = waveCols.indexOf(col);
+                    if (idx >= 0) return WAVE_PROGRESS_GRID[idx][row - 1];
+                    return col > Math.max(...waveCols) ? 0 : 1.0;
+                };
+                const scaleVars = (progress: number) => ({
+                    scale: 1 - progress,
+                    rotationX: progress * 90,
+                });
 
-                    // growback drift: partial 状態の row のみ、settle 後に progress を
-                    // WAVE_GROWBACK ぶん減らして tile を「ある程度大きく」する。
-                    // 0 (縮小なし) や 1.0 (完全潰し) には適用しない。
-                    if (progress > 0 && progress < 1.0) {
-                        const nextEventTime =
-                            entryIdx + 1 < progression.length
-                                ? progression[entryIdx + 1].time
-                                : TIMING.timelineEnd;
-                        const driftDuration = Math.max(0.05, nextEventTime - settleEnd);
-                        const growbackTarget = Math.max(0, progress - WAVE_GROWBACK);
+                midTiles.forEach((el) => {
+                    const stagger = Number(el.getAttribute('data-mid-delay')) || 0;
+                    const col = Number(el.getAttribute('data-tile-col'));
+                    const row = Number(el.getAttribute('data-tile-row'));
+
+                    const progression: { time: number; progress: number }[] = [];
+                    let prev = -1;
+                    EVENT_TIMES.forEach((time, idx) => {
+                        const p = waveProgressAt(col, row, idx);
+                        if (p !== prev) {
+                            progression.push({ time, progress: p });
+                            prev = p;
+                        }
+                    });
+
+                    progression.forEach(({ time, progress }, entryIdx) => {
+                        const isPhaseD = entryIdx === 0 && time === TIMING.midShrinkStart;
+                        const settleStart =
+                            time + TIMING.shiftSettleOffset + (isPhaseD ? stagger : 0);
+                        const settleEnd = settleStart + TIMING.midShrinkDuration;
                         tl.to(
                             el,
                             {
-                                ...scaleVars(growbackTarget),
-                                duration: driftDuration,
-                                ease: 'none',
+                                ...scaleVars(progress),
+                                duration: TIMING.midShrinkDuration,
+                                ease: 'power3.out',
                             },
-                            settleEnd,
+                            settleStart,
                         );
-                    }
+
+                        if (progress > 0 && progress < 1.0) {
+                            const nextEventTime =
+                                entryIdx + 1 < progression.length
+                                    ? progression[entryIdx + 1].time
+                                    : TIMING.timelineEnd;
+                            const driftDuration = Math.max(0.05, nextEventTime - settleEnd);
+                            const growbackTarget = Math.max(0, progress - WAVE_GROWBACK);
+                            tl.to(
+                                el,
+                                {
+                                    ...scaleVars(growbackTarget),
+                                    duration: driftDuration,
+                                    ease: 'none',
+                                },
+                                settleEnd,
+                            );
+                        }
+                    });
                 });
-            });
+            }
 
             tl.to(
                 heroLayer,
@@ -260,20 +253,16 @@ const WorksLead: React.FC = () => {
             tl.to(meta, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.worksMeta);
 
             // ─── Phase F: WORKS hold → Project 01 → 02 → 03 ───
-            // 各 transition は前 stage を fade out (outAt 起点) しつつ次 stage を fade in
-            // (inAt 起点)、続けて rule scaleX を 1 に。
             projectStages.forEach((el) => {
                 gsap.set(el, { opacity: 0, y: 18 });
             });
 
-            // 1 個目の outTarget だけ WORKS stage、それ以外は前 project stage。
             const transitions = TIMING.projectTransitions.map((t, i) => ({
                 ...t,
                 outTarget: i === 0 ? worksStage : projectStage(TIMING.projectTransitions[i - 1].id),
             }));
 
             transitions.forEach(({ id, outAt, outTarget, inAt }) => {
-                // 右シフトは Phase D 開始時に 1 本の連続 tween で発行済み (本ループでは shift しない)。
                 if (outTarget) {
                     tl.to(
                         outTarget,
@@ -297,11 +286,6 @@ const WorksLead: React.FC = () => {
             });
 
             // ─── Phase G: Outro ───
-            // 1) Swept (project 03) を fade out
-            // 2) 全 folder tile を col 左→右の stagger で scale:0 + rotateX:90 に collapse (mid shrink と同じ方式)
-            // 3) pin 内 BioIntroStage (= AboutSection の lite teaser) を fade in
-            // 4) pin 終了 → 下にある AboutSection 本体 (timeline / stack 詳細) が
-            //    natural flow で viewport に入ってきて、ユーザは普通にスクロールして読み進める
             const sweptStage = projectStage('03');
             if (sweptStage) {
                 tl.to(
@@ -316,15 +300,12 @@ const WorksLead: React.FC = () => {
                 );
             }
 
-            const colSpan = HIDDEN_LEFT_COLS + FOLDER_COLS - 1; // -4..7 = 11 ぶん
+            const colSpan = cfg.hiddenLeftCols + cfg.cols - 1;
             tileEls.forEach((el) => {
                 const c = Number(el.getAttribute('data-tile-col'));
-                const colNorm = (c + HIDDEN_LEFT_COLS) / colSpan; // 0 (左端) → 1 (右端)
+                const colNorm = (c + cfg.hiddenLeftCols) / colSpan;
                 const fadeStart =
                     TIMING.outroSweepStart + colNorm * TIMING.outroSweepStaggerWindow;
-                // mid shrink 同様に scale 0 + rotateX 90° で奥に倒れて消える。
-                // 全 tile (top / mid / bottom row) を対象とするので、mid wave で
-                // 既に scale/rotateX が動いている tile も最終的に (0, 90) に着地する。
                 tl.to(
                     el,
                     {
@@ -337,10 +318,6 @@ const WorksLead: React.FC = () => {
                 );
             });
 
-            // BioIntroStage (pin 内 z-40) を opacity で fade in。
-            // sweep の終盤と overlap して、folder が消え終わる頃にはほぼ可視になっている。
-            // pin 解除後は pin-inner ごと viewport 外に去り、下の AboutSection 本体に
-            // 通常スクロールで自然に繋がる。
             const bioStage = container.querySelector<HTMLElement>('[data-stage="bio"]');
             if (bioStage) {
                 gsap.set(bioStage, { opacity: 0, y: 18 });
@@ -356,10 +333,11 @@ const WorksLead: React.FC = () => {
                 );
             }
 
-            // 終端ダミー: timeline 全体長を outroEnd まで確保し、pin scroll が outro 完了まで届くようにする。
             tl.to({}, { duration: 0.01 }, TIMING.outroEnd);
         },
     });
+
+    const { noFolderBandTopVh, noFolderBandHeightVh } = config;
 
     return (
         <section
@@ -369,48 +347,53 @@ const WorksLead: React.FC = () => {
         >
             <div
                 data-pin-inner
-                // isolate で独立 stacking context を作る。
-                // pin が建つ前 (= ScrollTrigger.create 前 / hydrate 直後) は
-                // position:relative + z-auto なので stacking context が立たず、
-                // 内部の HeroLayer(z-10) / FolderGrid(z-20) / 各 stage(z-40) が
-                // root stacking context に漏れ、index.astro の boot overlay を
-                // 上から潰してフォルダーが一瞬可視になる。isolate で常時独立化。
                 className="relative w-full h-screen overflow-hidden bg-background isolate"
             >
                 {/* z-10: Cloudflare hero (folders に覆われ Phase D で fade out) */}
                 <HeroLayer />
 
-                {/* z-20: folder grid (左から waterfall in → 全画面被覆 → 右シフト + 中段 shrink) */}
-                <FolderGrid />
+                {/* z-20: folder grid */}
+                <FolderGrid key={isMobile ? 'mobile' : 'desktop'} config={config} />
 
-                {/* z-40: WORKS heading stage (Phase E で reveal、Phase F で fade out) */}
-                <WorksStage reduced={reduced} />
+                {/* z-40: WORKS heading stage */}
+                <WorksStage
+                    reduced={reduced}
+                    bandTopVh={noFolderBandTopVh}
+                    bandHeightVh={noFolderBandHeightVh}
+                />
 
-                {/* z-40: project stages (Phase F で順送り fade in)。同位置に重ねて opacity 切替。
-                    reduced mode は scrollScene 無効なので opacity 0 のまま不可視 (fallback を別途下に表示)。 */}
+                {/* z-40: project stages */}
                 {!reduced && PROJECTS.map((p) => (
-                    <ProjectStage key={p.id} project={p} reduced={reduced} />
+                    <ProjectStage
+                        key={p.id}
+                        project={p}
+                        reduced={reduced}
+                        bandTopVh={noFolderBandTopVh}
+                        bandHeightVh={noFolderBandHeightVh}
+                    />
                 ))}
 
-                {/* z-40: Bio intro stage — Phase G outro 終盤で fade in する AboutSection への teaser。
-                    no-folder band に写真 placeholder + 名前 + 短い intro + scroll hint を配置。
-                    pin 解除後は下にある AboutSection 本体 (timeline / stack) に自然に繋がる。 */}
-                {!reduced && <BioIntroStage />}
+                {/* z-40: Bio intro stage */}
+                {!reduced && (
+                    <BioIntroStage
+                        bandTopVh={noFolderBandTopVh}
+                        bandHeightVh={noFolderBandHeightVh}
+                    />
+                )}
             </div>
 
-            {/* reduced-motion 用 static fallback: 3 プロジェクトを通常スクロールで読めるリストに */}
+            {/* reduced-motion 用 static fallback */}
             {reduced && <ReducedFallback />}
         </section>
     );
 };
 
-// Cloudflare hero (z-10): Phase A で reveal、Phase D で opacity 0 にフェードアウト。
+// Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
     <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
         <div className="absolute top-6 left-6 md:top-8 md:left-12">
             <CornerLabel label="WORKS" id="01" />
         </div>
-
 
         <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
             <div className="order-2 md:order-1">
@@ -435,16 +418,18 @@ const HeroLayer: React.FC = () => (
     </div>
 );
 
-// WORKS heading stage (z-40): Phase E で SplitChars が char 単位で reveal、Phase F の
-// 1 個目で project 01 へ crossfade で抜ける。
-// 配置は no-folder band (top row 下端 ↔ bottom row 上端) を親枠として、左寄せで描画。
-const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
+// WORKS heading stage (z-40)
+const WorksStage: React.FC<{ reduced: boolean; bandTopVh: number; bandHeightVh: number }> = ({
+    reduced,
+    bandTopVh,
+    bandHeightVh,
+}) => (
     <div
         data-stage="works"
         className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
         style={{
-            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
-            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+            top: `${bandTopVh}vh`,
+            height: `${bandHeightVh}vh`,
         }}
     >
         <div className="max-w-7xl w-full">
@@ -491,17 +476,17 @@ const WorksStage: React.FC<{ reduced: boolean }> = ({ reduced }) => (
     </div>
 );
 
-// Bio intro stage (z-40): Phase G outro 終盤で fade in する AboutSection への teaser。
-// 他 stage (WORKS / Project) と違って中央寄せ。写真 placeholder + 名前 + 短い intro +
-// 「scroll for timeline / stack」hint を縦並びで配置。
-// pin 解除後は下の AboutSection (timeline + stack の詳細) に通常スクロールで繋がる。
-const BioIntroStage: React.FC = () => (
+// Bio intro stage (z-40)
+const BioIntroStage: React.FC<{ bandTopVh: number; bandHeightVh: number }> = ({
+    bandTopVh,
+    bandHeightVh,
+}) => (
     <div
         data-stage="bio"
         className="absolute left-0 right-0 z-40 px-6 md:px-12 flex flex-col justify-center"
         style={{
-            top: `${NO_FOLDER_BAND_TOP_VH}vh`,
-            height: `${NO_FOLDER_BAND_HEIGHT_VH}vh`,
+            top: `${bandTopVh}vh`,
+            height: `${bandHeightVh}vh`,
             opacity: 0,
         }}
     >
@@ -516,8 +501,6 @@ const BioIntroStage: React.FC = () => (
             </div>
 
             <div className="flex flex-col items-center text-center gap-5 md:gap-6">
-                {/* 写真 placeholder。後で <img src="/path/to/photo.jpg" className="w-full h-full object-cover" />
-                    に差し替える想定。比率 4:5 (W:H) で縦長、accent 色の小さい tag を右上に。 */}
                 <div className="relative w-[150px] h-[190px] md:w-[180px] md:h-[230px] border border-foreground/30 bg-foreground/5 overflow-hidden">
                     <div className="absolute inset-0 flex items-center justify-center">
                         <span className="font-mono text-2xl font-bold tracking-[0.2em] text-foreground/30">
@@ -544,7 +527,7 @@ const BioIntroStage: React.FC = () => (
     </div>
 );
 
-// reduced-motion fallback: pin animation が走らないので 3 プロジェクトを縦に並べて読ませる。
+// reduced-motion fallback
 const ReducedFallback: React.FC = () => (
     <div className="relative px-6 md:px-12 py-16">
         <div className="max-w-4xl mx-auto space-y-12">
@@ -563,5 +546,4 @@ const ReducedFallback: React.FC = () => (
     </div>
 );
 
-// 外部から import される唯一の export。
 export const WorksSection: React.FC = () => <WorksLead />;
