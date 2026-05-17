@@ -1,6 +1,5 @@
 import { motion, type MotionValue } from 'framer-motion';
 import { FloorPlane } from '../../PrtsInterface/components/FloorPlane';
-import { ShadowLayer } from '../../PrtsInterface/components/ShadowLayer';
 import { MainTitle } from '../../PrtsInterface/components/MainTitle';
 import { NavigationLayer } from '../../PrtsInterface/components/NavigationLayer';
 import { Decorations } from '../../PrtsInterface/components/Decorations';
@@ -51,7 +50,6 @@ export const HeroLayer = ({
                 マウス連動 rotateX/Z、dolly の scale/opacity を等高線も一緒に受ける。 */}
             <ContourBackground chaos={chaos} />
             <FloorPlane />
-            <ShadowLayer contentX={contentX} contentY={contentY} />
             <MainTitle skipIntro={skipIntro} />
             <NavigationLayer
                 updates={updates}
