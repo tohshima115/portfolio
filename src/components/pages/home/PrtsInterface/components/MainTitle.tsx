@@ -57,21 +57,32 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                 width: 0, height: 0,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center"
+                justifyContent: "center",
+                // 親 HeroLayer の preserve-3d を継承させる。これがないと
+                // width: 0 / height: 0 の flat group ができて、HeroLayer 側で
+                // 3D transform (rotateY/rotateX/scale) が走った瞬間に内部の
+                // absolute 子要素のラスタが「サイズ 0 の bitmap」を起点にリラ
+                // スタライズされ、位置ズレ・明滅・引き逃しの原因になる。
+                transformStyle: "preserve-3d",
             }}
         >
             {/* ---------------- Desktop Layout ---------------- */}
 
             {/* Logo Section */}
             <motion.div
-                className="hidden md:flex absolute top-1/2 left-1/2 items-center justify-center p-4 z-20"
+                className="hidden md:flex absolute top-1/2 left-1/2 items-center justify-center p-4"
                 style={{
                     // 幅を固定値で指定してレイアウト崩れを防ぐ
                     width: LOGO_FULL_WIDTH,
                     height: LOGO_FULL_WIDTH, // 正方形と仮定(高さも同様の計算になるが、ここでは幅が重要)
                     x: "-50%",
                     y: "-50%",
-                    willChange: "transform" // パフォーマンス最適化
+                    willChange: "transform", // パフォーマンス最適化
+                    // 親 preserve-3d を継承。さらに Title より手前に出すために
+                    // translateZ で奥行きを与える (preserve-3d 内では z-index が
+                    // 効かないので translateZ で重ね順を表現する)。
+                    transformStyle: "preserve-3d",
+                    translateZ: 1,
                 }}
                 animate={{
                     x: `calc(-50% + ${isReady ? logoFinalX : 0}px)`
@@ -88,11 +99,14 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
             {/* Title Section */}
             <div
                 ref={titleRef}
-                className="hidden md:block absolute top-1/2 left-1/2 z-10"
+                className="hidden md:block absolute top-1/2 left-1/2"
                 style={{
                     transform: `translate(${titleFinalX}px, -50%)`,
                     whiteSpace: "nowrap",
-                    opacity: isReady ? 1 : 0
+                    opacity: isReady ? 1 : 0,
+                    // preserve-3d を継承 (中の motion.div が x: -100% → 0 で
+                    // アニメするので、親が flat group だと同様にラスタ問題が起きる)。
+                    transformStyle: "preserve-3d",
                 }}
             >
                 {/* テキスト見切れ対策: pr-8 (padding right) を追加 */}
@@ -127,6 +141,7 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
             {/* ---------------- Mobile Layout ---------------- */}
             <motion.div
                 className="md:hidden flex flex-col items-center justify-center p-4 relative"
+                style={{ transformStyle: "preserve-3d" }}
             >
                 <div className="relative z-20 mb-8">
                     <ToyoshimaLogo unit={6} timingProfile={MOBILE_LOGO_TIMING} skipIntro={skipIntro} />
