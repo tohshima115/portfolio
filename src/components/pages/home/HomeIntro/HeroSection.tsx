@@ -19,9 +19,14 @@ interface Props {
     dolly?: MotionValue<number>;
 }
 
-// Hero 専用のフルスクリーンセクション。HoverBackground (静的背景) を外、outer motion.div
-// (rotateX/rotateZ/scale/filter/opacity) の中に HeroLayer (= ContourBackground + ロゴ + nav)
-// を配置。前景・背景まとめてマウス連動と dolly transform を受ける。
+// Hero 専用のフルスクリーンセクション。
+// 構造を 2 段に分割:
+//   outer dolly motion.div : scale / filter / opacity (2D only, preserve-3d なし)
+//   inner 3D motion.div    : rotateX / rotateZ + preserve-3d
+// filter / opacity / will-change は stacking context を作って preserve-3d を
+// フラット化するため、それらと 3D rotate を同じレイヤに同居させると子の
+// translateZ (MainTitle 80px / NavigationLayer 160px) による高さが潰れる。
+// 2 段に分けることで dolly の引き&ブラーを保ちつつ Z 軸の浮き上がりを残す。
 
 export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos, dolly }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
@@ -90,24 +95,26 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                 の影響を受けず、画面いっぱいに固定で広がる。 */}
             <HoverBackground hoveredItem={hoveredItem} />
 
+            {/* 外側: dolly (scale/filter/opacity) 専用。preserve-3d は持たず 2D 合成のみ。 */}
             <motion.div
                 style={{
-                    rotateX,
-                    rotateZ,
                     scale: heroScale,
                     filter: heroFilter,
                     opacity: heroOpacity,
-                    transformStyle: 'preserve-3d',
-                    willChange: 'transform, filter, opacity',
+                    willChange: 'filter, opacity, transform',
                 }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >
-                <div
-                    className="absolute inset-0 flex items-center justify-center"
+                {/* 内側: マウス連動の 3D rotate と preserve-3d。
+                    ここから下に filter/opacity を一切置かないことで子の translateZ を生かす。 */}
+                <motion.div
                     style={{
-                        transform: 'translate3d(0, 0, 0)',
+                        rotateX,
+                        rotateZ,
                         transformStyle: 'preserve-3d',
+                        willChange: 'transform',
                     }}
+                    className="absolute inset-0 flex items-center justify-center origin-center"
                 >
                     <HeroLayer
                         skipIntro={skipIntro}
@@ -119,7 +126,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                         updates={updates}
                         chaos={chaos}
                     />
-                </div>
+                </motion.div>
             </motion.div>
         </div>
     );
