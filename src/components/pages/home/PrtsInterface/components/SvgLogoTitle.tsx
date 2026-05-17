@@ -113,7 +113,7 @@ interface LogoSubProps {
     timing: LogoTimingProfile;
 }
 
-const LogoCells = ({ skipIntro, SIZE, GAP, BORDER, CONTENT, timing }: LogoSubProps) => {
+const LogoCells = ({ skipIntro, SIZE, GAP, BORDER, timing }: LogoSubProps) => {
     const step = SIZE + GAP;
     const skipT = { duration: 0, delay: 0 };
     const easeQuint = [0.83, 0, 0.17, 1] as const;
@@ -134,13 +134,45 @@ const LogoCells = ({ skipIntro, SIZE, GAP, BORDER, CONTENT, timing }: LogoSubPro
     // ドロップの最終高さ = 3 cells + 2 gaps
     const dropFullH = SIZE + GAP + SIZE + GAP + SIZE; // = CONTENT
 
+    // === clip-path reveal を opacity stagger で置き換え ===
+    //
+    // 当初は <clipPath> + inset アニメで「中央 → 外周への展開」を表現していたが、
+    // Blink/WebKit は SVG 内の <clipPath> と親の preserve-3d + 3D transform の
+    // 組合せで描画位置がズレる既知の不具合があり、グリッチの原因になっていた。
+    // ここでは clip-path を一切使わず、各 cell の opacity を「中央からのマンハッタン
+    // 距離順」に delay でフェードインさせることで、同じ視覚効果を 3D 安全に再現する。
+    //
+    // タイミングは timing.expand (元 clip-path animation と同枠 1000-2000ms 想定):
+    //   distance 0 (中央 cell 4) → blink で既に表示済み、ここでは枠 opacity を即時 1
+    //   distance 1 (cells 1,3,5,7) → expand.start に同期して 500ms でフェード
+    //   distance 2 (cells 0,2,6,8) → expand.start + 500ms から 500ms でフェード
+    const cellDistance = (i: number) => {
+        const col = i % 3;
+        const row = Math.floor(i / 3);
+        return Math.abs(col - 1) + Math.abs(row - 1);
+    };
+    const cellRevealDelay = (i: number) => {
+        const d = cellDistance(i);
+        const base = msToS(timing.expand.start);
+        const halfDur = msToS(timing.expand.duration) / 2;
+        // distance 0 → 0 (即時), 1 → base, 2 → base + halfDur
+        if (d === 0) return 0;
+        if (d === 1) return base;
+        return base + halfDur;
+    };
+    const cellRevealDuration = (i: number) => {
+        const d = cellDistance(i);
+        if (d === 0) return 0;
+        return msToS(timing.expand.duration) / 2;
+    };
+
     return (
         <g>
-            {/* 9 cell の枠 */}
+            {/* 9 cell の枠 (opacity stagger で中央から外周へフェードイン) */}
             {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
                 const o = cellOrigin(i, step);
                 return (
-                    <rect
+                    <motion.rect
                         key={`b${i}`}
                         x={o.x + innerHalf}
                         y={o.y + innerHalf}
@@ -149,6 +181,17 @@ const LogoCells = ({ skipIntro, SIZE, GAP, BORDER, CONTENT, timing }: LogoSubPro
                         fill="none"
                         stroke="var(--color-logo)"
                         strokeWidth={BORDER}
+                        initial={{ opacity: skipIntro ? 1 : 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={
+                            skipIntro
+                                ? skipT
+                                : {
+                                      delay: cellRevealDelay(i),
+                                      duration: cellRevealDuration(i),
+                                      ease: 'easeOut',
+                                  }
+                        }
                     />
                 );
             })}
@@ -261,35 +304,6 @@ export const SvgLogoTitle = ({ skipIntro = false, layout }: Props) => {
                 }}
                 aria-label="Shogo Toyoshima"
             >
-                <defs>
-                    {/* clip reveal: inset 23.8% → -1% を logo content (210x210) 基準で再現 */}
-                    <clipPath id="svg-logo-clip-d">
-                        <motion.rect
-                            initial={{
-                                x: skipIntro ? -D_LOGO_CONTENT * 0.01 : D_LOGO_CONTENT * 0.238,
-                                y: skipIntro ? -D_LOGO_CONTENT * 0.01 : D_LOGO_CONTENT * 0.238,
-                                width: skipIntro ? D_LOGO_CONTENT * 1.02 : D_LOGO_CONTENT * 0.524,
-                                height: skipIntro ? D_LOGO_CONTENT * 1.02 : D_LOGO_CONTENT * 0.524,
-                            }}
-                            animate={{
-                                x: -D_LOGO_CONTENT * 0.01,
-                                y: -D_LOGO_CONTENT * 0.01,
-                                width: D_LOGO_CONTENT * 1.02,
-                                height: D_LOGO_CONTENT * 1.02,
-                            }}
-                            transition={
-                                skipIntro
-                                    ? skipT
-                                    : {
-                                          delay: msToS(MAIN_TITLE_TIMING_MS.logoExpandStart),
-                                          duration: msToS(MAIN_TITLE_TIMING_MS.logoExpandDuration),
-                                          ease: easeQuint as unknown as [number, number, number, number],
-                                      }
-                            }
-                        />
-                    </clipPath>
-                </defs>
-
                 {/* Logo group: 初期 (中央) → 最終 (左端) へ x シフト */}
                 <motion.g
                     initial={{ x: skipIntro ? 0 : initialLogoShift }}
@@ -305,10 +319,7 @@ export const SvgLogoTitle = ({ skipIntro = false, layout }: Props) => {
                     }
                 >
                     {/* logo content area の (0,0) を padding 内側に */}
-                    <g
-                        transform={`translate(${D_LOGO_PADDING / 2}, ${D_LOGO_PADDING / 2})`}
-                        clipPath="url(#svg-logo-clip-d)"
-                    >
+                    <g transform={`translate(${D_LOGO_PADDING / 2}, ${D_LOGO_PADDING / 2})`}>
                         <LogoCells
                             skipIntro={skipIntro}
                             SIZE={D_SIZE}
@@ -393,38 +404,7 @@ export const SvgLogoTitle = ({ skipIntro = false, layout }: Props) => {
             }}
             aria-label="Shogo Toyoshima"
         >
-            <defs>
-                <clipPath id="svg-logo-clip-m">
-                    <motion.rect
-                        initial={{
-                            x: skipIntro ? -M_LOGO_CONTENT * 0.01 : M_LOGO_CONTENT * 0.238,
-                            y: skipIntro ? -M_LOGO_CONTENT * 0.01 : M_LOGO_CONTENT * 0.238,
-                            width: skipIntro ? M_LOGO_CONTENT * 1.02 : M_LOGO_CONTENT * 0.524,
-                            height: skipIntro ? M_LOGO_CONTENT * 1.02 : M_LOGO_CONTENT * 0.524,
-                        }}
-                        animate={{
-                            x: -M_LOGO_CONTENT * 0.01,
-                            y: -M_LOGO_CONTENT * 0.01,
-                            width: M_LOGO_CONTENT * 1.02,
-                            height: M_LOGO_CONTENT * 1.02,
-                        }}
-                        transition={
-                            skipIntro
-                                ? skipT
-                                : {
-                                      delay: msToS(MAIN_TITLE_TIMING_MS.logoExpandStart),
-                                      duration: msToS(MAIN_TITLE_TIMING_MS.logoExpandDuration),
-                                      ease: easeQuint as unknown as [number, number, number, number],
-                                  }
-                        }
-                    />
-                </clipPath>
-            </defs>
-
-            <g
-                transform={`translate(${logoOriginX + M_LOGO_PADDING / 2}, ${M_LOGO_PADDING / 2})`}
-                clipPath="url(#svg-logo-clip-m)"
-            >
+            <g transform={`translate(${logoOriginX + M_LOGO_PADDING / 2}, ${M_LOGO_PADDING / 2})`}>
                 <LogoCells
                     skipIntro={skipIntro}
                     SIZE={M_SIZE}
