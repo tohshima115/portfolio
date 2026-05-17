@@ -2,12 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
 import { HeroLayer } from '../HomeScene/layers/HeroLayer';
-import type { UpdateItem } from '../HomeScene/types';
 import { dollyScale, dollyBlurPxFg, dollyOpacity } from './dollyCurves';
 
 interface Props {
     skipIntro: boolean;
-    updates?: UpdateItem[];
     active: boolean;
     /** ContourBackground の uChaos に流す MotionValue/数値 */
     chaos?: MotionValue<number> | number;
@@ -28,7 +26,7 @@ interface Props {
 // translateZ (MainTitle 80px / NavigationLayer 160px) による高さが潰れる。
 // 2 段に分けることで dolly の引き&ブラーを保ちつつ Z 軸の浮き上がりを残す。
 
-export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos, dolly }) => {
+export const HeroSection: React.FC<Props> = ({ skipIntro, active, chaos, dolly }) => {
     const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
     const mouseX = useMotionValue(0.5);
@@ -123,7 +121,6 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                         onHoverItem={setHoveredItem}
                         mouseX={mouseX}
                         mouseY={mouseY}
-                        updates={updates}
                         chaos={chaos}
                     />
                 </motion.div>

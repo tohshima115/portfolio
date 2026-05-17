@@ -5,8 +5,6 @@ import { NavigationLayer } from '../../PrtsInterface/components/NavigationLayer'
 import { Decorations } from '../../PrtsInterface/components/Decorations';
 import { ContourBackground } from '../../PrtsInterface/components/ContourBackground';
 import { MAIN_TITLE_TIMING_MS, msToS } from '../../PrtsInterface/config/animationTiming';
-import type { UpdateItem } from '../types';
-
 interface Props {
     skipIntro: boolean;
     contentX: MotionValue<number>;
@@ -14,7 +12,6 @@ interface Props {
     onHoverItem: (label: string | null) => void;
     mouseX: MotionValue<number>;
     mouseY: MotionValue<number>;
-    updates?: UpdateItem[];
     /** ContourBackground の uChaos に流す MotionValue/数値 */
     chaos?: MotionValue<number> | number;
 }
@@ -26,7 +23,6 @@ export const HeroLayer = ({
     onHoverItem,
     mouseX,
     mouseY,
-    updates,
     chaos,
 }: Props) => {
     return (
@@ -52,7 +48,6 @@ export const HeroLayer = ({
             <FloorPlane />
             <MainTitle skipIntro={skipIntro} />
             <NavigationLayer
-                updates={updates}
                 onHoverItem={onHoverItem}
                 skipIntro={skipIntro}
             />

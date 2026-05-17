@@ -182,7 +182,6 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 {bootDone && (
                     <HeroSection
                         skipIntro={skipIntro}
-                        updates={updates}
                         active={true}
                     />
                 )}
@@ -209,7 +208,6 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 {bootDone && (
                     <HeroSection
                         skipIntro={skipIntro}
-                        updates={updates}
                         active={true}
                         dolly={progressMv}
                     />
