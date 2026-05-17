@@ -15,8 +15,10 @@ import { SvgLogoTitle } from './SvgLogoTitle';
  */
 
 // グロー版 (床面に落ちる影/光) の共通スタイル。
-// 色は SVG 内部の var(--color-logo) をそのまま使う = ブランドカラー。
+// SVG 内の var(--color-logo) (ロゴ枠/塗り) と var(--color-foreground) (TOYOSHIMA
+// 文字) の両方を logo カラーに揃え、ブランドカラー一色のグローにする。
 const GLOW_STYLE: CSSProperties = {
+    ['--color-foreground' as never]: 'var(--color-logo)',
     filter: 'blur(28px)',
     opacity: 0.6,
     transform: 'translateZ(0)', // GPU レイヤ化
