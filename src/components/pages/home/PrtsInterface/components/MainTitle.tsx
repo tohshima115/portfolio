@@ -23,12 +23,28 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
             }}
         >
             {/* Desktop SVG */}
-            <div className="hidden md:block">
-                <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
+            <div className="relative hidden md:block">
+                {/* 背後のグロー (accent 色のにじみ)。SVG は 1 テクスチャなので
+                    filter:blur を SVG 自身に当てるのは避け、後ろに blur 済みの div を敷く。 */}
+                <div
+                    aria-hidden
+                    className="absolute inset-0 bg-accent/20 blur-3xl rounded-full pointer-events-none"
+                    style={{ transform: 'translateZ(0)' }}
+                />
+                <div className="relative">
+                    <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
+                </div>
             </div>
             {/* Mobile SVG */}
-            <div className="md:hidden">
-                <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
+            <div className="relative md:hidden">
+                <div
+                    aria-hidden
+                    className="absolute inset-0 bg-accent/20 blur-3xl rounded-full pointer-events-none"
+                    style={{ transform: 'translateZ(0)' }}
+                />
+                <div className="relative">
+                    <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
+                </div>
             </div>
         </div>
     );
