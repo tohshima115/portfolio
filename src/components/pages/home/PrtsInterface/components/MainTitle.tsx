@@ -82,9 +82,16 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                     ease: [0.83, 0, 0.17, 1]  // var(--ease-in-out-quint) 同等
                 }}
             >
+                {/* glow: filter:blur は preserve-3d をフラット化してレイヤ境界で
+                    flicker するので、box-shadow の inner+outer で同等の柔らかい光を
+                    再現する。box-shadow は paint 単位で合成されるためフラット化が
+                    起きず、親 transform 進行中でも明滅しない。 */}
                 <div
-                    className="absolute inset-0 bg-accent/20 blur-3xl rounded-full"
-                    style={{ transform: "translateZ(0)" }} // GPUレイヤー化
+                    className="absolute inset-0 rounded-full pointer-events-none"
+                    style={{
+                        boxShadow: '0 0 96px 24px var(--color-accent, rgba(250,204,21,0.2))',
+                        opacity: 0.2,
+                    }}
                 />
                 <ToyoshimaLogo unit={UNIT} timingProfile={DESKTOP_LOGO_TIMING} skipIntro={skipIntro} />
             </motion.div>
@@ -111,9 +118,13 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                         }}
                         style={{ willChange: "transform, opacity" }} // パフォーマンス最適化
                     >
+                        {/* タイトル背後の glow も同様に filter:blur をやめて box-shadow に。
+                            preserve-3d 内のフラット化を避けて flicker を防ぐ。 */}
                         <div
-                            className="absolute -inset-10 bg-gradient-to-tr from-accent/20 to-transparent blur-2xl rounded-full opacity-60 pointer-events-none"
-                            style={{ transform: "translateZ(0)" }} // GPUレイヤー化
+                            className="absolute -inset-10 rounded-full opacity-60 pointer-events-none"
+                            style={{
+                                boxShadow: '0 0 64px 16px var(--color-accent, rgba(250,204,21,0.2))',
+                            }}
                         />
 
                         <h1
@@ -138,7 +149,13 @@ export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
                 className="md:hidden flex flex-col items-center justify-center p-4 relative"
             >
                 <div className="relative z-20 mb-8">
-                    <div className="absolute inset-0 bg-accent/20 blur-3xl rounded-full" />
+                    <div
+                        className="absolute inset-0 rounded-full pointer-events-none"
+                        style={{
+                            boxShadow: '0 0 96px 24px var(--color-accent, rgba(250,204,21,0.2))',
+                            opacity: 0.2,
+                        }}
+                    />
                     <ToyoshimaLogo unit={6} timingProfile={MOBILE_LOGO_TIMING} skipIntro={skipIntro} />
                 </div>
 
