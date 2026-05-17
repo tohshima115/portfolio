@@ -12,7 +12,7 @@ export const NavigationLayer = ({ onHoverItem, skipIntro = false }: NavigationLa
     return (
         <motion.div
             className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
-            style={{ transform: "translateZ(160px)" }}
+            style={{ transform: "translateZ(160px)", transformStyle: 'preserve-3d' }}
         >
             <div className="relative w-[90vw] max-w-7xl h-[80vh] flex flex-col justify-between pointer-events-none">
                 <StatusBadges />

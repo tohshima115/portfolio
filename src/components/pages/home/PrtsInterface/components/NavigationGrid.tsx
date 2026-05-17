@@ -42,14 +42,17 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
             </div>
         </div>
 
-        {/* Mobile: 2×2 グリッド */}
-        <div className="md:hidden mt-auto mb-10 self-center w-full px-6 pointer-events-auto">
-            <div className="grid grid-cols-2 gap-3 w-full">
+        {/* Mobile: 2×2 グリッド。
+            NavigationLayer が translateZ(160px) のため -80px で相殺 → net Z=80px (ロゴと同じ高さ)。
+            XY は画面下寄りに絶対配置。 */}
+        <div
+            className="md:hidden absolute bottom-10 left-0 right-0 px-6 pointer-events-auto"
+            style={{ transform: 'translateZ(-80px)', transformStyle: 'preserve-3d' }}
+        >
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 w-full">
                 {navItems.map((item, index) => (
-                    <motion.a
+                    <motion.div
                         key={item.label}
-                        href={item.href}
-                        data-astro-prefetch="load"
                         initial={skipIntro ? false : { opacity: 0, y: 16 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={skipIntro ? { duration: 0 } : {
@@ -57,15 +60,9 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
                             delay: msToS(MAIN_TITLE_TIMING_MS.navigation.appearStart + MAIN_TITLE_TIMING_MS.navigation.stagger * index),
                             ease: "easeOut"
                         }}
-                        className={`group flex items-center justify-center gap-2 py-3 px-4 rounded-lg border font-mono text-sm tracking-widest font-bold transition-colors active:scale-95
-                            ${item.highlight
-                                ? 'border-accent text-accent bg-accent/10 active:bg-accent active:text-background'
-                                : 'border-foreground/20 text-foreground bg-background/30 active:bg-accent active:border-accent active:text-background'
-                            }`}
                     >
-                        {item.customIcon && item.customIcon(null)}
-                        {item.label}
-                    </motion.a>
+                        <NavButton {...item} onHover={onHoverItem} />
+                    </motion.div>
                 ))}
             </div>
         </div>
