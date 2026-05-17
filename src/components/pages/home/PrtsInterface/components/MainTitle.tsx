@@ -19,7 +19,7 @@ import { SvgLogoTitle } from './SvgLogoTitle';
 // 文字) の両方を logo カラーに揃え、ブランドカラー一色のグローにする。
 const GLOW_STYLE: CSSProperties = {
     ['--color-foreground' as never]: 'var(--color-logo)',
-    filter: 'blur(96px)',
+    filter: 'blur(40px)',
     opacity: 0.45,
     transform: 'translateZ(0)', // GPU レイヤ化
     willChange: 'filter',
