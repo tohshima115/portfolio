@@ -39,7 +39,8 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
     const mouseX = useMotionValue(0.5);
     const mouseY = useMotionValue(0.5);
     const springConfig = { damping: 20, stiffness: 100, mass: 1 };
-    const rotateX = useSpring(useTransform(mouseY, [0, 1], [16, 24]), springConfig);
+    const rotateX = useSpring(useTransform(mouseY, [0, 1], [20, 40]), springConfig);
+    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
     const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
     const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
 
@@ -115,6 +116,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             <motion.div
                 style={{
                     rotateX,
+                    rotateZ,
                     scale: heroScale,
                     filter: heroFilter,
                     opacity: heroOpacity,
