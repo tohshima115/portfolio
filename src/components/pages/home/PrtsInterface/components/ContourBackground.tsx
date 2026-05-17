@@ -236,22 +236,32 @@ export const ContourBackground: React.FC<Props> = ({
         const dScale = dollyScale(d);
         const dBlur = dollyBlurPxBg(d);
         const dOpa = dollyOpacity(d);
-        // シーン階層 (HomeScene) と同じ順番:
-        //   外側 wrapper: rotateZ(cameraRZ)
-        //     内側 wrapper: translate3d(camera)
-        //       Hero local: intro 群
-        // CSS は左から並べた transform が行列の左から並ぶので、point に
-        // 適用される順は右側 (intro) → translate → rotateZ → ... となる。
-        // mouseX 連動の rotateX は実装簡略化のため intro X と合算して
-        // 同位置に当てる (Hero アンカー時は cameraRZ=0 で角度差は出ない)。
+        // ロゴ側 (HeroSection outer motion.div + 内側 HeroLayer) の実効合成順と
+        // 完全一致させる:
+        //   outer:  rotateX(mouseX) rotateZ(mouseZ) scale(dolly)
+        //   inner:  scale(intro)  rotateY(introY)  rotateX(introX)
+        //   ⇒ 行列積 = rotateX(mouseX)·rotateZ(mouseZ)·scale(dolly)·
+        //              scale(intro)·rotateY(introY)·rotateX(introX)
+        // CSS transform は左から並べた順に行列を左から掛けるので、上記をそのまま
+        // 並べれば point への作用順 (右→左) も一致する。
+        //
+        // mouseX/Z は intro と"別の位置"にあるので合算してはいけない (途中に
+        // rotateY(introY) が挟まると合成順が崩れて、ロゴが浅い角度に見える)。
+        //
+        // camera 系 (HomeScene 用) は本来 outer wrapper として最外側に巻く想定。
+        // ここでは行列順を維持するため、camera を最外側、その内側に Hero local
+        // の合成を並べる。Hero 単独 (HomeIntro 経由) は camera = 0 で無影響。
         c.style.transform =
             `perspective(${CANVAS_PERSPECTIVE_PX}px) ` +
-            `rotateZ(${crz + mouseZ}deg) ` +
+            `rotateZ(${crz}deg) ` +
             `translate3d(${cx}px, ${cy}px, ${cz}px) ` +
             `rotateY(${cry}deg) ` +
-            `rotateX(${mouseX + introX}deg) ` +
+            `rotateX(${mouseX}deg) ` +
+            `rotateZ(${mouseZ}deg) ` +
+            `scale(${dScale}) ` +
+            `scale(${introS}) ` +
             `rotateY(${introY}deg) ` +
-            `scale(${introS * dScale})`;
+            `rotateX(${introX}deg)`;
         // blur(0px) でも GPU レイヤを 1 枚作るブラウザがあるので閾値前は filter を空に。
         c.style.filter = dBlur > 0.05 ? `blur(${dBlur.toFixed(2)}px)` : '';
         c.style.opacity = dOpa < 0.999 ? dOpa.toFixed(3) : '';
