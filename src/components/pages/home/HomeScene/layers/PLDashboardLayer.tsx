@@ -57,7 +57,7 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                 </h2>
 
                 <p className="text-sm sm:text-base text-foreground/80 leading-relaxed max-w-2xl mb-6">
-                    先輩が毎月触っていた「成長した Excel」を OOUI ダッシュボードへ。最初は D1 + Hono で組もうとして詰まったので、社内ツールだしと割り切って Vite + React の CSR で書き直し、Cloudflare Pages + Zero Trust で Google Workspace アドレスにだけ公開している。
+                    先輩が毎月触っていた「成長した Excel」を OOUI ダッシュボードへ。最初は TanStack Start で組もうとして D1 で詰まったので、社内ツールだしと割り切って Vite + React の CSR で書き直し、Cloudflare Pages + Zero Trust で Google Workspace アドレスにだけ公開している。
                 </p>
 
                 <dl className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-x-6 gap-y-3 text-sm mb-8">
