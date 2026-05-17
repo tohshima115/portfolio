@@ -21,6 +21,7 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
     ];
 
     return (
+        <>
         {/* Desktop: 横1列 */}
         <div className="hidden md:block mt-auto mb-20 self-center w-full max-w-3xl px-6 pointer-events-auto">
             <div className="flex flex-row items-end justify-between gap-4 w-full">
@@ -68,5 +69,6 @@ export const NavigationGrid = ({ onHoverItem, skipIntro = false }: NavigationGri
                 ))}
             </div>
         </div>
+        </>
     );
 };
