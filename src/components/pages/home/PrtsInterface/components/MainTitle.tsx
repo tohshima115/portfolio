@@ -4,64 +4,63 @@ import { SvgLogoTitle } from './SvgLogoTitle';
 /**
  * Hero 内のロゴ + タイトル領域。
  *
- * SvgLogoTitle を 2 枚重ねる:
- *   1. グロー版 (背後): filter:blur + --color-logo を accent 色に上書き
- *   2. 本体版 (前面): 通常表示
- * 両方とも同じ skipIntro でアニメするので cell の reveal や drop down と
- * グローが同期して光る (静的な div グローだと「アニメ中まだ描かれてない部分」
- * までグローしてしまう問題を回避)。
+ * SvgLogoTitle を 2 枚レンダリングし Z 方向に分離する:
+ *   1. グロー版 → translateZ(0) (床面)。filter:blur + 半透明で「ロゴが床に落とす影/光」
+ *   2. 本体版  → translateZ(80px) (浮き上がり)
+ * 両方とも同じ skipIntro で同期アニメーションするので、cell の reveal/drop down が
+ * 進むのに合わせて床のグローも同時に育つ。
  *
- * 旧構造は HTML DOM の grid + 各 cell の motion.div で組まれていたが、
- * Hero の親が preserve-3d + 3D rotation 状態のときに頻繁に変化する DOM ツリーは
- * compositor が毎フレームラスタライズし直して明滅していた。
- * SvgLogoTitle で 1 つの <svg> に統合することで replaced element = 1 テクスチャ
- * 扱いになり、グロー版の filter:blur も SVG 1 テクスチャに対する GPU 1 パスで済む。
+ * SvgLogoTitle で 1 つの <svg> に統合しているため、グロー版の filter:blur は
+ * SVG 1 テクスチャに対する GPU 1 パスで済む。
  */
 
-// グロー版コンテナの共通スタイル。
-// --color-logo を accent に上書きすることで SVG 内の `var(--color-logo)` が
-// すべて accent 色に置き換わる (= 色付きのにじんだロゴ)。
+// グロー版 (床面に落ちる影/光) の共通スタイル。
+// 色は SVG 内部の var(--color-logo) をそのまま使う = ブランドカラー。
 const GLOW_STYLE: CSSProperties = {
-    // CSS カスタムプロパティを TS の CSSProperties に通すための any キャスト相当。
-    ['--color-logo' as never]: 'var(--color-accent)',
     filter: 'blur(28px)',
-    opacity: 0.55,
+    opacity: 0.6,
     transform: 'translateZ(0)', // GPU レイヤ化
     willChange: 'filter',
-    // 本体版とピクセル一致で重ねるため inset:0。
-    position: 'absolute',
-    inset: 0,
     pointerEvents: 'none',
 };
 
+// 中央寄せ + 3D オフセット補正用の共通ラッパスタイル。
+// translateZ だけ呼び出し側で差し替える。
+const wrapperStyle = (z: number): CSSProperties => ({
+    transform: `translate(-50%, -50%) translateZ(${z}px)`,
+    marginTop: '-40px', // 3D パースによる視覚的なズレ補正
+    transformStyle: 'preserve-3d',
+});
+
 export const MainTitle = ({ skipIntro = false }: { skipIntro?: boolean }) => {
     return (
-        <div
-            className="absolute left-1/2 top-1/2 pointer-events-none"
-            style={{
-                transform: 'translate(-50%, -50%) translateZ(80px)',
-                marginTop: '-40px', // 3Dパースによる視覚的なズレ補正
-                transformStyle: 'preserve-3d',
-            }}
-        >
-            {/* Desktop */}
-            <div className="relative hidden md:block">
-                <div aria-hidden style={GLOW_STYLE}>
+        <>
+            {/* 床面 (Z=0) のグロー: ロゴが床に落とす影/光 */}
+            <div
+                aria-hidden
+                className="absolute left-1/2 top-1/2 pointer-events-none"
+                style={wrapperStyle(0)}
+            >
+                <div className="hidden md:block" style={GLOW_STYLE}>
                     <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
                 </div>
-                <div className="relative">
-                    <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
-                </div>
-            </div>
-            {/* Mobile */}
-            <div className="relative md:hidden">
-                <div aria-hidden style={GLOW_STYLE}>
-                    <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
-                </div>
-                <div className="relative">
+                <div className="md:hidden" style={GLOW_STYLE}>
                     <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
                 </div>
             </div>
-        </div>
+
+            {/* 浮き上がり (Z=80px) の本体ロゴ */}
+            <div
+                className="absolute left-1/2 top-1/2 pointer-events-none"
+                style={wrapperStyle(80)}
+            >
+                <div className="hidden md:block">
+                    <SvgLogoTitle skipIntro={skipIntro} layout="desktop" />
+                </div>
+                <div className="md:hidden">
+                    <SvgLogoTitle skipIntro={skipIntro} layout="mobile" />
+                </div>
+            </div>
+        </>
     );
 };
