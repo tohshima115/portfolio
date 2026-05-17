@@ -102,7 +102,7 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} chaos={chaos} dolly={dolly} />
+            <ContourBackground skipIntro={skipIntro} rotateX={rotateX} rotateZ={rotateZ} chaos={chaos} dolly={dolly} />
             <HoverBackground hoveredItem={hoveredItem} />
 
             {/*

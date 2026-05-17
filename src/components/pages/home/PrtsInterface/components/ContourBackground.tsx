@@ -19,6 +19,11 @@ interface Props {
      */
     rotateX?: MotionValue<number>;
     /**
+     * マウス連動の Z 軸回転 (deg)。HeroSection の外側 motion.div に当てている
+     * rotateZ と同じ値を渡すと、等高線も画面平面で同じ向きに傾く。
+     */
+    rotateZ?: MotionValue<number>;
+    /**
      * シーン内の camera 位置 (= シーン全体に当てる逆方向 translate / rotateY)。
      * 上記の制約で ContourBackground を camera div の子に置けないため、
      * 同じ値を canvas DOM に直接当てて Hero アンカー位置を再現する。
@@ -189,6 +194,7 @@ const ContourScene: React.FC<{
 export const ContourBackground: React.FC<Props> = ({
     skipIntro = false,
     rotateX,
+    rotateZ,
     cameraX,
     cameraY,
     cameraZ,
@@ -214,6 +220,7 @@ export const ContourBackground: React.FC<Props> = ({
         const c = canvasRef.current;
         if (!c) return;
         const mouseX = rotateX?.get() ?? 0;
+        const mouseZ = rotateZ?.get() ?? 0;
         const cx = cameraX?.get() ?? 0;
         const cy = cameraY?.get() ?? 0;
         const cz = cameraZ?.get() ?? 0;
@@ -239,7 +246,7 @@ export const ContourBackground: React.FC<Props> = ({
         // 同位置に当てる (Hero アンカー時は cameraRZ=0 で角度差は出ない)。
         c.style.transform =
             `perspective(${CANVAS_PERSPECTIVE_PX}px) ` +
-            `rotateZ(${crz}deg) ` +
+            `rotateZ(${crz + mouseZ}deg) ` +
             `translate3d(${cx}px, ${cy}px, ${cz}px) ` +
             `rotateY(${cry}deg) ` +
             `rotateX(${mouseX + introX}deg) ` +
@@ -249,13 +256,14 @@ export const ContourBackground: React.FC<Props> = ({
         c.style.filter = dBlur > 0.05 ? `blur(${dBlur.toFixed(2)}px)` : '';
         c.style.opacity = dOpa < 0.999 ? dOpa.toFixed(3) : '';
         c.style.willChange = d > 0.01 ? 'transform, filter, opacity' : '';
-    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly]);
+    }, [rotateX, rotateZ, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly]);
 
-    // マウス連動 rotateX + camera motion values + dolly の購読
+    // マウス連動 rotateX/rotateZ + camera motion values + dolly の購読
     useEffect(() => {
         applyTransform();
         const unsubs: Array<() => void> = [];
         if (rotateX) unsubs.push(rotateX.on('change', applyTransform));
+        if (rotateZ) unsubs.push(rotateZ.on('change', applyTransform));
         if (cameraX) unsubs.push(cameraX.on('change', applyTransform));
         if (cameraY) unsubs.push(cameraY.on('change', applyTransform));
         if (cameraZ) unsubs.push(cameraZ.on('change', applyTransform));
@@ -265,7 +273,7 @@ export const ContourBackground: React.FC<Props> = ({
         return () => {
             for (const u of unsubs) u();
         };
-    }, [rotateX, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly, applyTransform]);
+    }, [rotateX, rotateZ, cameraX, cameraY, cameraZ, cameraRY, cameraRZ, dolly, applyTransform]);
 
     // イントロアニメ (3D シーンの inner intro container と同じタイミングで進行)
     useEffect(() => {
