@@ -32,23 +32,17 @@ export const HeroLayer = ({
 }: Props) => {
     return (
         <motion.div
-            // ===== DEBUG-CAMERA-OFF: intro 3D アニメーションを無効化 (切り分け用) =====
-            // 戻すときはこのブロックを元に戻す:
-            // initial={skipIntro ? false : { scale: 2.5, rotateY: -45, rotateX: 30 }}
-            // animate={{ scale: 1, rotateY: 0, rotateX: 0 }}
-            // transition={
-            //     skipIntro
-            //         ? { duration: 0 }
-            //         : {
-            //               delay: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutStart),
-            //               duration: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutDuration),
-            //               ease: [0.83, 0, 0.17, 1],
-            //           }
-            // }
-            initial={false}
+            initial={skipIntro ? false : { scale: 2.5, rotateY: -45, rotateX: 30 }}
             animate={{ scale: 1, rotateY: 0, rotateX: 0 }}
-            transition={{ duration: 0 }}
-            // ===== /DEBUG-CAMERA-OFF =====
+            transition={
+                skipIntro
+                    ? { duration: 0 }
+                    : {
+                          delay: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutStart),
+                          duration: msToS(MAIN_TITLE_TIMING_MS.cameraZoomOutDuration),
+                          ease: [0.83, 0, 0.17, 1],
+                      }
+            }
             style={{ transformStyle: 'preserve-3d' }}
             className="w-full h-full absolute inset-0 flex items-center justify-center origin-center"
         >
