@@ -7,7 +7,7 @@ interface Props {
 
 const tldr = [
     { k: 'Role', v: '課題発見 / 提案 / 設計 / 実装 / 社内デプロイ' },
-    { k: 'Stack', v: 'Cloudflare Workers · D1 · Zero Trust · Hono · React · Tailwind' },
+    { k: 'Stack', v: 'Vite · React · TypeScript · Tailwind · Cloudflare Pages + Zero Trust' },
     { k: 'Trigger', v: '先輩の Excel を観察 →「ダッシュボードにした方が早い」と自発提案' },
     { k: 'Status', v: '社内で運用中（クライアント情報を含むためダミーデータでデモ可能）' },
 ];
@@ -51,13 +51,13 @@ export const PLDashboardLayer = ({ progress }: Props) => {
                 </div>
 
                 <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-[1.05] mb-4">
-                    Excel → Cloudflare D1。
+                    Excel → Web ダッシュボード。
                     <br />
                     自発的に置き換えた社内ツール。
                 </h2>
 
                 <p className="text-sm sm:text-base text-foreground/80 leading-relaxed max-w-2xl mb-6">
-                    先輩が毎月触っていた「成長した Excel」を OOUI ダッシュボードへ。Cloudflare D1 + Zero Trust で Google Workspace アドレスのみアクセス可能に。経営学部で身につけた PL 構造の理解がデータモデル設計で効いた。
+                    先輩が毎月触っていた「成長した Excel」を OOUI ダッシュボードへ。最初は D1 + Hono で組もうとして詰まったので、社内ツールだしと割り切って Vite + React の CSR で書き直し、Cloudflare Pages + Zero Trust で Google Workspace アドレスにだけ公開している。
                 </p>
 
                 <dl className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-x-6 gap-y-3 text-sm mb-8">
