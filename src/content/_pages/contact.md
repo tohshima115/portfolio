@@ -1,16 +1,18 @@
 ---
 title: Contact
-description: 連絡フォーム。Email経由でメッセージを送信。
+description: 気軽な連絡フォーム。記事の感想や表示崩れの報告も歓迎。
 order: 2
 ---
 
-# SendMessage
+# Contact
 
-ESTABLISH_COMM
+記事の感想、雑談、仕事の話、なんでもどうぞ。
 
-連絡を取りたい方は、Webサイト上の Contact フォームから以下を入力して送信してください:
+サイト上のフォームから以下を送れます:
 
-- **Identity verify (Email)**: 連絡先のメールアドレス
-- **Message Payload**: メッセージ本文
+- **Name** (任意): お名前
+- **Email**: 返信先のメールアドレス
+- **Message**: 本文
 
-通信は暗号化された安全な経路で送信されます (SECURE CHANNEL: ENCRYPTED // END-TO-END)。
+「ここ使いにくい」「表示崩れてない？」のような改善提案・バグ報告も大歓迎です。
+フォームが動かないときは tohshima115@gmail.com まで直接どうぞ。
