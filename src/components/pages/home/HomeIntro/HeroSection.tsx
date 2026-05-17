@@ -91,10 +91,11 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* HoverBackground は静的な radial gradient + noise だけで intro の影響を
-                受ける必要がないので outer の直下 (HeroLayer の外) に置く。
-                ただし outer の rotateX/rotateZ/scale/filter/opacity は受けるので、
-                マウス連動と dolly の引きには一緒に追従する。 */}
+            {/* 静的背景レイヤー (radial gradient + noise): カメラ追従の枠外。
+                outer motion.div の外側に置くことで rotateX/rotateZ/scale/filter/opacity
+                の影響を受けず、画面いっぱいに固定で広がる。 */}
+            <HoverBackground hoveredItem={hoveredItem} />
+
             <motion.div
                 style={{
                     rotateX,
@@ -107,7 +108,6 @@ export const HeroSection: React.FC<Props> = ({ skipIntro, updates, active, chaos
                 }}
                 className="relative w-full h-full flex items-center justify-center origin-center"
             >
-                <HoverBackground hoveredItem={hoveredItem} />
                 <div
                     className="absolute inset-0 flex items-center justify-center"
                     style={{
