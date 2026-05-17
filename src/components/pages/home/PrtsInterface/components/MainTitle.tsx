@@ -20,7 +20,7 @@ import { SvgLogoTitle } from './SvgLogoTitle';
 const GLOW_STYLE: CSSProperties = {
     ['--color-foreground' as never]: 'var(--color-logo)',
     filter: 'blur(40px)',
-    opacity: 0.7,
+    opacity: 0.5,
     transform: 'translateZ(0)', // GPU レイヤ化
     willChange: 'filter',
     pointerEvents: 'none',

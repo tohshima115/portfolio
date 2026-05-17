@@ -136,8 +136,9 @@ const LogoCells = ({ skipIntro, SIZE, GAP, BORDER, timing }: LogoSubProps) => {
 
     return (
         <g>
-            {/* 9 cell の枠 (clip-path で中央 → 外周へ reveal) */}
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => {
+            {/* 9 cell の枠 (中央セル 4 を除く 8 つは常時表示)。
+                cell 4 だけは枠自体が点滅するので下で別途 motion.rect で描画する。 */}
+            {[0, 1, 2, 3, 5, 6, 7, 8].map((i) => {
                 const o = cellOrigin(i, step);
                 return (
                     <rect
@@ -153,13 +154,17 @@ const LogoCells = ({ skipIntro, SIZE, GAP, BORDER, timing }: LogoSubProps) => {
                 );
             })}
 
-            {/* 中央セル blink (opacity ×4 切替) */}
+            {/* 中央セル (index 4) の枠の点滅。塗りは出さず stroke のみ blink。
+                blink 終了後は枠が出っぱなしになり、その後の drop down (cell 1 から
+                伸びる塗り) が cell 4 の内部を覆うので塗りが現れる演出となる。 */}
             <motion.rect
-                x={c4.x}
-                y={c4.y}
-                width={SIZE}
-                height={SIZE}
-                fill="var(--color-logo)"
+                x={c4.x + innerHalf}
+                y={c4.y + innerHalf}
+                width={innerSize}
+                height={innerSize}
+                fill="none"
+                stroke="var(--color-logo)"
+                strokeWidth={BORDER}
                 initial={{ opacity: skipIntro ? 1 : 0 }}
                 animate={{
                     opacity: skipIntro ? 1 : [0, 0, 1, 1, 0, 0, 1, 1],
