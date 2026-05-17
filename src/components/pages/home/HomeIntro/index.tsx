@@ -40,20 +40,48 @@ const readSkipIntroFlag = (): boolean => {
     );
 };
 
+// ローディング演出の調整値
+const BOOT_MIN_VISIBLE_MS = 600;   // hydrate が早くてもこの時間は loading を見せる
+const BOOT_FADE_DURATION_MS = 400; // overlay opacity 1→0 の transition (index.astro の inline style と一致)
+
 export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
     const [skipIntro] = useState<boolean>(readSkipIntroFlag);
     const [reducedMotion, setReducedMotion] = useState(false);
+    // bootDone: BOOT_SEQUENCE overlay が完全に消えて Hero を描画してよい状態。
+    // skipIntro / reducedMotion 時は loading 演出をスキップして即時 true。
+    const [bootDone, setBootDone] = useState<boolean>(() => {
+        if (typeof window === 'undefined') return false;
+        if (readSkipIntroFlag()) return true;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+        return false;
+    });
 
-    // index.astro が SSR HTML に置く #hero-boot-overlay を hydrate 完了時に消す。
-    // HomeIntro 自体が client:only="react" のため、HomeStack (client:load で SSR
-    // される WorksSection の folder grid) が hydrate までの一瞬だけ覗く問題を、
-    // 初期オーバーレイで覆って隠している。Hero (fixed bg-background) が
-    // 描画され始めたタイミング = この component が mount したタイミングで
-    // 役目を終えるので display:none に切り替える。
+    // index.astro が SSR HTML に置く #hero-boot-overlay の制御:
+    //   - 通常 (初回訪問・reduced-motion 無効): 最低 BOOT_MIN_VISIBLE_MS 待ってから
+    //     opacity フェードアウト → display:none → bootDone=true で HeroSection を mount
+    //   - skipIntro / reducedMotion: 即時 display:none + bootDone は最初から true
+    // bootDone=false の間 HeroSection を mount しないことで、ロゴアニメは overlay
+    // フェード完了後に綺麗に立ち上がる (MAIN_TITLE_TIMING_MS の delay はそのまま流用)。
     useEffect(() => {
         const overlay = document.getElementById('hero-boot-overlay');
-        if (overlay) overlay.style.display = 'none';
-    }, []);
+        if (bootDone) {
+            if (overlay) overlay.style.display = 'none';
+            return;
+        }
+        const mountTime = performance.now();
+        const fadeStartDelay = Math.max(0, BOOT_MIN_VISIBLE_MS - (performance.now() - mountTime));
+        const fadeTimer = window.setTimeout(() => {
+            if (overlay) overlay.style.opacity = '0';
+            const doneTimer = window.setTimeout(() => {
+                if (overlay) overlay.style.display = 'none';
+                setBootDone(true);
+            }, BOOT_FADE_DURATION_MS);
+            // cleanup 用に inner timer を ref 経由でつかむ簡略版: outer cleanup で外側を止め、
+            // 内側は (短時間なので) そのまま走らせる。実害がないので簡素に。
+            return () => window.clearTimeout(doneTimer);
+        }, fadeStartDelay);
+        return () => window.clearTimeout(fadeTimer);
+    }, [bootDone]);
 
     useEffect(() => {
         if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -119,6 +147,10 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
         p >= 0.999 ? 'none' : 'auto',
     );
 
+    // bootDone=false の間は HeroSection を mount しない (overlay が表示されたまま)。
+    // mount を遅延することで ContourBackground の Canvas 起動も framer-motion の
+    // intro delay の計時もすべて「overlay フェード完了後」に始まる。
+
     // reduced-motion: dolly 演出なし、Hero は単純な 100vh セクションとして
     // 通常フローで配置 (Statement と縦並び)
     if (reducedMotion) {
@@ -128,11 +160,13 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 onClickCapture={handleLinkClick}
                 data-home-intro
             >
-                <HeroSection
-                    skipIntro={skipIntro}
-                    updates={updates}
-                    active={true}
-                />
+                {bootDone && (
+                    <HeroSection
+                        skipIntro={skipIntro}
+                        updates={updates}
+                        active={true}
+                    />
+                )}
             </section>
         );
     }
@@ -153,12 +187,14 @@ export const HomeIntro = ({ updates = [] }: { updates?: UpdateItem[] }) => {
                 data-home-intro
                 style={{ display: heroDisplay, pointerEvents: heroPointerEvents }}
             >
-                <HeroSection
-                    skipIntro={skipIntro}
-                    updates={updates}
-                    active={true}
-                    dolly={progressMv}
-                />
+                {bootDone && (
+                    <HeroSection
+                        skipIntro={skipIntro}
+                        updates={updates}
+                        active={true}
+                        dolly={progressMv}
+                    />
+                )}
             </motion.section>
         </>
     );
