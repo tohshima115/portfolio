@@ -11,7 +11,7 @@ import cloudflare from '@astrojs/cloudflare';
 // https://astro.build/config
 export default defineConfig({
     site: 'https://toyoshima.work',
-    adapter: cloudflare(),
+    adapter: cloudflare({ platformProxy: { enabled: false } }),
     // 主要な下層ページをトップから即座にプリフェッチして遷移を瞬時にする。
     // data-astro-prefetch 属性が無いリンクはホバー時にフェッチ (defaultStrategy)。
     prefetch: {
