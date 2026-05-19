@@ -232,24 +232,4 @@ const isActive = (href: string) => {
         opacity: 1;
     }
 
-    /* Dark background contexts */
-    :global(body.bg-neutral-950) .site-header__glass,
-    :global(.dark) .site-header__glass {
-        background-color: oklch(0.22 0.005 100 / 0.45);
-        border-color: oklch(1 0 0 / 0.12);
-        color: var(--color-background);
-    }
-    :global(body.bg-neutral-950) .site-header__glass a,
-    :global(.dark) .site-header__glass a {
-        color: oklch(1 0 0 / 0.85);
-    }
-    :global(body.bg-neutral-950) .site-header__cta,
-    :global(.dark) .site-header__cta {
-        background-color: var(--color-background);
-        color: var(--color-foreground);
-    }
-    :global(body.bg-neutral-950) #site-menu-btn .menu-bar,
-    :global(.dark) #site-menu-btn .menu-bar {
-        background-color: oklch(1 0 0 / 0.85);
-    }
 </style>
