@@ -85,8 +85,8 @@ currentTags.forEach((tech: string) => {
 ---
 
 <ProjectLayout title={`${entry.data.title} | Portfolio`}>
-    <!-- Wrapper for full screen layout with background -->
-    <div class="h-screen w-full font-sans text-gray-900 selection:bg-yellow-400 selection:text-black overflow-hidden relative flex flex-col pt-[68px] sm:pt-[72px]">
+    <!-- Wrapper for scrollable layout with sticky sidebars -->
+    <div class="min-h-screen w-full font-sans text-gray-900 selection:bg-yellow-400 selection:text-black relative pt-[68px] sm:pt-[72px]">
         <Background client:load transition:persist="project-background" />
         
         <!-- Large Background Typography Watermark -->
@@ -95,7 +95,7 @@ currentTags.forEach((tech: string) => {
         </div>
 
         <!-- Project Navigation Bar (PRTS Style) -->
-        <div class="sticky top-0 z-50 w-full flex-shrink-0">
+        <div class="sticky top-[68px] sm:top-[72px] z-50 w-full">
             <ProjectNavigation 
                 projects={navProjects} 
                 currentSlug={entry.slug} 
@@ -104,10 +104,10 @@ currentTags.forEach((tech: string) => {
             />
         </div>
 
-        <div class="flex flex-col lg:grid lg:grid-cols-12 relative z-10 w-full max-w-[1920px] mx-auto lg:overflow-hidden h-[calc(100vh-80px-68px)] sm:h-[calc(100vh-80px-72px)]">
-            
-            <!-- Left Column: Specs Panel -->
-            <aside class="lg:col-span-3 h-full lg:overflow-y-auto relative flex flex-col">
+        <div class="flex flex-col lg:grid lg:grid-cols-12 relative z-10 w-full max-w-[1920px] mx-auto">
+
+            <!-- Left Column: Specs Panel (sticky) -->
+            <aside class="hidden lg:flex lg:col-span-3 flex-col self-start sticky top-[148px] sm:top-[152px] h-[calc(100svh-148px)] sm:h-[calc(100svh-152px)] overflow-y-auto">
                 <div class="p-8 pb-4 shrink-0">
                     <ProjectMetaPanel
                         title={entry.data.title}
@@ -134,16 +134,12 @@ currentTags.forEach((tech: string) => {
                 </div>
             </aside>
 
-            <!-- Center Column: Primary Visual & Content -->
-            <main class="lg:col-span-7 h-full w-full relative lg:overflow-y-auto scrollbar-hide">
-                
-                <div class="p-8 lg:p-16 max-w-5xl mx-auto">
+            <!-- Center Column: Scrollable Content -->
+            <main class="lg:col-span-7 w-full relative">
+
+                <div class="p-8 lg:p-16 max-w-3xl mx-auto pb-32">
                     <!-- Hero Section -->
                     <div class="relative mb-16 group">
-                         {/* Diagonal decorative cuts */}
-                         <div class="absolute -top-4 -left-4 w-8 h-8 border-t-2 border-l-2 border-black z-20"></div>
-                         <div class="absolute -bottom-4 -right-4 w-8 h-8 border-b-2 border-r-2 border-black z-20"></div>
-
                         {currentLogo?.mark ? (
                             <div class="relative overflow-hidden aspect-video bg-transparent flex items-center justify-center">
                                 <img
@@ -159,10 +155,7 @@ currentTags.forEach((tech: string) => {
                                     alt={entry.data.title}
                                     class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />
-                                <!-- Image Overlay Gradient -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-
-                                <!-- Floating Label on Image -->
                                 <div class="absolute bottom-4 left-4 bg-yellow-400 text-black px-3 py-1 font-mono text-xs font-bold tracking-widest uppercase">
                                     Visual_Reference_01
                                 </div>
@@ -170,24 +163,26 @@ currentTags.forEach((tech: string) => {
                         ) : null}
                     </div>
 
-                    <!-- Hidden Content Source — extracted into modals by TableOfContents -->
-                    <div id="project-content-source" class="sr-only" aria-hidden="true">
+                    <!-- Main Content -->
+                    <div class="prose prose-neutral max-w-none font-sans
+                        prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
+                        prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-yellow-400 prose-h2:pl-4 prose-h2:mt-16 prose-h2:mb-6
+                        prose-h3:text-xl prose-h3:border-l-4 prose-h3:border-yellow-400 prose-h3:pl-3 prose-h3:mt-10
+                        prose-h4:text-base prose-h4:mt-6
+                        prose-p:text-gray-700 prose-p:leading-relaxed
+                        prose-strong:text-black prose-strong:font-bold prose-strong:bg-yellow-100 prose-strong:px-1
+                        prose-li:marker:text-yellow-500
+                        prose-a:text-black prose-a:underline
+                        prose-table:text-sm prose-table:font-sans
+                        prose-blockquote:border-l-4 prose-blockquote:border-yellow-400 prose-blockquote:bg-yellow-50 prose-blockquote:py-1
+                    ">
                         <Content />
-                    </div>
-
-                    <!-- Hint to open sections from the right navigation -->
-                    <div class="mt-12 flex flex-col items-center justify-center text-center opacity-60 select-none">
-                        <span class="font-mono text-2xs uppercase tracking-[0.3em] mb-3">Select a section</span>
-                        <div class="flex items-center gap-3 text-xs font-bold uppercase tracking-widest">
-                            <span class="hidden lg:inline">→</span>
-                            <span>Open from Navigation</span>
-                        </div>
                     </div>
                 </div>
             </main>
 
-            <!-- Right Column: Navigation Control Panel -->
-            <nav class="hidden lg:block lg:col-span-2 h-full relative z-20">
+            <!-- Right Column: Navigation Control Panel (sticky) -->
+            <nav class="hidden lg:block lg:col-span-2 self-start sticky top-[148px] sm:top-[152px] h-[calc(100svh-148px)] sm:h-[calc(100svh-152px)] relative z-20">
                 <TableOfContents 
                     headings={headings} 
                     projectLink={entry.data.meta.link}

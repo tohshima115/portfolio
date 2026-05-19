@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '@/utils/cn';
 
 interface Heading {
@@ -10,78 +10,37 @@ interface Heading {
 interface TableOfContentsProps {
     headings: Heading[];
     projectLink?: string;
-    className?: string; // Add className prop
-}
-
-const SOURCE_ID = 'project-content-source';
-
-function extractSectionHtml(slug: string): { title: string; html: string } | null {
-    if (typeof document === 'undefined') return null;
-    const source = document.getElementById(SOURCE_ID);
-    if (!source) return null;
-
-    let escapedSlug: string;
-    try {
-        escapedSlug = (window as any).CSS?.escape?.(slug) ?? slug;
-    } catch {
-        escapedSlug = slug;
-    }
-    const headingEl = source.querySelector(`#${escapedSlug}`) as HTMLElement | null;
-    if (!headingEl) return null;
-
-    const startLevel = parseInt(headingEl.tagName.slice(1), 10);
-    const fragments: string[] = [];
-    let cursor = headingEl.nextElementSibling as HTMLElement | null;
-    while (cursor) {
-        if (/^H[1-6]$/.test(cursor.tagName)) {
-            const level = parseInt(cursor.tagName.slice(1), 10);
-            if (level <= startLevel) break;
-        }
-        fragments.push(cursor.outerHTML);
-        cursor = cursor.nextElementSibling as HTMLElement | null;
-    }
-    return {
-        title: headingEl.textContent?.trim() ?? '',
-        html: fragments.join(''),
-    };
+    className?: string;
 }
 
 const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink, className }) => {
     const [activeSlug, setActiveSlug] = useState<string | null>(null);
-    const [section, setSection] = useState<{ title: string; html: string } | null>(null);
-
-    const closeModal = useCallback(() => {
-        setActiveSlug(null);
-        setSection(null);
-    }, []);
-
-    const openSection = useCallback((slug: string) => {
-        const extracted = extractSectionHtml(slug);
-        if (extracted) {
-            setActiveSlug(slug);
-            setSection(extracted);
-        }
-    }, []);
 
     useEffect(() => {
-        if (!activeSlug) return;
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') closeModal();
-        };
-        document.addEventListener('keydown', onKey);
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.removeEventListener('keydown', onKey);
-            document.body.style.overflow = prev;
-        };
-    }, [activeSlug, closeModal]);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        setActiveSlug(entry.target.id);
+                    }
+                });
+            },
+            { rootMargin: '-10% 0px -70% 0px' }
+        );
+
+        headings.forEach(h => {
+            const el = document.getElementById(h.slug);
+            if (el) observer.observe(el);
+        });
+
+        return () => observer.disconnect();
+    }, [headings]);
 
     return (
         <div className={cn("relative h-full flex flex-col justify-between font-mono text-black p-6 overflow-hidden", className)}>
 
             {/* Top Decorative Header */}
-            <div>
+            <div className="overflow-y-auto flex-1">
                 <div className="flex justify-between items-start mb-12">
                     <div className="text-4xl font-black writing-vertical-rl transform rotate-180 opacity-20 select-none pointer-events-none">
                         NAVIGATION
@@ -98,18 +57,17 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
                         const isActive = activeSlug === heading.slug;
                         return (
                             <li key={heading.slug} className="group relative">
-                                <button
-                                    type="button"
-                                    onClick={() => openSection(heading.slug)}
+                                <a
+                                    href={`#${heading.slug}`}
                                     className={cn(
-                                        'block w-full py-3 pr-2 text-sm font-bold uppercase tracking-wider hover:pl-8 transition-all duration-200 border-b border-black/10 group-hover:bg-white group-hover:text-black flex justify-between items-center text-left',
+                                        'block w-full py-3 pr-2 text-sm font-bold uppercase tracking-wider hover:pl-8 transition-all duration-200 border-b border-black/10 hover:bg-white hover:text-black flex justify-between items-center',
                                         indentClass,
                                         isActive && 'bg-black text-white pl-8',
                                     )}
                                 >
                                     <span>{heading.text}</span>
                                     <span className={cn('text-2xs opacity-0 group-hover:opacity-100', isActive && 'opacity-100')}>0{index + 1}</span>
-                                </button>
+                                </a>
                                 <div className={cn('absolute left-0 top-0 h-full bg-black transition-all duration-200', isActive ? 'w-1' : 'w-0 group-hover:w-1')} />
                             </li>
                         );
@@ -118,7 +76,7 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
             </div>
 
             {/* Bottom Action Area */}
-            <div className="mt-auto pt-8 border-t-2 border-black mb-12">
+            <div className="shrink-0 pt-8 border-t-2 border-black mb-12">
                 {projectLink ? (
                     <a
                         href={projectLink}
@@ -147,66 +105,6 @@ const TableOfContents: React.FC<TableOfContentsProps> = ({ headings, projectLink
             <div className="absolute -right-12 bottom-20 text-[7.5rem] font-black opacity-10 pointer-events-none rotate-90 whitespace-nowrap">
                 ARCHIVE
             </div>
-
-            {/* Section Modal */}
-            {activeSlug && section && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label={section.title}
-                >
-                    {/* Backdrop */}
-                    <button
-                        type="button"
-                        aria-label="Close"
-                        onClick={closeModal}
-                        className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
-                    />
-
-                    {/* Panel */}
-                    <div className="relative bg-white border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-3xl max-h-[85vh] flex flex-col">
-                        {/* Header */}
-                        <div className="flex items-center justify-between border-b-2 border-black bg-yellow-400 px-6 py-3">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <span className="font-mono text-2xs uppercase tracking-[0.2em] font-bold opacity-70 shrink-0">SECTION</span>
-                                <h2 className="font-black text-lg uppercase tracking-tight truncate">{section.title}</h2>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={closeModal}
-                                className="ml-4 shrink-0 w-8 h-8 flex items-center justify-center border-2 border-black bg-white hover:bg-black hover:text-white transition-colors font-bold"
-                                aria-label="Close"
-                            >
-                                ×
-                            </button>
-                        </div>
-
-                        {/* Body */}
-                        <div className="overflow-y-auto px-6 py-6 sm:px-8 sm:py-8">
-                            <div
-                                className="prose prose-neutral max-w-none font-sans
-                                    prose-headings:font-black prose-headings:uppercase prose-headings:tracking-tight
-                                    prose-h3:text-xl prose-h3:border-l-4 prose-h3:border-yellow-400 prose-h3:pl-3 prose-h3:mt-8
-                                    prose-h4:text-base prose-h4:mt-6
-                                    prose-p:text-gray-700 prose-p:leading-relaxed
-                                    prose-strong:text-black prose-strong:font-bold prose-strong:bg-yellow-100 prose-strong:px-1
-                                    prose-li:marker:text-yellow-500
-                                    prose-a:text-black prose-a:underline
-                                    prose-table:text-sm
-                                "
-                                dangerouslySetInnerHTML={{ __html: section.html }}
-                            />
-                        </div>
-
-                        {/* Footer */}
-                        <div className="border-t-2 border-black bg-white px-6 py-2 flex items-center justify-between">
-                            <span className="font-mono text-2xs uppercase tracking-[0.2em] opacity-60">ESC to close</span>
-                            <span className="font-mono text-2xs uppercase tracking-[0.2em] opacity-60">#{activeSlug}</span>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
