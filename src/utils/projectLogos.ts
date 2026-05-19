@@ -8,6 +8,7 @@
 export interface ProjectLogo {
     mark?: string;
     horizontal?: string;
+    vertical?: string;
 }
 
 const LOGOS: Record<string, ProjectLogo> = {
@@ -17,6 +18,7 @@ const LOGOS: Record<string, ProjectLogo> = {
     swept: {
         mark: '/Swept/logoMark.svg',
         horizontal: '/Swept/logoHorizontal.svg',
+        vertical: '/Swept/logoVertical.svg',
     },
     'internal-tools': {
         mark: '/InternalTools/logoMark.svg',
