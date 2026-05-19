@@ -22,7 +22,9 @@ const currentLogo = getProjectLogo(entry.slug);
 
 // Format projects for navigation. ブランドマークがあればそれを最優先で使い、
 // 無ければ既存の icon / thumbnail フォールバックに任せる。
-const navProjects = projects.map((p: any) => {
+const navProjects = [...projects].sort((a: any, b: any) =>
+    new Date(b.data.meta.date).getTime() - new Date(a.data.meta.date).getTime()
+).map((p: any) => {
     const logo = getProjectLogo(p.slug);
     return {
         slug: p.slug,
