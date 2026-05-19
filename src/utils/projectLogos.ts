@@ -18,6 +18,15 @@ const LOGOS: Record<string, ProjectLogo> = {
         mark: '/Swept/logoMark.svg',
         horizontal: '/Swept/logoHorizontal.svg',
     },
+    'internal-tools': {
+        mark: '/InternalTools/logoMark.svg',
+    },
+    hobby: {
+        mark: '/Hobby/logoMark.svg',
+    },
+    'design-works': {
+        mark: '/DesignWorks/logoMark.svg',
+    },
 };
 
 export const getProjectLogo = (slug: string): ProjectLogo | undefined =>
