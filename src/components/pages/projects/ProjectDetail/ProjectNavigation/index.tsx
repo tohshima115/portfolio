@@ -89,7 +89,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                 </div>
 
                 <motion.ul
-                    className="flex justify-center flex-shrink-0 flex-wrap gap-3 pr-8 md:pr-0"
+                    className="flex justify-center flex-shrink-0 flex-wrap gap-5 pr-8 md:pr-0"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -113,7 +113,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                                 >
                                     {/* Outline / Shape */}
                                     <div className={cn(
-                                        "w-12 h-12 md:w-14 md:h-14 flex items-center justify-center relative transition-all duration-300 rounded-full overflow-hidden",
+                                        "w-12 h-12 md:w-14 md:h-14 flex items-center justify-center relative transition-all duration-300 rounded-2xl overflow-hidden",
                                         isActive
                                             ? "bg-transparent border-2 border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.4)]"
                                             : "bg-gray-100/50 backdrop-blur-sm border border-gray-300 hover:border-black hover:scale-105"
