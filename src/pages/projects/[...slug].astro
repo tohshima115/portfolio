@@ -142,7 +142,15 @@ currentTags.forEach((tech: string) => {
                          <div class="absolute -top-4 -left-4 w-8 h-8 border-t-2 border-l-2 border-black z-20"></div>
                          <div class="absolute -bottom-4 -right-4 w-8 h-8 border-b-2 border-r-2 border-black z-20"></div>
 
-                        {entry.data.meta.thumbnail && (
+                        {currentLogo?.mark ? (
+                            <div class="relative overflow-hidden shadow-xl aspect-video bg-white flex items-center justify-center">
+                                <img
+                                    src={currentLogo.mark}
+                                    alt={`${entry.data.title} logo`}
+                                    class="w-1/2 h-1/2 object-contain transition-transform duration-700 group-hover:scale-105"
+                                />
+                            </div>
+                        ) : entry.data.meta.thumbnail ? (
                             <div class="relative overflow-hidden shadow-xl aspect-video bg-gray-100">
                                 <img
                                     src={entry.data.meta.thumbnail.src}
@@ -151,13 +159,13 @@ currentTags.forEach((tech: string) => {
                                 />
                                 <!-- Image Overlay Gradient -->
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                
+
                                 <!-- Floating Label on Image -->
                                 <div class="absolute bottom-4 left-4 bg-yellow-400 text-black px-3 py-1 font-mono text-xs font-bold tracking-widest uppercase">
                                     Visual_Reference_01
                                 </div>
                             </div>
-                        )}
+                        ) : null}
                     </div>
 
                     <!-- Hidden Content Source — extracted into modals by TableOfContents -->
