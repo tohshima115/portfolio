@@ -37,24 +37,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
             <div className="mb-8 relative group">
                 <div className="absolute -left-4 top-0 w-1 h-full bg-yellow-400 group-hover:h-1/2 transition-all duration-300" />
 
-                {/* Brand Mark / Wordmark — horizontal を優先、なければ mark */}
-                {logoHorizontal ? (
-                    <img
-                        src={logoHorizontal}
-                        alt=""
-                        aria-hidden
-                        className="h-10 w-auto mb-4 relative z-10"
-                    />
-                ) : logoMark ? (
-                    <img
-                        src={logoMark}
-                        alt=""
-                        aria-hidden
-                        className="w-12 h-12 rounded-lg mb-4 relative z-10 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.2)]"
-                    />
-                ) : null}
-
-                <h1 className="text-5xl font-black tracking-tighter uppercase leading-none mb-2 relative z-10">
+<h1 className="text-5xl font-black tracking-tighter uppercase leading-none mb-2 relative z-10">
                     {title}
                 </h1>
                 <div className="flex items-center gap-2 text-xs font-bold tracking-widest text-gray-400">
