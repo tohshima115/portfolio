@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://toyoshima.work/rss.xml
+
+# AI / LLM friendly index (proposed standard: llmstxt.org)
+# Each page is also available as raw Markdown by appending .md to its URL.
+Llms-Index: https://toyoshima.work/llms.txt
+Llms-Full: https://toyoshima.work/llms-full.txt

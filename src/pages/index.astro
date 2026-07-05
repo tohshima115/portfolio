@@ -1,6 +1,69 @@
 ---
+import { getCollection } from "astro:content";
+import { ClientRouter } from "astro:transitions";
 import "../styles/global.css";
-import { PrtsInterface } from "../components/pages/home/PrtsInterface";
+import "../styles/home.css";
+import { HomeIntro } from "../components/pages/home/HomeIntro";
+import { HomeStack } from "../components/pages/home/HomeStack";
+import WebGLTransition from "../components/common/WebGLTransition";
+import SiteHeader from "../components/common/SiteHeader.astro";
+import { MarkdownActions } from "../components/common/MarkdownActions";
+import { SmoothScroll } from "../components/common/SmoothScroll";
+
+const projects = await getCollection("projects");
+const blogPosts = await getCollection("blog");
+
+// Merge and sort updates
+const allUpdates = [
+	...projects.map((p) => ({
+		title: p.data.title,
+		date: p.data.meta.updatedDate
+			? new Date(p.data.meta.updatedDate)
+			: new Date(p.data.meta.date),
+		url: `/projects/${p.slug}`,
+		type: "projects" as const,
+	})),
+	...blogPosts.map((b) => ({
+		title: b.data.title,
+		date: b.data.updatedDate
+			? new Date(b.data.updatedDate)
+			: new Date(b.data.pubDate),
+		url: `/blog/${b.slug}`,
+		type: "blog" as const,
+	})),
+].sort((a, b) => b.date.valueOf() - a.date.valueOf());
+
+const latestUpdates = allUpdates.slice(0, 5).map((u) => ({
+	...u,
+	date: u.date.toISOString(), // passed via props, keep as string
+}));
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
+const personSchema = {
+	"@context": "https://schema.org",
+	"@type": "Person",
+	name: "Shogo Toyoshima",
+	alternateName: "豊島 昇悟",
+	url: siteUrl || Astro.url.origin,
+	jobTitle: "Product Engineer",
+	description:
+		"Cloudflare Workers / D1 / Durable Objects / Workers AI を本番投入した個人開発SaaS『AIChatClip』のオーナー。プロダクトの企画から実装・運用までを1人で完結する Product Engineer / Designer。",
+	knowsAbout: [
+		"Cloudflare Workers",
+		"Cloudflare D1",
+		"Durable Objects",
+		"Workers AI",
+		"TypeScript",
+		"React",
+		"Hono",
+		"Astro",
+		"Browser Extension Development",
+		"Obsidian Plugin Development",
+		"UI Design",
+		"Visual Identity",
+	],
+	sameAs: ["https://github.com/tohshima115", "https://x.com/"],
+};
 ---
 
 <html lang="ja">
@@ -13,10 +76,134 @@ import { PrtsInterface } from "../components/pages/home/PrtsInterface";
 		<title>Shogo Toyoshima Portfolio</title>
 		<meta
 			name="description"
-			content="Design Engineer / UX Researcher ポートフォリオサイト"
+			content="Product Engineer / Designer ポートフォリオサイト。Cloudflareスタックで個人プロダクトを出荷。"
 		/>
+		<link
+			rel="alternate"
+			type="text/markdown"
+			title="View as Markdown"
+			href="/index.md"
+		/>
+		<link
+			rel="alternate"
+			type="text/plain"
+			title="LLM-friendly index"
+			href="/llms.txt"
+		/>
+		<script
+			type="application/ld+json"
+			set:html={JSON.stringify(personSchema)}
+		/>
+		<!--
+		  React マウント前に sessionStorage を読み、
+		  2 回目以降の訪問では PrtsInterface のイントロアニメを
+		  完全スキップするための同期フラグ。
+		  framer-motion の initial / transition.delay は最初の render で確定するため、
+		  必ずレンダリング前に決定する必要がある。
+		-->
+		<script is:inline data-astro-rerun>
+			(function () {
+				var skip = false;
+				try {
+					var key = "prts-intro-seen";
+					if (window.sessionStorage.getItem(key)) {
+						skip = true;
+					} else {
+						window.sessionStorage.setItem(key, "1");
+					}
+				} catch (e) {
+					skip = false;
+				}
+				window.__prtsSkipIntro = skip;
+				// CSS animation (clip-path 等の React 制御外のもの) を即時抑止するため、
+				// HTML パース前に <html> へクラスを付与する。
+				if (skip) {
+					document.documentElement.classList.add("prts-skip-intro");
+				}
+				// HomeIntro の 1200px spacer と HomeStack の GSAP pinSpacer は hydrate 後に
+				// 注入されるため、ブラウザ標準の scroll 復元 (mid-page reload で過去の scrollY を
+				// 復元する) と layout 確定タイミングが噛み合わず、pin の start/end 計算が
+				// ズレて「同じセクションが二か所に出る」破綻が起きる。アニメ主体の TOP では
+				// 復元を諦めて常に先頭から見せる方が破綻しない。
+				//
+				// scrollRestoration='manual' だけでは、Chromium 系 + Lenis 環境で layout
+				// 確定後に過去の scrollY が再適用されるケースがある (本人確認済み)。
+				// そのため rAF ループで「ユーザーが操作する or 1 秒経過するまで scroll=0
+				// を強制し続ける」形で復元を完全に潰す。
+				if ("scrollRestoration" in window.history) {
+					window.history.scrollRestoration = "manual";
+				}
+				try {
+					window.scrollTo(0, 0);
+				} catch (e) {
+					/* ignore */
+				}
+				(function lockTop() {
+					var armed = true;
+					var disarm = function () {
+						armed = false;
+					};
+					var opts = { once: true, passive: true, capture: true };
+					window.addEventListener("wheel", disarm, opts);
+					window.addEventListener("touchstart", disarm, opts);
+					window.addEventListener(
+						"keydown",
+						disarm,
+						{ once: true, capture: true },
+					);
+					window.setTimeout(disarm, 1000);
+					var raf = function () {
+						if (!armed) return;
+						if (window.scrollY !== 0 || window.pageYOffset !== 0) {
+							window.scrollTo(0, 0);
+						}
+						window.requestAnimationFrame(raf);
+					};
+					window.requestAnimationFrame(raf);
+				})();
+			})();
+		</script>
+		<ClientRouter />
 	</head>
-	<body class="min-h-screen">
-		<PrtsInterface client:load />
+	<body class="min-h-screen overflow-x-hidden">
+		<SiteHeader />
+		<SmoothScroll client:only="react" />
+		<!--
+		  HomeIntro は client:only="react" のため SSR HTML に含まれず、
+		  HomeStack (= client:load で SSR される WorksSection) のフォルダーや
+		  HudOverlay (z-[80] fixed) が hydrate 完了までの間、画面前面に出てしまう
+		  ことがある。それらを SSR 段階で覆う初期オーバーレイ + BOOT_SEQUENCE
+		  ローディング UI。Tailwind の JIT 抽出に依存すると初回 paint に間に合わない
+		  ケースがあるので inline style + var(--color-background) で確実に塗る。
+		  SiteHeader (z-[100]) のすぐ下にあたる z-index:99 で、HomeStack 内の
+		  あらゆる fixed/絶対配置要素 (HudOverlay z-80 含む) より前に出す。
+		  HomeIntro mount → 最低 600ms 待機 → opacity フェード (400ms) → display:none。
+		-->
+		<div
+			id="hero-boot-overlay"
+			aria-hidden="true"
+			style="position:fixed;inset:0;z-index:99;background-color:var(--color-background);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);transition:opacity 400ms ease-out;"
+		>
+			<div
+				style="font-size:11px;letter-spacing:0.4em;color:var(--color-muted-foreground,#737373);text-transform:uppercase;display:flex;align-items:center;gap:8px;"
+			>
+				<span style="color:var(--color-accent,#facc15);">▸</span>
+				<span>BOOT_SEQUENCE</span>
+			</div>
+			<div
+				style="width:200px;height:2px;background-color:color-mix(in srgb,var(--color-foreground,#0a0a0a) 12%,transparent);overflow:hidden;position:relative;"
+			>
+				<div
+					style="position:absolute;top:0;left:0;height:100%;width:0;background-color:var(--color-accent,#facc15);animation:hero-boot-fill 1200ms cubic-bezier(0.4,0,0.2,1) forwards;"
+				></div>
+			</div>
+		</div>
+		<HomeIntro client:only="react" updates={latestUpdates} />
+		<HomeStack client:load updates={latestUpdates} />
+		<MarkdownActions client:load transition:persist="md-actions" />
+		<WebGLTransition
+			client:only="react"
+			transition:persist="webgl-transition"
+		/>
 	</body>
 </html>

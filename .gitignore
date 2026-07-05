@@ -22,3 +22,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# z-ai
+z-ai/*
+# claude code worktrees
+.claude/worktrees/

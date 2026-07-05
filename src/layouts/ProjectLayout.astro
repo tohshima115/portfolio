@@ -1,12 +1,18 @@
 ---
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
+import WebGLTransition from "../components/common/WebGLTransition";
+import SiteHeader from "../components/common/SiteHeader.astro";
+import { MarkdownActions } from "../components/common/MarkdownActions";
 
 interface Props {
     title: string;
 }
 
 const { title } = Astro.props;
+
+const trimmedPath = Astro.url.pathname.replace(/\/+$/, "");
+const mdHref = trimmedPath === "" ? "/index.md" : `${trimmedPath}.md`;
 ---
 
 <!DOCTYPE html>
@@ -17,31 +23,35 @@ const { title } = Astro.props;
         <meta name="viewport" content="width=device-width" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <meta name="generator" content={Astro.generator} />
+        <link
+            rel="alternate"
+            type="text/markdown"
+            title="View as Markdown"
+            href={mdHref}
+        />
+        <link
+            rel="alternate"
+            type="text/plain"
+            title="LLM-friendly index"
+            href="/llms.txt"
+        />
         <title>{title}</title>
         <style is:global>
             /* Global styles for terminal-like feel if needed */
             body {
                 font-family: "Inter", system-ui, sans-serif;
-                background-color: #0a0a0a;
-                color: #e5e5e5;
-            }
-            /* Custom scrollbar */
-            ::-webkit-scrollbar {
-                width: 8px;
-            }
-            ::-webkit-scrollbar-track {
-                background: #0a0a0a;
-            }
-            ::-webkit-scrollbar-thumb {
-                background: #333;
-                border-radius: 4px;
-            }
-            ::-webkit-scrollbar-thumb:hover {
-                background: #555;
+                background-color: var(--color-surface-deep);
+                color: var(--color-neutral-100);
             }
         </style>
     </head>
     <body class="bg-neutral-950 text-white min-h-screen">
+        <SiteHeader />
         <slot />
+        <MarkdownActions client:load transition:persist="md-actions" />
+        <WebGLTransition
+            client:only="react"
+            transition:persist="webgl-transition"
+        />
     </body>
 </html>

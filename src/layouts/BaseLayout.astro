@@ -1,6 +1,9 @@
 ---
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
+import WebGLTransition from "../components/common/WebGLTransition";
+import SiteHeader from "../components/common/SiteHeader.astro";
+import { MarkdownActions } from "../components/common/MarkdownActions";
 
 interface Props {
     title: string;
@@ -10,17 +13,50 @@ interface Props {
 
 const {
     title,
-    description = "Shogo Toyoshima Portfolio - Design Engineer / UX Researcher",
+    description = "Shogo Toyoshima Portfolio — Product Engineer / Designer. Cloudflare スタックで個人プロダクトを出荷している26歳。",
     image = "/og-image.png",
 } = Astro.props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
+
+const trimmedPath = Astro.url.pathname.replace(/\/+$/, "");
+const mdHref = trimmedPath === "" ? "/index.md" : `${trimmedPath}.md`;
+const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Shogo Toyoshima",
+    alternateName: "豊島 昇悟",
+    url: siteUrl || Astro.url.origin,
+    jobTitle: "Product Engineer",
+    description:
+        "Cloudflare Workers / D1 / Durable Objects / Workers AI を本番投入した個人開発SaaS『AIChatClip』のオーナー。プロダクトの企画から実装・運用までを1人で完結する Product Engineer / Designer。",
+    knowsAbout: [
+        "Cloudflare Workers",
+        "Cloudflare D1",
+        "Durable Objects",
+        "Workers AI",
+        "TypeScript",
+        "React",
+        "Hono",
+        "Astro",
+        "Browser Extension Development",
+        "Obsidian Plugin Development",
+        "UI Design",
+        "Visual Identity",
+    ],
+    sameAs: [
+        "https://github.com/tohshima115",
+        "https://x.com/",
+    ],
+};
 ---
 
 <!DOCTYPE html>
-<html lang="ja" class="scroll-smooth bg-neutral-950 text-white">
+<html lang="ja" class="scroll-smooth bg-background text-foreground">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/Iogo.svg" />
         <meta name="generator" content={Astro.generator} />
 
         <title>{title}</title>
@@ -39,30 +75,37 @@ const {
             title="Portfolio Updates (RSS)"
             href="/rss.xml"
         />
+        <link
+            rel="alternate"
+            type="text/markdown"
+            title="View as Markdown"
+            href={mdHref}
+        />
+        <link
+            rel="alternate"
+            type="text/plain"
+            title="LLM-friendly index"
+            href="/llms.txt"
+        />
+
+        <!-- Structured Data: Person Schema (SEO for name search) -->
+        <script
+            type="application/ld+json"
+            set:html={JSON.stringify(personSchema)}
+        />
 
         <ClientRouter />
 
-        <style is:global>
-            /* Custom Scrollbar for Webkit */
-            ::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-            }
-            ::-webkit-scrollbar-track {
-                background: #0a0a0a;
-            }
-            ::-webkit-scrollbar-thumb {
-                background: #333;
-                border-radius: 4px;
-            }
-            ::-webkit-scrollbar-thumb:hover {
-                background: #555;
-            }
-        </style>
     </head>
     <body
-        class="min-h-screen relative overflow-x-hidden selection:bg-yellow-400 selection:text-black font-sans antialiased"
+        class="min-h-screen relative overflow-x-hidden selection:bg-accent selection:text-accent-foreground font-sans antialiased"
     >
+        <SiteHeader />
         <slot />
+        <MarkdownActions client:load transition:persist="md-actions" />
+        <WebGLTransition
+            client:only="react"
+            transition:persist="webgl-transition"
+        />
     </body>
 </html>

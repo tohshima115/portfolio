@@ -193,12 +193,19 @@ src/
 *   **サブナビゲーション**:
     *   `[ SYSTEM_GUIDE ]` -> `/system`
     *   `[ SIGNAL_FEED ]` -> `/rss.xml`
-*   **最新アクティビティ**:
-    *   `[ LATEST_ACTIVITY ]`: Works/Blogの最新3件へのダイレクトリンク。
+*   **最新アクティビティ (LATEST UPDATES)**:
+    *   旧 `<StatusBadges>` (SYSTEM ONLINE) のUIを活用し、ホバーで最新3件の更新（Works/Blogの最終更新日時 `updatedDate` の降順）を表示。
+    *   クリックで全ての更新履歴一覧ページ `/updates` へ遷移する。
 
-## **7\. 実装・最適化ガイドライン (Implementation Guidelines)**
+### **7.4 コンテンツデータスキーマ・更新の記録**
+*   **運用方針**:
+    *   コンテンツ（`/works`, `/blog`）には、新規作成時の `date`, `pubDate` に加え、最終更新日時を記録するための `updatedDate` をフロントマターに付与する。
+    *   最新の更新の順位は、この `updatedDate` を優先的に参照して決定される（存在しない場合は初版日付を参照）。
+    *   UIおよび `/updates` の一覧では、新規記事だけでなく既存記事の「最終更新日」を示すことで、サイトの「生きた」状態（生存報告）を継続しやすくする。
 
-### **7.1 画像最適化とコンポーネント合成 (Image Optimization & Composition)**
+## **8\. 実装・最適化ガイドライン (Implementation Guidelines)**
+
+### **8.1 画像最適化とコンポーネント合成 (Image Optimization & Composition)**
 
 Reactコンポーネント内でAstroの強力な画像最適化（`astro:assets`）の恩恵を受けるため、以下の設計ルールを徹底する。
 

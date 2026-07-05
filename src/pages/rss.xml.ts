@@ -15,14 +15,14 @@ export async function GET(context) {
 
     return rss({
         title: 'Shogo Toyoshima Portfolio',
-        description: 'Updates from Shogo Toyoshima - Design Engineer / UX Researcher. Portfolio items and development logs.',
+        description: 'Updates from Shogo Toyoshima — Product Engineer / Designer. Portfolio items and development logs.',
         site: context.site,
         items: projects.map((post) => ({
             title: post.data.title,
             pubDate: new Date(post.data.meta.date),
             description: `New project added: ${post.data.title}`,
             // If you have a description field in frontmatter, use post.data.description
-            link: `/works/${post.slug}/`,
+            link: `/projects/${post.slug}/`,
         })),
         customData: `<language>ja-jp</language>`,
     });
