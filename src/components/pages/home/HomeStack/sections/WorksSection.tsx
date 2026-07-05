@@ -107,27 +107,31 @@ const WorksLead: React.FC = () => {
                 gsap.set(globe, { x: initialGlobeX });
                 gsap.set(headlineChars, { yPercent: -110, y: 0, opacity: 0 });
 
-                gsap.timeline({
+                const preTl = gsap.timeline({
                     scrollTrigger: {
                         trigger: container,
                         start: 'top bottom',
                         end: 'top top',
                         scrub: 0.4,
                     },
-                })
-                    .to(globe, { x: 0, duration: 1.3, ease: 'power2.out' }, 0.5)
-                    .to(
-                        headlineChars,
-                        {
-                            opacity: 1,
-                            yPercent: 0,
-                            y: 0,
-                            stagger: 0.035,
-                            duration: 0.12,
-                            ease: 'power3.out',
-                        },
-                        1.0,
-                    );
+                });
+                // globe のスライドはデスクトップ 2 カラムレイアウトでのみ発生させる。
+                // モバイルは 1 カラムで最初から globe が中央にあるので動かす必要がない。
+                if (!mobile) {
+                    preTl.to(globe, { x: 0, duration: 1.3, ease: 'power2.out' }, 0.9);
+                }
+                preTl.to(
+                    headlineChars,
+                    {
+                        opacity: 1,
+                        yPercent: 0,
+                        y: 0,
+                        stagger: 0.035,
+                        duration: 0.12,
+                        ease: 'power3.out',
+                    },
+                    1.6,
+                );
             }
 
             const tl = gsap.timeline({
