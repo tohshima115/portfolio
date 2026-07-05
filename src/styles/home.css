@@ -1,6 +1,6 @@
 /* =============================================================================
    Home Page Specific CSS
-   - global.css から TOP ページ (HomeIntro / HomeStack / PrtsInterface) 専用の
+   - global.css から TOP ページ (HomeIntro / HomeStack) 専用の
      keyframes と reveal 初期状態を分離。Home 系レイアウト (src/pages/index.astro)
      からのみ import する。
    ============================================================================= */
@@ -80,13 +80,3 @@
   }
 }
 
-/* -----------------------------------------------------------------------------
-   Intro skip overrides
-   2 回目以降の訪問では <html> に .prts-skip-intro が付与される (index.astro 参照)。
-   SSR HTML の inline style に焼き付いた CSS animation を !important で上書きし、
-   ブラウザが描画する瞬間から最終状態を表示する。
-   ----------------------------------------------------------------------------- */
-html.prts-skip-intro [data-prts-logo] {
-  animation: none !important;
-  clip-path: inset(-1%) !important;
-}

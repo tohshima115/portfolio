@@ -55,6 +55,13 @@
   --color-accent: oklch(0.82 0.18 85);
   --color-accent-foreground: oklch(0.20 0.02 100);
 
+  /* Hero gradient (Home TOP ファーストビュー用。緑寄りのドーム型グラデーション) */
+  --color-hero-gradient-1: #1b3d24;
+  --color-hero-gradient-2: #14301d;
+  --color-hero-gradient-3: #0e2216;
+  --color-hero-gradient-4: #08150d;
+  --color-hero-gradient-5: #030a05;
+
   /* Surface / Neutral extensions (kept inside @theme so any change here cascades) */
   --color-surface-deep: oklch(0.16 0.005 100);     /* ≈ #0a0a0a 系の暗背景 */
   --color-surface-raised: oklch(0.22 0.005 100);   /* ≈ #2a2c30 */
