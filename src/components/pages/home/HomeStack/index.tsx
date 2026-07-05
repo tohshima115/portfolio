@@ -1,36 +1,31 @@
 import React, { useEffect } from 'react';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
-import type { UpdateItem } from '../HomeScene/types';
+import { StackHeroSection } from './sections/StackHeroSection';
 import { WorksSection } from './sections/WorksSection';
+import { BlogSection, type BlogPostItem } from './sections/BlogSection';
 import { AboutSection } from './sections/AboutSection';
-import { LatestSection } from './sections/LatestSection';
 import { CTASection } from './sections/CTASection';
 
-export type { UpdateItem };
-
 // HomeStack: Hero 直下のネイティブ縦スクロール本体。
-// Works (Lead → Flagship → Ops) → About → Latest → CTA の構成を縦に並べる。
-// 各セクションが独自に IntersectionObserver / ScrollTrigger で reveal/parallax を持つ。
-//
-// HomeIntro が fixed + scroll spacer 構造、scrollY 0..1200 が Hero の dolly range、
-// 1200px 以降からこのスタックが見え始める。Works に戻るのも単に上方向スクロールで
-// 自動的に Hero pin range に再突入する (専用イベント不要)。
+// StackHero → Works → Blog → About → CTA の構成を縦に並べる。
+// 各セクションが自分自身の pin (useScrollScene) を独立に持ち、
+// 1つのセクションのアニメーションが終わったら pin を解除して通常スクロールで
+// 次のセクションへつながる (セクションをまたいだ巨大な1本pinにはしない)。
 //
 // internal リンクは WebGL transition、外部リンクは通常遷移 (HomeIntro と同じ挙動)。
 
 interface Props {
-    updates?: UpdateItem[];
+    blogPosts?: BlogPostItem[];
 }
 
-export const HomeStack: React.FC<Props> = ({ updates = [] }) => {
+export const HomeStack: React.FC<Props> = ({ blogPosts = [] }) => {
     // pin 復元用 ScrollTrigger.refresh()。
     //
     // 各セクションの useScrollScene は gsap を dynamic import するので、
-    // ScrollTrigger.create() が走るタイミングは「HomeIntro の 1200px spacer
-    // 挿入」「画像/フォント load 完了」「Lenis 初期化」と非同期で混ざる。
-    // 初期計算した pin start/end が実レイアウトとズレた状態で固定されると、
-    // リロード直後に「pin 自体が建たない」状態になる (各セクションは
-    // invalidateOnRefresh: true で refresh を待っている)。
+    // ScrollTrigger.create() が走るタイミングは「画像/フォント load 完了」
+    // 「Lenis 初期化」と非同期で混ざる。初期計算した pin start/end が実レイアウト
+    // とズレた状態で固定されると、リロード直後に「pin 自体が建たない」状態になる
+    // (各セクションは invalidateOnRefresh: true で refresh を待っている)。
     //
     // SPA 遷移 (ロゴクリック → /) では JS が既にロード済で全 island が
     // 即マウントするためズレないが、hard reload では非同期 import の遅延が
@@ -94,9 +89,10 @@ export const HomeStack: React.FC<Props> = ({ updates = [] }) => {
             onClickCapture={handleLinkClick}
             data-home-stack
         >
+            <StackHeroSection />
             <WorksSection />
+            <BlogSection posts={blogPosts} />
             <AboutSection />
-            <LatestSection updates={updates} />
             <CTASection />
         </main>
     );

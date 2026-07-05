@@ -10,33 +10,19 @@ import SiteHeader from "../components/common/SiteHeader.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
 import { SmoothScroll } from "../components/common/SmoothScroll";
 
-const projects = await getCollection("projects");
-const blogPosts = await getCollection("blog");
+const blogPostsCollection = await getCollection("blog");
 
-// Merge and sort updates
-const allUpdates = [
-	...projects.map((p) => ({
-		title: p.data.title,
-		date: p.data.meta.updatedDate
-			? new Date(p.data.meta.updatedDate)
-			: new Date(p.data.meta.date),
-		url: `/works/${p.slug}`,
-		type: "projects" as const,
-	})),
-	...blogPosts.map((b) => ({
+// トップページ BlogSection 用: 最新3件を pubDate 降順で。
+const latestBlogPosts = blogPostsCollection
+	.slice()
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3)
+	.map((b) => ({
+		slug: b.slug,
 		title: b.data.title,
-		date: b.data.updatedDate
-			? new Date(b.data.updatedDate)
-			: new Date(b.data.pubDate),
-		url: `/blog/${b.slug}`,
-		type: "blog" as const,
-	})),
-].sort((a, b) => b.date.valueOf() - a.date.valueOf());
-
-const latestUpdates = allUpdates.slice(0, 5).map((u) => ({
-	...u,
-	date: u.date.toISOString(), // passed via props, keep as string
-}));
+		description: b.data.description,
+		pubDate: b.data.pubDate.toISOString(),
+	}));
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
 const personSchema = {
@@ -193,8 +179,8 @@ const personSchema = {
 				></div>
 			</div>
 		</div>
-		<HomeIntro client:only="react" updates={latestUpdates} />
-		<HomeStack client:load updates={latestUpdates} />
+		<HomeIntro client:only="react" />
+		<HomeStack client:load blogPosts={latestBlogPosts} />
 		<MarkdownActions client:load transition:persist="md-actions" />
 		<WebGLTransition
 			client:only="react"

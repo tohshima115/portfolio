@@ -4,34 +4,48 @@ import { useScrollScene } from '../hooks/useScrollScene';
 import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { MediaFrame } from '../primitives/MediaFrame';
-import { PROJECTS } from './works/data';
 
-// WorksSection = 独立した pin セクション。
-// 通常スクロールで "WORKS" タイトルが先出しで見えている状態から、
-// pin発生とともに (1) タイトルが画面上部の小さいラベルに切り替わり
-// (2) 下からカード枠がせり上がってくる → カード内は video/poster + タイトル +
-// 説明 + CTA を、pin中スクロールに応じて 3 プロジェクトぶんクロスフェードする。
-// 全件見終わったら pin解除し、次の BlogSection へ通常スクロールでつながる。
+// BlogSection = WorksSection と全く同じ構造の独立 pin セクション。
+// "BLOG" タイトルの先出し → pin発生でミニラベル化 + カードせり上がり →
+// 最新の投稿を pin中スクロールでクロスフェード。
+// サムネイル画像はまだ無いため、MediaFrame の抽象プレースホルダー表示を使う。
 
-const WORKS_PIN_SCROLL_VH = 420;
-const WORKS_PIN_HEIGHT_VH = 100;
-const WORKS_SECTION_MIN_HEIGHT_VH = WORKS_PIN_SCROLL_VH + WORKS_PIN_HEIGHT_VH;
+export interface BlogPostItem {
+    slug: string;
+    title: string;
+    description: string;
+    pubDate: string; // ISO string
+}
+
+interface Props {
+    posts: BlogPostItem[];
+}
+
+const BLOG_PIN_SCROLL_VH = 320;
+const BLOG_PIN_HEIGHT_VH = 100;
+const BLOG_SECTION_MIN_HEIGHT_VH = BLOG_PIN_SCROLL_VH + BLOG_PIN_HEIGHT_VH;
 
 const HOLD = 0.22;
 const TRANS = 0.09;
 
-export const WorksSection: React.FC = () => {
+const formatDate = (iso: string): string => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+};
+
+export const BlogSection: React.FC<Props> = ({ posts }) => {
     const containerRef = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
 
     useScrollScene(containerRef, {
-        disabled: reduced,
+        disabled: reduced || posts.length === 0,
+        deps: [posts.length],
         setup: ({ gsap, container }) => {
             const pinTarget = container.querySelector<HTMLElement>('[data-pin-inner]');
             if (!pinTarget) return;
 
-            const bigTitle = container.querySelector('[data-works-bigtitle]');
-            const miniLabel = container.querySelector('[data-works-minilabel]');
+            const bigTitle = container.querySelector('[data-blog-bigtitle]');
+            const miniLabel = container.querySelector('[data-blog-minilabel]');
             const mediaWrapper = container.querySelector('[data-media-wrapper]');
             const stages = container.querySelectorAll<HTMLElement>('[data-media-stage]');
 
@@ -46,7 +60,7 @@ export const WorksSection: React.FC = () => {
                 scrollTrigger: {
                     trigger: container,
                     start: 'top top',
-                    end: `+=${WORKS_PIN_SCROLL_VH}%`,
+                    end: `+=${BLOG_PIN_SCROLL_VH}%`,
                     pin: pinTarget,
                     pinSpacing: true,
                     scrub: 0.6,
@@ -54,24 +68,16 @@ export const WorksSection: React.FC = () => {
                 },
             });
 
-            // ─── タイトル: 中央の大きい "WORKS" → 上部の小さい常時可視ラベルへ ───
             tl.to(bigTitle, { opacity: 0, duration: 0.08, ease: 'power2.out' }, 0);
             tl.to(miniLabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.02);
-
-            // ─── カード枠が下からせり上がる ───
             tl.to(mediaWrapper, { yPercent: 0, duration: 0.14, ease: 'power3.out' }, 0);
 
             const first = stages[0];
             if (first) {
-                tl.to(
-                    first,
-                    { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' },
-                    0.08,
-                );
+                tl.to(first, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.08);
                 tl.call(() => { first.style.pointerEvents = 'auto'; }, undefined, 0.08);
             }
 
-            // ─── pin中: プロジェクトを順にクロスフェード ───
             let cursor = 0.12 + HOLD;
             for (let i = 1; i < stages.length; i++) {
                 const prev = stages[i - 1];
@@ -84,16 +90,17 @@ export const WorksSection: React.FC = () => {
                 tl.call(() => { cur.style.pointerEvents = 'auto'; }, undefined, inAt);
                 cursor += TRANS + HOLD;
             }
-            // 最終カードを見終わってから pin解除までの hold
             tl.to({}, { duration: 0.15 }, cursor);
         },
     });
+
+    if (posts.length === 0) return null;
 
     return (
         <section
             ref={containerRef}
             className="relative w-full"
-            style={{ minHeight: reduced ? '100svh' : `${WORKS_SECTION_MIN_HEIGHT_VH}vh` }}
+            style={{ minHeight: reduced ? '100svh' : `${BLOG_SECTION_MIN_HEIGHT_VH}vh` }}
         >
             <div
                 data-pin-inner
@@ -105,42 +112,38 @@ export const WorksSection: React.FC = () => {
                 {!reduced && (
                     <>
                         <div
-                            data-works-bigtitle
+                            data-blog-bigtitle
                             className="absolute inset-0 z-10 flex items-center justify-center px-6"
                         >
                             <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(2rem,10svh,4rem)] md:text-[clamp(3rem,9vw,7.5rem)] leading-none">
-                                Works
+                                Blog
                             </span>
                         </div>
 
                         <div
-                            data-works-minilabel
+                            data-blog-minilabel
                             style={{ opacity: 0 }}
                             className="absolute top-28 md:top-32 inset-x-0 z-20 flex items-center justify-center gap-4 px-6"
                         >
                             <span aria-hidden className="h-px bg-foreground/30 flex-1 max-w-[120px]" />
                             <p className="font-mono text-2xs md:text-xs uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
                                 <span className="text-accent">+</span>
-                                <span className="ml-3">Works</span>
+                                <span className="ml-3">Blog</span>
                             </p>
                             <span aria-hidden className="h-px bg-foreground/30 flex-1 max-w-[120px]" />
                         </div>
 
                         <div data-media-wrapper className="absolute inset-0 z-30">
-                            {PROJECTS.map((p) => (
+                            {posts.map((post, i) => (
                                 <MediaFrame
-                                    key={p.id}
-                                    stageId={p.id}
-                                    media={
-                                        p.poster
-                                            ? { type: 'video', poster: p.poster, videoSrc: p.videoSrc }
-                                            : { type: 'placeholder' }
-                                    }
-                                    eyebrow={`Project ${p.id} / ${p.meta}`}
-                                    title={p.name}
-                                    description={p.description}
-                                    ctaLabel="詳しくはこちら"
-                                    ctaHref={`/works/${p.slug}`}
+                                    key={post.slug}
+                                    stageId={post.slug}
+                                    media={{ type: 'placeholder' }}
+                                    eyebrow={`Post ${String(i + 1).padStart(2, '0')} / ${formatDate(post.pubDate)}`}
+                                    title={post.title}
+                                    description={post.description}
+                                    ctaLabel="続きを読む"
+                                    ctaHref={`/blog/${post.slug}`}
                                 />
                             ))}
                         </div>
@@ -148,33 +151,33 @@ export const WorksSection: React.FC = () => {
                 )}
             </div>
 
-            {reduced && <ReducedFallback />}
+            {reduced && <ReducedFallback posts={posts} />}
         </section>
     );
 };
 
 // reduced-motion 用 static fallback
-const ReducedFallback: React.FC = () => (
+const ReducedFallback: React.FC<{ posts: BlogPostItem[] }> = ({ posts }) => (
     <div className="relative px-6 md:px-12 py-16">
         <div className="max-w-4xl mx-auto space-y-12">
             <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
                 <span className="text-accent">+</span>
-                <span className="ml-3">Works</span>
+                <span className="ml-3">Blog</span>
             </p>
-            {PROJECTS.map((p) => (
-                <article key={p.id} className="border-l-2 border-accent/40 pl-6">
+            {posts.map((post) => (
+                <article key={post.slug} className="border-l-2 border-accent/40 pl-6">
                     <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
-                        Project {p.id} / {p.meta}
+                        {formatDate(post.pubDate)}
                     </p>
                     <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
-                        {p.name}
+                        {post.title}
                     </h3>
-                    <p className="text-foreground/80 leading-relaxed mb-4">{p.description}</p>
+                    <p className="text-foreground/80 leading-relaxed mb-4">{post.description}</p>
                     <a
-                        href={`/works/${p.slug}`}
+                        href={`/blog/${post.slug}`}
                         className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
                     >
-                        <span>詳しくはこちら</span>
+                        <span>続きを読む</span>
                         <span aria-hidden>→</span>
                     </a>
                 </article>

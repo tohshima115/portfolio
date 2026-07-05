@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { playWebGLTransition } from '@/components/common/WebGLTransition/controller';
-import type { UpdateItem } from '../HomeScene/types';
 import { LogoIntroOverlay } from './LogoIntroOverlay';
 import { HeroSection } from './HeroSection';
-
-export type { UpdateItem };
 
 // HomeIntro: ロゴスプラッシュ (初回訪問のみ) + Hero (通常フロー、以降は
 // HomeStack が自然スクロールで続く) の 2 段構成。
@@ -24,7 +21,7 @@ const BOOT_FADE_DURATION_MS = 250;
 const BOOT_MIN_VISIBLE_SKIP_MS = 150;
 const BOOT_FADE_DURATION_SKIP_MS = 120;
 
-export const HomeIntro = ({ updates: _updates = [] }: { updates?: UpdateItem[] }) => {
+export const HomeIntro = () => {
     const [skipIntro] = useState<boolean>(readSkipIntroFlag);
     const [reducedMotion, setReducedMotion] = useState(false);
     const [bootDone, setBootDone] = useState<boolean>(() => {

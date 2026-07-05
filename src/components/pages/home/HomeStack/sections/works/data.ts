@@ -1,16 +1,25 @@
 // WORKS pin carousel で使うデータ定義。
 // プロジェクトを増減させる場合はここだけを編集する。
 
+import sweptHero from '@/assets/projects/swept-hero.png';
+import type { ImageMetadata } from 'astro';
+
 export interface Project {
     id: string;
+    slug: string;
     name: string;
     meta: string;
     description: string;
+    /** 実演動画/静止画のposter。無ければ抽象プレースホルダー表示にフォールバック。 */
+    poster?: ImageMetadata;
+    /** 将来 mp4 を差し込む用。今は未用意なので常に undefined。 */
+    videoSrc?: string;
 }
 
 export const PROJECTS: Project[] = [
     {
         id: '01',
+        slug: 'aichatclip',
         name: 'AIChatClip',
         meta: '個人開発 · Chrome / Firefox · Ongoing',
         description:
@@ -18,6 +27,7 @@ export const PROJECTS: Project[] = [
     },
     {
         id: '02',
+        slug: 'internal-tools',
         name: '業務ツールいろいろ',
         meta: 'Design Office · 社内運用',
         description:
@@ -25,10 +35,12 @@ export const PROJECTS: Project[] = [
     },
     {
         id: '03',
+        slug: 'swept',
         name: 'Swept',
         meta: '社会起業 · チームプロジェクト · 2024–2026',
         description:
             '3人チームの社会起業プロジェクトに約2年関わった。デザイナーとして入って、途中から実装も担うようになった。方向性の違いで 2026 年初頭に離脱。',
+        poster: sweptHero,
     },
 ];
 
