@@ -1,7 +1,10 @@
+import { useEffect, useRef } from 'react';
+
 // Hero (ファーストビュー) の背景。
 // FourClock (別プロジェクト) の options 画面で使っている「下中央起点のドーム型
-// radial-gradient + フィルムノイズ」の設計をそのまま踏襲し、配色だけサイトの
-// ブランドカラー (--color-logo 系, 緑) に寄せて再構成したもの。
+// radial-gradient (6段階) + canvas生成グレインのoverlay合成」をそのまま踏襲し、
+// 配色だけサイトのブランドカラー (--color-logo 系, 緑) に寄せて再構成したもの。
+// 0% の白も純白ではなく --color-logo と同じ緑相のオフホワイトにしてある。
 export const HeroGradientBackground = () => {
     return (
         <div className="absolute inset-0 overflow-hidden" aria-hidden>
@@ -9,19 +12,48 @@ export const HeroGradientBackground = () => {
                 className="absolute inset-0"
                 style={{
                     background:
-                        'radial-gradient(ellipse 160% 90% at 50% 100%, var(--color-hero-gradient-1) 0%, var(--color-hero-gradient-2) 32%, var(--color-hero-gradient-3) 58%, var(--color-hero-gradient-4) 82%, var(--color-hero-gradient-5) 100%)',
+                        'radial-gradient(ellipse 180% 90% at 50% 100%, var(--color-hero-gradient-1) 0%, var(--color-hero-gradient-2) 34%, var(--color-hero-gradient-3) 47%, var(--color-hero-gradient-4) 68%, var(--color-hero-gradient-5) 95%, var(--color-hero-gradient-6) 100%)',
                 }}
             />
-            {/* フィルムノイズ (フラットな帯を潰す粒状感) */}
-            <div
-                className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
-                style={{
-                    backgroundImage:
-                        'url(\'data:image/svg+xml,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="n"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23n)"/%3E%3C/svg%3E\')',
-                    backgroundRepeat: 'repeat',
-                    backgroundSize: '160px 160px',
-                }}
-            />
+            <GrainLayer />
         </div>
+    );
+};
+
+// canvas でランダムなグレースケールノイズを生成し、overlay 合成でグラデーションの
+// 帯 (バンディング) を潰すノイズオーバーレイ。FourClock の GrainLayer と同じ実装。
+const GrainLayer = () => {
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const data = ctx.createImageData(size, size);
+        for (let i = 0; i < data.data.length; i += 4) {
+            const v = (Math.random() * 255) | 0;
+            data.data[i] = v;
+            data.data[i + 1] = v;
+            data.data[i + 2] = v;
+            data.data[i + 3] = 255;
+        }
+        ctx.putImageData(data, 0, 0);
+
+        el.style.backgroundImage = `url(${canvas.toDataURL()})`;
+    }, []);
+
+    return (
+        <div
+            ref={ref}
+            className="absolute inset-0 pointer-events-none opacity-[0.12] mix-blend-overlay"
+            style={{ backgroundRepeat: 'repeat', backgroundSize: '256px 256px' }}
+        />
     );
 };
