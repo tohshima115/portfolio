@@ -5,7 +5,6 @@ import { WorksSection } from './sections/WorksSection';
 import { AboutSection } from './sections/AboutSection';
 import { LatestSection } from './sections/LatestSection';
 import { CTASection } from './sections/CTASection';
-import { HudOverlay } from './visuals/HudOverlay';
 
 export type { UpdateItem };
 
@@ -99,7 +98,6 @@ export const HomeStack: React.FC<Props> = ({ updates = [] }) => {
             <AboutSection />
             <LatestSection updates={updates} />
             <CTASection />
-            <HudOverlay />
         </main>
     );
 };

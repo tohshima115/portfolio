@@ -165,13 +165,13 @@ const personSchema = {
 		<SmoothScroll client:only="react" />
 		<!--
 		  HomeIntro は client:only="react" のため SSR HTML に含まれず、
-		  HomeStack (= client:load で SSR される WorksSection) のフォルダーや
-		  HudOverlay (z-[80] fixed) が hydrate 完了までの間、画面前面に出てしまう
-		  ことがある。それらを SSR 段階で覆う初期オーバーレイ + BOOT_SEQUENCE
-		  ローディング UI。Tailwind の JIT 抽出に依存すると初回 paint に間に合わない
-		  ケースがあるので inline style + var(--color-background) で確実に塗る。
+		  HomeStack (= client:load で SSR される WorksSection) のフォルダーが
+		  hydrate 完了までの間、画面前面に出てしまうことがある。それらを SSR
+		  段階で覆う初期オーバーレイ + BOOT_SEQUENCE ローディング UI。Tailwind の
+		  JIT 抽出に依存すると初回 paint に間に合わないケースがあるので inline
+		  style + var(--color-background) で確実に塗る。
 		  SiteHeader (z-[100]) のすぐ下にあたる z-index:99 で、HomeStack 内の
-		  あらゆる fixed/絶対配置要素 (HudOverlay z-80 含む) より前に出す。
+		  あらゆる fixed/絶対配置要素より前に出す。
 		  HomeIntro mount → 最低 600ms 待機 → opacity フェード (400ms) → display:none。
 		-->
 		<div
