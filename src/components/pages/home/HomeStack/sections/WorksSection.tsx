@@ -435,7 +435,7 @@ const WorksLead: React.FC = () => {
 
 const DESIGN_STACK = ['Figma', 'Illustrator', 'Photoshop', 'DTP'];
 const ENGINEERING_STACK = [
-    'TypeScript', 'React', 'Astro.js', 'Tailwind CSS', 'Cloudflare', 'Git', 'Claude Code',
+    'TypeScript', 'React', 'Astro.js', 'Tailwind CSS', 'Hono', 'Cloudflare Workers', 'D1', 'KV', 'Git', 'Claude Code',
 ];
 
 // Cloudflare hero (z-10)
