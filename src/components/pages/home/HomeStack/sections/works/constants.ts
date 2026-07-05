@@ -145,9 +145,7 @@ export const TIMING = {
     // Phase A: Cloudflare hero reveal (~0.05–0.40)
     // hero stats (CF products) の全 reveal が 0.40 頃に完了し、0.55 まで hold してから
     // Phase B (folder waterfall) が始まる。ユーザーが製品名を読む時間を十分確保。
-    heroGlobe: 0.05,
     heroSubLabel: 0.10,
-    heroHeadline: 0.09,
     heroStatsBadge: 0.20,
     heroStats: 0.23,
     heroStatsCount: 0.30,

@@ -40,7 +40,7 @@ const WorksLead: React.FC = () => {
     useScrollScene(containerRef, {
         disabled: reduced,
         deps: [isMobile],
-        setup: ({ gsap, container }) => {
+        setup: ({ gsap, ScrollTrigger, container }) => {
             const pinTarget = container.querySelector<HTMLElement>('[data-pin-inner]');
             if (!pinTarget) return;
 
@@ -48,7 +48,8 @@ const WorksLead: React.FC = () => {
             const cfg: GridConfig = mobile ? MOBILE_GRID_CONFIG : DESKTOP_GRID_CONFIG;
 
             // ── Phase A 用 selector ──
-            const globe = container.querySelector('[data-lead-globe]');
+            const globe = container.querySelector<HTMLElement>('[data-lead-globe]');
+            const heroRow = container.querySelector<HTMLElement>('[data-hero-row]');
             const subLabel = container.querySelector('[data-lead-sublabel]');
             const headlineChars = container.querySelectorAll(
                 '[data-lead-heading] [data-split-chars][data-anim] > span',
@@ -90,6 +91,45 @@ const WorksLead: React.FC = () => {
             if (stats.length > 0) gsap.set(stats, { y: 6 });
             if (statsCount) gsap.set(statsCount, { y: 6 });
 
+            // ─── Phase A-pre: globe スライド + headline roll-up ───
+            // globe は最初から表示済み (中央寄せ)。pin が発生する前、セクションが画面に
+            // 迫ってくる自然なスクロールの間に「中央 → 右カラムの定位置」へスライドし、
+            // 同時に headline が 1 文字ずつ下から巻き上がる。pin (top top) を待たず、
+            // "top bottom"(セクション上端が画面下端に触れた瞬間)から "top top"
+            // (pin 発生の瞬間) までの間で完結させる、独立した scrub アニメ。
+            if (globe && heroRow) {
+                const rowRect = heroRow.getBoundingClientRect();
+                const globeRect = globe.getBoundingClientRect();
+                const rowCenterX = rowRect.left + rowRect.width / 2;
+                const globeCenterX = globeRect.left + globeRect.width / 2;
+                const initialGlobeX = mobile ? 0 : rowCenterX - globeCenterX;
+
+                gsap.set(globe, { x: initialGlobeX });
+                gsap.set(headlineChars, { yPercent: -110, y: 0, opacity: 0 });
+
+                gsap.timeline({
+                    scrollTrigger: {
+                        trigger: container,
+                        start: 'top bottom',
+                        end: 'top top',
+                        scrub: 0.4,
+                    },
+                })
+                    .to(globe, { x: 0, duration: 1, ease: 'power2.out' }, 0)
+                    .to(
+                        headlineChars,
+                        {
+                            opacity: 1,
+                            yPercent: 0,
+                            y: 0,
+                            stagger: 0.006,
+                            duration: 1,
+                            ease: 'power3.out',
+                        },
+                        0.2,
+                    );
+            }
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: container,
@@ -102,30 +142,8 @@ const WorksLead: React.FC = () => {
                 },
             });
 
-            // ─── Phase A: Cloudflare hero reveal ───
-            // globe は最初から表示済み。中央寄せの位置から、右カラムの定位置へスッと
-            // スライドインさせる (2 カラムグリッドの右カラム = 全体幅の右半分なので、
-            // 自分の幅の 50% ぶん左にずらせば見た目上ほぼ画面中央に来る)。
-            if (globe && !mobile) {
-                gsap.set(globe, { xPercent: -50 });
-                tl.to(globe, { xPercent: 0, duration: 0.14, ease: 'power2.out' }, TIMING.heroGlobe);
-            }
+            // ─── Phase A: Cloudflare hero reveal (globe/headline は Phase A-pre で完了済み) ───
             tl.to(subLabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroSubLabel);
-            // headline は 1 文字ずつ下から巻き上がるように出す (WORKS 見出しと同じ roll-up)。
-            gsap.set(headlineChars, { yPercent: -110, y: 0, opacity: 0 });
-            tl.fromTo(
-                headlineChars,
-                { opacity: 0, yPercent: -110, y: 0 },
-                {
-                    opacity: 1,
-                    yPercent: 0,
-                    y: 0,
-                    stagger: 0.018,
-                    duration: 0.10,
-                    ease: 'power3.out',
-                },
-                TIMING.heroHeadline,
-            );
             tl.to(statsBadge, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsBadge);
             tl.to(
                 stats,
@@ -417,7 +435,10 @@ const CF_PRODUCTS = [
 // Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
     <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
-        <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+        <div
+            data-hero-row
+            className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16"
+        >
             <div className="order-2 md:order-1">
                 <h2
                     data-lead-heading
