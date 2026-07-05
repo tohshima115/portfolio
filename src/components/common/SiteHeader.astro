@@ -48,7 +48,7 @@ const isActive = (href: string) => {
                     navItems.map((item) => (
                         <a
                             href={item.href}
-                            class="site-header__link relative flex items-center gap-1.5 font-mono text-2xs tracking-[0.2em] uppercase px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors"
+                            class="site-header__link relative flex items-center gap-1.5 font-sans font-semibold text-sm tracking-[0.12em] uppercase px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors"
                         >
                             <span
                                 class="site-header__dot w-1.5 h-1.5 rounded-full bg-accent shrink-0"
@@ -65,7 +65,7 @@ const isActive = (href: string) => {
                 <a
                     href="/contact"
                     data-active={isActive("/contact")}
-                    class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-mono text-2xs tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-sans font-semibold text-sm tracking-[0.12em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                     Contact
                     <svg
@@ -110,7 +110,7 @@ const isActive = (href: string) => {
                         <a
                             href={item.href}
                             data-active={isActive(item.href)}
-                            class="site-header__mobile-link font-mono text-xs tracking-[0.2em] uppercase px-4 py-3 rounded-xl text-foreground/70 hover:text-foreground hover:bg-white/30 transition-colors data-[active=true]:text-foreground data-[active=true]:bg-white/20"
+                            class="site-header__mobile-link font-sans font-semibold text-sm tracking-[0.12em] uppercase px-4 py-3 rounded-xl text-foreground/70 hover:text-foreground hover:bg-white/30 transition-colors data-[active=true]:text-foreground data-[active=true]:bg-white/20"
                         >
                             {item.label}
                         </a>
@@ -118,7 +118,7 @@ const isActive = (href: string) => {
                 }
                 <a
                     href="/contact"
-                    class="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-foreground text-background font-mono text-xs tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-foreground text-background font-sans font-semibold text-sm tracking-[0.12em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                     Contact
                     <svg
