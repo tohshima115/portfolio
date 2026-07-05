@@ -20,7 +20,7 @@ const isActive = (href: string) => {
     <div class="px-4 sm:px-6 lg:px-10 pt-3 sm:pt-4">
         <!-- Main bar -->
         <div
-            class="site-header__glass pointer-events-auto mx-auto max-w-[1600px] flex items-center justify-between gap-4 px-4 sm:px-6 h-14 rounded-full border border-white/30 bg-white/30 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)]"
+            class="site-header__glass pointer-events-auto mx-auto max-w-[1600px] flex items-center justify-between gap-4 pl-4 sm:pl-6 pr-[10px] h-14 rounded-full border border-white/40 bg-white/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)]"
         >
             <!-- Logo -->
             <a
@@ -48,9 +48,12 @@ const isActive = (href: string) => {
                     navItems.map((item) => (
                         <a
                             href={item.href}
-                            data-active={isActive(item.href)}
-                            class="site-header__link relative font-mono text-2xs tracking-[0.2em] uppercase px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors data-[active=true]:text-foreground"
+                            class="site-header__link relative flex items-center gap-1.5 font-mono text-2xs tracking-[0.2em] uppercase px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors"
                         >
+                            <span
+                                class="site-header__dot w-1.5 h-1.5 rounded-full bg-accent shrink-0"
+                                aria-hidden="true"
+                            />
                             {item.label}
                         </a>
                     ))
@@ -98,7 +101,7 @@ const isActive = (href: string) => {
         <!-- Mobile dropdown -->
         <div
             id="site-mobile-menu"
-            class="site-header__glass site-mobile-menu pointer-events-auto mx-auto max-w-[1600px] mt-2 rounded-2xl border border-white/30 bg-white/30 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+            class="site-header__glass site-mobile-menu pointer-events-auto mx-auto max-w-[1600px] mt-2 rounded-2xl border border-white/40 bg-white/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)] overflow-hidden"
             aria-hidden="true"
         >
             <nav class="flex flex-col p-3 gap-1" aria-label="Mobile Primary">
@@ -216,17 +219,35 @@ const isActive = (href: string) => {
         isolation: isolate;
     }
 
-    /* Active indicator dot for desktop nav */
-    .site-header__link[data-active="true"]::after {
+    /* Desktop nav hover: pill background rises up behind the link */
+    .site-header__link {
+        isolation: isolate;
+    }
+    .site-header__link::before {
         content: "";
         position: absolute;
-        left: 50%;
-        bottom: 4px;
-        width: 4px;
-        height: 4px;
-        background: var(--color-accent);
+        inset: 0;
+        z-index: -1;
         border-radius: 9999px;
-        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.6);
+        opacity: 0;
+        transform: scale(0.92);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .site-header__link:hover::before {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Hover indicator dot to the left of the label */
+    .site-header__dot {
+        opacity: 0;
+        transform: scale(0);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .site-header__link:hover .site-header__dot {
+        opacity: 1;
+        transform: scale(1);
     }
 
     /* Mobile menu collapse/expand */
