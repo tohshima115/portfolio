@@ -432,8 +432,8 @@ const WorksLead: React.FC = () => {
     );
 };
 
-const CF_PRODUCTS = [
-    'Workers', 'D1', 'R2', 'Durable Objects', 'Workers AI', 'Email Routing', 'Zero Trust',
+const TECH_STACK = [
+    'TypeScript', 'React', 'Astro.js', 'Tailwind CSS', 'Cloudflare', 'Git', 'Claude Code',
 ];
 
 // Cloudflare hero (z-10)
@@ -450,25 +450,25 @@ const HeroLayer: React.FC = () => (
                 >
                     <SplitChars text="Cloudflare が好きで、" className="block overflow-hidden" dataAnim />
                     <SplitChars
-                        text="いろいろ試しながら作っています。"
+                        text="TypeScript を主に使っています。"
                         className="block overflow-hidden text-foreground/70"
                         dataAnim
                     />
                 </h2>
 
-                {/* CF product stack — staggered reveal in Phase A */}
+                {/* Tech stack — staggered reveal in Phase A */}
                 <div
                     data-lead-statbadge
                     style={{ opacity: 0 }}
                     className="mt-5 flex items-center gap-2 font-mono"
                 >
                     <span className="text-accent text-xs">+</span>
-                    <span className="text-2xs uppercase tracking-[0.4em] text-muted-foreground">CF Products in use</span>
+                    <span className="text-2xs uppercase tracking-[0.4em] text-muted-foreground">Tech Stack</span>
                     <span aria-hidden className="h-px bg-foreground/15 w-12" />
                 </div>
 
                 <ul className="mt-3 flex flex-wrap gap-1.5">
-                    {CF_PRODUCTS.map((p) => (
+                    {TECH_STACK.map((p) => (
                         <li
                             key={p}
                             data-lead-stat
@@ -485,7 +485,7 @@ const HeroLayer: React.FC = () => (
                     style={{ opacity: 0 }}
                     className="mt-3 font-mono text-2xs uppercase tracking-[0.35em] text-muted-foreground/55"
                 >
-                    {CF_PRODUCTS.length} products · all Cloudflare native
+                    {TECH_STACK.length} tools · daily-driver stack
                 </p>
             </div>
 
