@@ -14,7 +14,7 @@ export const HeroSection = () => {
                     TOYOSHIMA
                 </h1>
                 <p className="font-mono text-xs sm:text-sm tracking-[0.3em] uppercase text-white/70">
-                    Product Engineer / Designer
+                    Designer / Engineer
                 </p>
             </div>
 
