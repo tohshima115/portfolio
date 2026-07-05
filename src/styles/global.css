@@ -57,8 +57,8 @@
 
   /* Hero gradient (Home TOP ファーストビュー用。FourClock (別プロジェクト) の
      options 画面ドーム型グラデーションと同じ 6 段階構成を、緑寄りの配色に
-     置き換えたもの。0% は純白ではなく --color-logo と同じ緑相の白寄りトーン。 */
-  --color-hero-gradient-1: #f4f8ee;
+     置き換えたもの。0% は次セクションの --color-background とぴったり
+     揃えて継ぎ目を作らないため、専用の色は持たず var(--color-background) を直接使う。 */
   --color-hero-gradient-2: #e3f1d8;
   --color-hero-gradient-3: #7fc95d;
   --color-hero-gradient-4: #2c7a3c;

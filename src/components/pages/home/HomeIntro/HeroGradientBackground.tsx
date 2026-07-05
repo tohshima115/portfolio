@@ -4,7 +4,6 @@ import { useEffect, useRef } from 'react';
 // FourClock (別プロジェクト) の options 画面で使っている「下中央起点のドーム型
 // radial-gradient (6段階) + canvas生成グレインのoverlay合成」をそのまま踏襲し、
 // 配色だけサイトのブランドカラー (--color-logo 系, 緑) に寄せて再構成したもの。
-// 0% の白も純白ではなく --color-logo と同じ緑相のオフホワイトにしてある。
 export const HeroGradientBackground = () => {
     return (
         <div className="absolute inset-0 overflow-hidden" aria-hidden>
@@ -12,10 +11,24 @@ export const HeroGradientBackground = () => {
                 className="absolute inset-0"
                 style={{
                     background:
-                        'radial-gradient(ellipse 180% 90% at 50% 100%, var(--color-hero-gradient-1) 0%, var(--color-hero-gradient-2) 34%, var(--color-hero-gradient-3) 47%, var(--color-hero-gradient-4) 68%, var(--color-hero-gradient-5) 95%, var(--color-hero-gradient-6) 100%)',
+                        'radial-gradient(ellipse 180% 90% at 50% 100%, var(--color-background) 0%, var(--color-hero-gradient-2) 34%, var(--color-hero-gradient-3) 47%, var(--color-hero-gradient-4) 68%, var(--color-hero-gradient-5) 95%, var(--color-hero-gradient-6) 100%)',
                 }}
             />
             <GrainLayer />
+            {/*
+              楕円の半径が画面幅より大きいため、画面下端でも中央から少し外れる
+              だけで 0% の白から次の色相に寄ってしまい、次セクションの
+              --color-background と食い違う帯ができる。ここで確実に
+              --color-background へ収束させて継ぎ目を消す。
+              ノイズレイヤーより上に重ねることで、明るい部分でノイズが
+              overlay 合成によって沈んで見える (くすむ) のもここで隠れる。
+            */}
+            <div
+                className="absolute inset-x-0 bottom-0 h-[26vh]"
+                style={{
+                    background: 'linear-gradient(to bottom, transparent 0%, var(--color-background) 90%)',
+                }}
+            />
         </div>
     );
 };
