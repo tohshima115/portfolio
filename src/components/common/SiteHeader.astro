@@ -202,6 +202,20 @@ const isActive = (href: string) => {
 </script>
 
 <style>
+    /*
+      Lenis はスクロール開始/停止のたびに <html> のクラスを全部外して
+      付け直す (lenis-scrolling / lenis-smooth 等)。これが <html> 全体の
+      スタイル再計算を引き起こし、backdrop-filter を使っている fixed
+      ヘッダーが再コンポジットされて一瞬二重に見える (Chromium/Firefox 側の
+      既知のレンダリングバグ)。ヘッダーを独立した合成レイヤーに固定して
+      祖先の再計算に巻き込まれないようにする。
+    */
+    .site-header__glass {
+        transform: translateZ(0);
+        will-change: transform;
+        isolation: isolate;
+    }
+
     /* Active indicator dot for desktop nav */
     .site-header__link[data-active="true"]::after {
         content: "";
