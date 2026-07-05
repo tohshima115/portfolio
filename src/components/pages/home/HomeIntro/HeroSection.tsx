@@ -16,16 +16,19 @@ export const HeroSection = () => {
                 <p className="font-mono text-xs sm:text-sm tracking-[0.3em] uppercase text-white/70">
                     Designer / Engineer
                 </p>
-            </div>
 
-            <ScrollCue />
+                <ScrollCue />
+            </div>
         </section>
     );
 };
 
+// テキストの直下、画面中央よりやや下の位置に置くスクロール誘導。
+// viewport 最下部 (グラデーションが明るくなる帯) に置くとコントラストが
+// 落ちて見えづらいため、あえてビューポート端には固定しない。
 const ScrollCue = () => {
     return (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/60">
+        <div className="mt-14 sm:mt-20 flex flex-col items-center gap-2 text-white/60">
             <span className="font-mono text-3xs sm:text-2xs tracking-[0.3em] uppercase">
                 Scroll
             </span>
