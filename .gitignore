@@ -25,3 +25,5 @@ pnpm-debug.log*
 
 # z-ai
 z-ai/*
+# claude code worktrees
+.claude/worktrees/
