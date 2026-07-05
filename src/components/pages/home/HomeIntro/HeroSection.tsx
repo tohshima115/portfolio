@@ -25,7 +25,7 @@ export const HeroSection = () => {
 
 // 画面下部固定のスクロール誘導。グラデーションが明るくなる帯の上なので、
 // 白系ではなくダーク (foreground寄り) にしてコントラストを確保する。
-// 光の筋が上から下へさーっと流れ、少し間を置いてもう一本流れる、を繰り返す。
+// 光の筋が上から下へさーっと流れ、少し間を置いて繰り返す。
 const ScrollCue = () => {
     const trackHeight = 56; // px
     const streakHeight = 20; // px
@@ -42,26 +42,22 @@ const ScrollCue = () => {
                 className="relative w-px overflow-hidden bg-foreground/15"
                 style={{ height: trackHeight }}
             >
-                {[0, 0.28].map((delayOffset) => (
-                    <motion.span
-                        key={delayOffset}
-                        className="absolute inset-x-0 top-0 bg-gradient-to-b from-transparent via-foreground to-transparent"
-                        style={{ height: streakHeight }}
-                        initial={{ y: -streakHeight, opacity: 0 }}
-                        animate={{
-                            y: [-streakHeight, trackHeight],
-                            opacity: [0, 1, 1, 0],
-                        }}
-                        transition={{
-                            duration,
-                            repeat: Infinity,
-                            repeatDelay,
-                            delay: delayOffset,
-                            ease: 'easeIn',
-                            times: [0, 0.15, 0.7, 1],
-                        }}
-                    />
-                ))}
+                <motion.span
+                    className="absolute inset-x-0 top-0 bg-gradient-to-b from-transparent via-foreground to-transparent"
+                    style={{ height: streakHeight }}
+                    initial={{ y: -streakHeight, opacity: 0 }}
+                    animate={{
+                        y: [-streakHeight, trackHeight],
+                        opacity: [0, 1, 1, 0],
+                    }}
+                    transition={{
+                        duration,
+                        repeat: Infinity,
+                        repeatDelay,
+                        ease: 'easeIn',
+                        times: [0, 0.15, 0.7, 1],
+                    }}
+                />
             </div>
         </div>
     );
