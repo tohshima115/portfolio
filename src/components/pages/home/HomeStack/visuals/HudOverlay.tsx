@@ -15,12 +15,8 @@ const SECTION_IDS: Record<string, string> = {
     about: '03',
     cta: '04',
 };
-// 右端インジケータは 4 行に絞る (works-ops は除外、works ドットでまとめて指す)
-const ORDERED = ['statement', 'works', 'about', 'cta'] as const;
-
-// 常駐 HUD: 右上 = active section + ID、左下 = scroll progress、
-// 右端中央 = section indicator (click でその section へ smooth scroll)。
-// pointer-events: none を基本にし、clickable なインジケータだけ pointer-events: auto。
+// 常駐 HUD: 右上 = active section + ID、左下 = scroll progress。
+// pointer-events: none。
 export const HudOverlay: React.FC = () => {
     const { activeId, progress } = useSectionProgress();
     const pct = Math.round(progress * 100);
@@ -49,41 +45,6 @@ export const HudOverlay: React.FC = () => {
                 <span>{String(pct).padStart(2, '0')}%</span>
                 <span className="text-muted-foreground/40">LAT 35.6762  LON 139.6503</span>
             </div>
-
-            {/* 右端中央: section indicator */}
-            <nav
-                aria-label="Section navigation"
-                className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto"
-            >
-                {ORDERED.map((sid) => {
-                    // works ドットは works / works-ops どちらでも active 扱い
-                    const isActive =
-                        sid === activeId ||
-                        (sid === 'works' && activeId === 'works-ops');
-                    return (
-                        <button
-                            key={sid}
-                            type="button"
-                            onClick={() => {
-                                const el = document.querySelector(
-                                    `[data-section="${sid}"]`,
-                                );
-                                el?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            aria-label={`Jump to ${SECTION_LABELS[sid]}`}
-                            className="group flex items-center gap-2 cursor-pointer"
-                        >
-                            <span
-                                className={`block h-px transition-all duration-300 ${
-                                    isActive
-                                        ? 'w-6 bg-accent'
-                                        : 'w-3 bg-foreground/30 group-hover:bg-foreground/60'
-                                }`}
-                            />
-                        </button>
-                    );
-                })}
-            </nav>
         </div>
     );
 };
