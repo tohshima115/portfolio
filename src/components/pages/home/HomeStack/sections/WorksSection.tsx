@@ -54,9 +54,8 @@ const WorksLead: React.FC = () => {
             const headlineChars = container.querySelectorAll(
                 '[data-lead-heading] [data-split-chars][data-anim] > span',
             );
-            const statsBadge = container.querySelector('[data-lead-statbadge]');
+            const statBadges = container.querySelectorAll('[data-lead-statbadge]');
             const stats = container.querySelectorAll('[data-lead-stat]');
-            const statsCount = container.querySelector('[data-lead-statcount]');
 
             // ── Phase B/D 用 selector (folder grid) ──
             const tileEls = container.querySelectorAll<HTMLElement>('[data-folder-tile]');
@@ -87,9 +86,8 @@ const WorksLead: React.FC = () => {
                 );
 
             // ── Phase A stats 要素の初期 y オフセットをセット ──
-            if (statsBadge) gsap.set(statsBadge, { y: 8 });
+            if (statBadges.length > 0) gsap.set(statBadges, { y: 8 });
             if (stats.length > 0) gsap.set(stats, { y: 6 });
-            if (statsCount) gsap.set(statsCount, { y: 6 });
 
             // ─── Phase A-pre: globe スライド + headline roll-up ───
             // globe は最初から表示済み (中央寄せ)。pin が発生する前、セクションが画面に
@@ -148,13 +146,16 @@ const WorksLead: React.FC = () => {
 
             // ─── Phase A: Cloudflare hero reveal (globe/headline は Phase A-pre で完了済み) ───
             tl.to(subLabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroSubLabel);
-            tl.to(statsBadge, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsBadge);
+            tl.to(
+                statBadges,
+                { opacity: 1, y: 0, stagger: 0.06, duration: 0.08, ease: 'power2.out' },
+                TIMING.heroStatsBadge,
+            );
             tl.to(
                 stats,
                 { opacity: 1, y: 0, stagger: 0.012, duration: 0.10, ease: 'power2.out' },
                 TIMING.heroStats,
             );
-            tl.to(statsCount, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsCount);
 
             // ─── Phase B: folder grid 左から waterfall ───
             tileEls.forEach((el) => {
@@ -432,70 +433,85 @@ const WorksLead: React.FC = () => {
     );
 };
 
-const TECH_STACK = [
+const DESIGN_STACK = ['Figma', 'Illustrator', 'Photoshop', 'DTP'];
+const ENGINEERING_STACK = [
     'TypeScript', 'React', 'Astro.js', 'Tailwind CSS', 'Cloudflare', 'Git', 'Claude Code',
 ];
 
 // Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
     <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
-        <div
-            data-hero-row
-            className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16"
-        >
-            <div className="order-2 md:order-1">
-                <h2
-                    data-lead-heading
-                    className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl"
-                >
-                    <SplitChars text="Cloudflare が好きで、" className="block overflow-hidden" dataAnim />
-                    <SplitChars
-                        text="TypeScript を主に使っています。"
-                        className="block overflow-hidden text-foreground/70"
-                        dataAnim
-                    />
-                </h2>
-
-                {/* Tech stack — staggered reveal in Phase A */}
-                <div
-                    data-lead-statbadge
-                    style={{ opacity: 0 }}
-                    className="mt-5 flex items-center gap-2 font-mono"
-                >
-                    <span className="text-accent text-xs">+</span>
-                    <span className="text-2xs uppercase tracking-[0.4em] text-muted-foreground">Tech Stack</span>
-                    <span aria-hidden className="h-px bg-foreground/15 w-12" />
-                </div>
-
-                <ul className="mt-3 flex flex-wrap gap-1.5">
-                    {TECH_STACK.map((p) => (
-                        <li
-                            key={p}
-                            data-lead-stat
-                            style={{ opacity: 0 }}
-                            className="font-mono text-xs text-foreground/70 border border-foreground/15 px-2 py-0.5 leading-tight"
-                        >
-                            {p}
-                        </li>
-                    ))}
-                </ul>
-
-                <p
-                    data-lead-statcount
-                    style={{ opacity: 0 }}
-                    className="mt-3 font-mono text-2xs uppercase tracking-[0.35em] text-muted-foreground/55"
-                >
-                    {TECH_STACK.length} tools · daily-driver stack
-                </p>
+        <div className="relative w-full flex flex-col items-center gap-10 md:gap-14">
+            {/* スクロールでこのセクションに近づいた時点で「次は何のセクションか」が
+                分かるよう、画面中央に大きく置く先出しタイトル。 */}
+            <div data-lead-stacktitle className="text-center px-6">
+                <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                    Stack
+                </span>
             </div>
 
             <div
-                data-lead-globe
-                className="order-1 md:order-2 flex items-center justify-center"
+                data-hero-row
+                className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16"
             >
-                <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />
+                <div className="order-2 md:order-1">
+                    <h2
+                        data-lead-heading
+                        className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl"
+                    >
+                        <SplitChars text="Cloudflare が好きで、" className="block overflow-hidden" dataAnim />
+                        <SplitChars
+                            text="TypeScript を主に使っています。"
+                            className="block overflow-hidden text-foreground/70"
+                            dataAnim
+                        />
+                    </h2>
+
+                    {/* Design / Engineering スタック — Phase A で staggered reveal。
+                        Hero の "Designer / Engineer" と表記順を揃え、Design を上に置く。 */}
+                    <StackGroup label="Design" items={DESIGN_STACK} className="mt-5" />
+                    <StackGroup label="Engineering" items={ENGINEERING_STACK} className="mt-4" />
+                </div>
+
+                <div
+                    data-lead-globe
+                    className="order-1 md:order-2 flex items-center justify-center"
+                >
+                    <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />
+                </div>
             </div>
         </div>
+    </div>
+);
+
+const StackGroup: React.FC<{ label: string; items: string[]; className?: string }> = ({
+    label,
+    items,
+    className,
+}) => (
+    <div className={className}>
+        <div
+            data-lead-statbadge
+            style={{ opacity: 0 }}
+            className="flex items-center gap-2 font-mono"
+        >
+            <span className="text-accent text-xs">+</span>
+            <span className="text-2xs uppercase tracking-[0.4em] text-muted-foreground">{label}</span>
+            <span aria-hidden className="h-px bg-foreground/15 w-12" />
+        </div>
+
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+            {items.map((p) => (
+                <li
+                    key={p}
+                    data-lead-stat
+                    style={{ opacity: 0 }}
+                    className="font-mono text-xs text-foreground/70 border border-foreground/15 px-2 py-0.5 leading-tight"
+                >
+                    {p}
+                </li>
+            ))}
+        </ul>
     </div>
 );
 

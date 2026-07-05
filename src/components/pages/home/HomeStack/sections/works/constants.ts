@@ -148,7 +148,6 @@ export const TIMING = {
     heroSubLabel: 0.10,
     heroStatsBadge: 0.20,
     heroStats: 0.23,
-    heroStatsCount: 0.30,
 
     // Phase B: folder waterfall (~0.55–0.87)
     // Phase A hold (+0.25 シフト) により 0.30 → 0.55 に移動。
