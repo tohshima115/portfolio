@@ -388,11 +388,11 @@ const WorksLead: React.FC = () => {
         <section
             ref={containerRef}
             className="relative w-full"
-            style={{ minHeight: reduced ? '100vh' : `${SECTION_MIN_HEIGHT_VH}vh` }}
+            style={{ minHeight: reduced ? '100svh' : `${SECTION_MIN_HEIGHT_VH}vh` }}
         >
             <div
                 data-pin-inner
-                className="relative w-full h-screen overflow-hidden bg-background isolate"
+                className="relative w-full h-[100svh] overflow-hidden bg-background isolate"
             >
                 {/* z-10: Cloudflare hero (folders に覆われ Phase D で fade out) */}
                 <HeroLayer />
@@ -441,23 +441,25 @@ const ENGINEERING_STACK = [
 // Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
     <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
-        <div className="relative w-full flex flex-col items-center gap-10 md:gap-14">
+        <div className="relative w-full flex flex-col items-center gap-[3svh] md:gap-14">
             {/* スクロールでこのセクションに近づいた時点で「次は何のセクションか」が
-                分かるよう、画面中央に大きく置く先出しタイトル。 */}
+                分かるよう、画面中央に大きく置く先出しタイトル。
+                モバイルは svh 基準で縮めて、iPhone SE 級の低height機でも
+                STACK/globe/tags が h-[100svh] 内に収まるようにする。 */}
             <div data-lead-stacktitle className="text-center px-6">
-                <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
                     Stack
                 </span>
             </div>
 
             <div
                 data-hero-row
-                className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-3 md:gap-16"
+                className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-[1svh] md:gap-16"
             >
                 <div className="order-2 md:order-1">
                     <h2
                         data-lead-heading
-                        className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl"
+                        className="font-sans font-bold text-foreground text-[clamp(1.15rem,4.5svh,2.5rem)] md:text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl"
                     >
                         <SplitChars text="Cloudflare が好きで、" className="block overflow-hidden" dataAnim />
                         <SplitChars
@@ -469,15 +471,15 @@ const HeroLayer: React.FC = () => (
 
                     {/* Design / Engineering スタック — Phase A で staggered reveal。
                         Hero の "Designer / Engineer" と表記順を揃え、Design を上に置く。 */}
-                    <StackGroup label="Design" items={DESIGN_STACK} className="mt-5" />
-                    <StackGroup label="Engineering" items={ENGINEERING_STACK} className="mt-4" />
+                    <StackGroup label="Design" items={DESIGN_STACK} className="mt-[1.5svh] md:mt-5" />
+                    <StackGroup label="Engineering" items={ENGINEERING_STACK} className="mt-[1svh] md:mt-4" />
                 </div>
 
                 <div
                     data-lead-globe
-                    className="order-1 md:order-2 flex items-center justify-center -mb-10 md:mb-0"
+                    className="order-1 md:order-2 flex items-center justify-center -mb-[5svh] md:mb-0"
                 >
-                    <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />
+                    <GlobeBackground className="w-full max-w-[min(360px,34svh)] sm:max-w-[min(400px,36svh)] md:max-w-[480px] aspect-square" />
                 </div>
             </div>
         </div>
@@ -500,13 +502,13 @@ const StackGroup: React.FC<{ label: string; items: string[]; className?: string 
             <span aria-hidden className="h-px bg-foreground/15 w-12" />
         </div>
 
-        <ul className="mt-3 flex flex-wrap gap-2">
+        <ul className="mt-[0.8svh] md:mt-3 flex flex-wrap gap-1.5 md:gap-2">
             {items.map((p) => (
                 <li
                     key={p}
                     data-lead-stat
                     style={{ opacity: 0 }}
-                    className="font-mono text-sm text-foreground/70 border border-foreground/15 px-3 py-1 leading-tight"
+                    className="font-mono text-sm text-foreground/70 border border-foreground/15 px-2.5 py-0.5 md:px-3 md:py-1 leading-tight"
                 >
                     {p}
                 </li>
