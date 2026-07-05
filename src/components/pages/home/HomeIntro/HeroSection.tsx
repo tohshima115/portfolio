@@ -13,7 +13,7 @@ export const HeroSection = () => {
                 <h1 className="font-black tracking-tight leading-none text-5xl sm:text-6xl md:text-8xl">
                     TOYOSHIMA
                 </h1>
-                <p className="font-mono text-xs sm:text-sm tracking-[0.3em] uppercase text-white/70">
+                <p className="font-mono text-base sm:text-lg tracking-[0.3em] uppercase text-white/70">
                     Designer / Engineer
                 </p>
             </div>

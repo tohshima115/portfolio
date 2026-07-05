@@ -495,18 +495,18 @@ const StackGroup: React.FC<{ label: string; items: string[]; className?: string 
             style={{ opacity: 0 }}
             className="flex items-center gap-2 font-mono"
         >
-            <span className="text-accent text-xs">+</span>
-            <span className="text-2xs uppercase tracking-[0.4em] text-muted-foreground">{label}</span>
+            <span className="text-accent text-sm">+</span>
+            <span className="text-xs uppercase tracking-[0.4em] text-muted-foreground">{label}</span>
             <span aria-hidden className="h-px bg-foreground/15 w-12" />
         </div>
 
-        <ul className="mt-3 flex flex-wrap gap-1.5">
+        <ul className="mt-3 flex flex-wrap gap-2">
             {items.map((p) => (
                 <li
                     key={p}
                     data-lead-stat
                     style={{ opacity: 0 }}
-                    className="font-mono text-xs text-foreground/70 border border-foreground/15 px-2 py-0.5 leading-tight"
+                    className="font-mono text-sm text-foreground/70 border border-foreground/15 px-3 py-1 leading-tight"
                 >
                     {p}
                 </li>
