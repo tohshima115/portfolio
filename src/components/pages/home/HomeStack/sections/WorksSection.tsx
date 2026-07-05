@@ -115,7 +115,7 @@ const WorksLead: React.FC = () => {
                         scrub: 0.4,
                     },
                 })
-                    .to(globe, { x: 0, duration: 1, ease: 'power2.out' }, 0)
+                    .to(globe, { x: 0, duration: 1.2, ease: 'power2.out' }, 0.35)
                     .to(
                         headlineChars,
                         {
@@ -126,7 +126,7 @@ const WorksLead: React.FC = () => {
                             duration: 1,
                             ease: 'power3.out',
                         },
-                        0.2,
+                        0.75,
                     );
             }
 
