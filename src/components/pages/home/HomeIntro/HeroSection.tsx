@@ -25,18 +25,44 @@ export const HeroSection = () => {
 
 // 画面下部固定のスクロール誘導。グラデーションが明るくなる帯の上なので、
 // 白系ではなくダーク (foreground寄り) にしてコントラストを確保する。
+// 光の筋が上から下へさーっと流れ、少し間を置いてもう一本流れる、を繰り返す。
 const ScrollCue = () => {
+    const trackHeight = 56; // px
+    const streakHeight = 20; // px
+    const duration = 1.1;
+    const repeatDelay = 1.3;
+
     return (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-foreground/70">
             <span className="font-mono text-3xs sm:text-2xs tracking-[0.3em] uppercase">
                 Scroll
             </span>
-            <motion.span
+            <div
                 aria-hidden
-                className="block w-px h-6 bg-foreground/60"
-                animate={{ y: [0, 8, 0], opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-            />
+                className="relative w-px overflow-hidden bg-foreground/15"
+                style={{ height: trackHeight }}
+            >
+                {[0, 0.28].map((delayOffset) => (
+                    <motion.span
+                        key={delayOffset}
+                        className="absolute inset-x-0 top-0 bg-gradient-to-b from-transparent via-foreground to-transparent"
+                        style={{ height: streakHeight }}
+                        initial={{ y: -streakHeight, opacity: 0 }}
+                        animate={{
+                            y: [-streakHeight, trackHeight],
+                            opacity: [0, 1, 1, 0],
+                        }}
+                        transition={{
+                            duration,
+                            repeat: Infinity,
+                            repeatDelay,
+                            delay: delayOffset,
+                            ease: 'easeIn',
+                            times: [0, 0.15, 0.7, 1],
+                        }}
+                    />
+                ))}
+            </div>
         </div>
     );
 };
