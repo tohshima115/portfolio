@@ -86,10 +86,14 @@ export const HomeIntro = ({ updates: _updates = [] }: { updates?: UpdateItem[] }
 
     const showLogoIntro = bootDone && !skipIntro && !reducedMotion;
 
+    // HeroSection は bootDone を待たず常時マウントする。
+    // HomeStack (WorksSection) の GSAP ScrollTrigger は mount 直後にレイアウトを
+    // 計測するため、Hero の高さがここで確定していないと pin の start/end が
+    // ズレて WorksSection が意図せず画面最上部に固定表示されてしまう。
     return (
         <section onClickCapture={handleLinkClick} data-home-intro>
             {showLogoIntro && <LogoIntroOverlay />}
-            {bootDone && <HeroSection />}
+            <HeroSection />
         </section>
     );
 };
