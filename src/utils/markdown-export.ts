@@ -65,7 +65,7 @@ export function projectMarkdown(entry: CollectionEntry<'projects'>): string {
         roles: entry.data.attributes.roles,
         stack: entry.data.attributes.stack,
         link: entry.data.meta.link,
-        canonical_url: absoluteUrl(`/projects/${entry.slug}`),
+        canonical_url: absoluteUrl(`/works/${entry.slug}`),
     });
     return `${fm}\n\n# ${entry.data.title}\n\n${entry.body ?? ''}`;
 }

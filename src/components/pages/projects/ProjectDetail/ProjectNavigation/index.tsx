@@ -27,10 +27,10 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
     useEffect(() => {
         // Function to update active slug based on URL
         const updateActiveSlug = () => {
-            // Extract slug from URL path: /projects/swept -> swept
+            // Extract slug from URL path: /works/swept -> swept
             const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            // Assuming structure /projects/[slug]
-            const slugIndex = pathSegments.indexOf('projects');
+            // Assuming structure /works/[slug]
+            const slugIndex = pathSegments.indexOf('works');
             if (slugIndex !== -1 && pathSegments[slugIndex + 1]) {
                 setActiveSlug(pathSegments[slugIndex + 1]);
             }
@@ -82,9 +82,9 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                         <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">HOME</span>
                     </a>
                     <div className="w-[1px] h-8 bg-gray-300"></div>
-                    <a href="/projects" className="group flex flex-col items-start transition-colors">
+                    <a href="/works" className="group flex flex-col items-start transition-colors">
                         <span className="text-2xs text-gray-400 font-mono tracking-[0.2em] leading-none group-hover:text-yellow-500 transition-colors">INDEX OF</span>
-                        <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">PROJECTS</span>
+                        <span className="text-xl font-bold text-black tracking-tighter group-hover:opacity-70 transition-opacity">WORKS</span>
                     </a>
                 </div>
 
@@ -104,7 +104,7 @@ const ProjectNavigation: React.FC<ProjectNavigationProps> = ({
                                 className="flex-shrink-0"
                             >
                                 <a
-                                    href={`/projects/${project.slug}`}
+                                    href={`/works/${project.slug}`}
                                     onClick={(e) => {
                                         // e.preventDefault(); // Let default navigation happen for now
                                         if (onProjectClick) onProjectClick(project);

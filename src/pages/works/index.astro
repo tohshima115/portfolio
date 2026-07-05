@@ -34,7 +34,7 @@ sortedProjects.forEach((project) => {
         id: projectId,
         name: project.data.title,
         type: "projects",
-        url: `/projects/${project.slug}`,
+        url: `/works/${project.slug}`,
     });
 
     const stackTags = project.data.attributes.stack || [];
@@ -46,7 +46,7 @@ sortedProjects.forEach((project) => {
                 id: tagId,
                 name: tech,
                 type: "tag",
-                url: `/projects?tag=${encodeURIComponent(tech)}`,
+                url: `/works?tag=${encodeURIComponent(tech)}`,
             });
         }
         graphLinks.push({
@@ -57,7 +57,7 @@ sortedProjects.forEach((project) => {
 });
 ---
 
-<BaseLayout title="Projects | Portfolio">
+<BaseLayout title="Works | Portfolio">
     <div
         class="min-h-screen bg-background text-foreground relative overflow-hidden"
     >
@@ -126,7 +126,7 @@ sortedProjects.forEach((project) => {
                         id="no-results"
                         class="hidden py-12 text-center font-mono text-sm text-muted-foreground uppercase tracking-wider"
                     >
-                        No projects found for this tag.
+                        No works found for this tag.
                     </div>
                 </div>
 
@@ -246,6 +246,6 @@ sortedProjects.forEach((project) => {
 
     // Clear filter button - full navigation to reset the graph component too
     document.getElementById("filter-clear")?.addEventListener("click", () => {
-        window.location.href = "/projects";
+        window.location.href = "/works";
     });
 </script>

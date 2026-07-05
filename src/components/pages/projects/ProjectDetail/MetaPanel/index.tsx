@@ -112,7 +112,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
                                                 {/* Popover Header */}
                                                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                                                     <span className="text-2xs uppercase font-bold text-gray-400 tracking-wider">
-                                                        Related Projects
+                                                        Related Works
                                                     </span>
                                                     <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
                                                 </div>
@@ -126,7 +126,7 @@ const ProjectMetaPanel: React.FC<ProjectMetaPanelProps> = ({ title, roles, durat
                                                             return (
                                                                 <a
                                                                     key={p.slug}
-                                                                    href={isCurrent ? "#" : `/projects/${p.slug}`}
+                                                                    href={isCurrent ? "#" : `/works/${p.slug}`}
                                                                     className={cn(
                                                                         "w-12 h-12 flex items-center justify-center border transition-all duration-300 rounded-full overflow-hidden relative group/icon shadow-sm",
                                                                         isCurrent

@@ -27,7 +27,7 @@ export const GET: APIRoute = async () => {
         [
             '# Shogo Toyoshima Portfolio — Full Content',
             '',
-            `> ${absoluteUrl('/')} の全ページの生Markdownを1ファイルに連結したものです。Projects → Blog → Pages の順で並んでいます。`,
+            `> ${absoluteUrl('/')} の全ページの生Markdownを1ファイルに連結したものです。Works → Blog → Pages の順で並んでいます。`,
         ].join('\n'),
     );
 

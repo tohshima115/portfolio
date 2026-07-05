@@ -19,10 +19,10 @@ export const GET: APIRoute = async () => {
     lines.push('> Shogo Toyoshima (Product Engineer / Designer) のポートフォリオ。Cloudflare スタックで個人プロダクトを出荷している26歳。プロジェクト事例 (個人プロダクト・業務改善・デザイン)、ブログ、プロフィールを含む。各ページは末尾に .md を付けることで生のMarkdownとして取得できます。');
     lines.push('');
 
-    lines.push('## Projects');
+    lines.push('## Works');
     lines.push('');
     for (const entry of projects) {
-        const url = absoluteUrl(`/projects/${entry.slug}.md`);
+        const url = absoluteUrl(`/works/${entry.slug}.md`);
         const summary = projectSummary(entry);
         lines.push(`- [${entry.data.title}](${url}): ${summary}`);
     }
