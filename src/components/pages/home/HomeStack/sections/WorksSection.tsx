@@ -452,7 +452,7 @@ const HeroLayer: React.FC = () => (
 
             <div
                 data-hero-row
-                className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16"
+                className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-3 md:gap-16"
             >
                 <div className="order-2 md:order-1">
                     <h2
@@ -475,7 +475,7 @@ const HeroLayer: React.FC = () => (
 
                 <div
                     data-lead-globe
-                    className="order-1 md:order-2 flex items-center justify-center"
+                    className="order-1 md:order-2 flex items-center justify-center -mb-10 md:mb-0"
                 >
                     <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />
                 </div>
