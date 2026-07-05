@@ -1,6 +1,5 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { CornerLabel } from '../primitives/CornerLabel';
 import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -53,12 +52,8 @@ export const AboutSection: React.FC = () => {
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
                     {/* 名前 / 写真 / 縦書き BIO は WorksSection の pin 内 BioIntroStage で見せ済み。
-                        ここでは ABOUT corner label + Timeline + Stack だけに絞る。 */}
-                    <div className="mb-16">
-                        <CornerLabel label="ABOUT" id="02" />
-                    </div>
-
-                    <h3 className="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
+                        ここでは Timeline + Stack だけに絞る。 */}
+                    <h3 className="mt-16 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
                         <span className="text-accent">+</span>
                         <span>TIMELINE</span>
                         <span className="flex-1 h-px bg-foreground/10" />

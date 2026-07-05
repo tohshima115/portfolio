@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { CornerLabel } from '../primitives/CornerLabel';
 import { GridLayer } from '../visuals/GridLayer';
 import { ScanLines } from '../visuals/ScanLines';
 import { SectionFrame } from '../visuals/SectionFrame';
@@ -77,10 +76,6 @@ export const CTASection: React.FC = () => {
                 />
 
                 <ScanLines opacity={0.03} />
-
-                <div className="absolute top-6 left-6 md:top-8 md:left-12">
-                    <CornerLabel label="CONTACT / 04" id="04" />
-                </div>
 
                 <div className="relative z-10 max-w-3xl mx-auto px-6 md:px-12 text-center">
 

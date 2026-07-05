@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect } from 'react';
-import { CornerLabel } from '../primitives/CornerLabel';
 import { SplitChars } from '../primitives/SplitChars';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
@@ -51,7 +50,9 @@ const WorksLead: React.FC = () => {
             // ── Phase A 用 selector ──
             const globe = container.querySelector('[data-lead-globe]');
             const subLabel = container.querySelector('[data-lead-sublabel]');
-            const headlineLines = container.querySelectorAll('[data-lead-line]');
+            const headlineChars = container.querySelectorAll(
+                '[data-lead-heading] [data-split-chars][data-anim] > span',
+            );
             const statsBadge = container.querySelector('[data-lead-statbadge]');
             const stats = container.querySelectorAll('[data-lead-stat]');
             const statsCount = container.querySelector('[data-lead-statcount]');
@@ -102,11 +103,27 @@ const WorksLead: React.FC = () => {
             });
 
             // ─── Phase A: Cloudflare hero reveal ───
-            tl.to(globe, { opacity: 1, duration: 0.10, ease: 'power2.out' }, TIMING.heroGlobe);
+            // globe は最初から表示済み。中央寄せの位置から、右カラムの定位置へスッと
+            // スライドインさせる (2 カラムグリッドの右カラム = 全体幅の右半分なので、
+            // 自分の幅の 50% ぶん左にずらせば見た目上ほぼ画面中央に来る)。
+            if (globe && !mobile) {
+                gsap.set(globe, { xPercent: -50 });
+                tl.to(globe, { xPercent: 0, duration: 0.14, ease: 'power2.out' }, TIMING.heroGlobe);
+            }
             tl.to(subLabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroSubLabel);
-            tl.to(
-                headlineLines,
-                { opacity: 1, y: 0, stagger: 0.03, duration: 0.12, ease: 'power3.out' },
+            // headline は 1 文字ずつ下から巻き上がるように出す (WORKS 見出しと同じ roll-up)。
+            gsap.set(headlineChars, { yPercent: -110, y: 0, opacity: 0 });
+            tl.fromTo(
+                headlineChars,
+                { opacity: 0, yPercent: -110, y: 0 },
+                {
+                    opacity: 1,
+                    yPercent: 0,
+                    y: 0,
+                    stagger: 0.018,
+                    duration: 0.10,
+                    ease: 'power3.out',
+                },
                 TIMING.heroHeadline,
             );
             tl.to(statsBadge, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, TIMING.heroStatsBadge);
@@ -400,19 +417,18 @@ const CF_PRODUCTS = [
 // Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
     <div data-hero-layer className="absolute inset-0 z-10 flex items-center">
-        <div className="absolute top-6 left-6 md:top-8 md:left-12">
-            <CornerLabel label="WORKS" id="01" />
-        </div>
-
         <div className="relative w-full max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
             <div className="order-2 md:order-1">
-                <h2 className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl">
-                    <span data-lead-line data-reveal className="block" style={{ opacity: 0 }}>
-                        Cloudflare が好きで、
-                    </span>
-                    <span data-lead-line data-reveal className="block text-foreground/70" style={{ opacity: 0 }}>
-                        いろいろ試しながら作っています。
-                    </span>
+                <h2
+                    data-lead-heading
+                    className="font-sans font-bold text-foreground text-[clamp(1.5rem,3vw,2.5rem)] leading-tight tracking-tight max-w-xl"
+                >
+                    <SplitChars text="Cloudflare が好きで、" className="block overflow-hidden" dataAnim />
+                    <SplitChars
+                        text="いろいろ試しながら作っています。"
+                        className="block overflow-hidden text-foreground/70"
+                        dataAnim
+                    />
                 </h2>
 
                 {/* CF product stack — staggered reveal in Phase A */}
@@ -450,7 +466,6 @@ const HeroLayer: React.FC = () => (
 
             <div
                 data-lead-globe
-                style={{ opacity: 0 }}
                 className="order-1 md:order-2 flex items-center justify-center"
             >
                 <GlobeBackground className="w-full max-w-[360px] sm:max-w-[420px] md:max-w-[480px] aspect-square" />

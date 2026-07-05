@@ -147,7 +147,7 @@ export const TIMING = {
     // Phase B (folder waterfall) が始まる。ユーザーが製品名を読む時間を十分確保。
     heroGlobe: 0.05,
     heroSubLabel: 0.10,
-    heroHeadline: 0.13,
+    heroHeadline: 0.09,
     heroStatsBadge: 0.20,
     heroStats: 0.23,
     heroStatsCount: 0.30,

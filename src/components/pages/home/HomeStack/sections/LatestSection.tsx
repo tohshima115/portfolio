@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { CornerLabel } from '../primitives/CornerLabel';
 import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -36,8 +35,7 @@ export const LatestSection: React.FC<Props> = ({ updates }) => {
                 <SectionFrame inset={32} />
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
-                    <div className="flex items-start justify-between mb-12">
-                        <CornerLabel label="LATEST" id="03" />
+                    <div className="flex items-start justify-end mb-12">
                         <span className="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground/60">
                             {updates.length} entries
                         </span>
