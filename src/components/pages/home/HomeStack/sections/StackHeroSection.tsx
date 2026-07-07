@@ -71,9 +71,9 @@ export const StackHeroSection: React.FC = () => {
                 // 半分を過ぎたあたりに相当する。発火をさらに後ろ倒しにしつつ、
                 // 各アニメーション自体もゆっくり再生されるよう duration を伸ばし、
                 // 終了時刻を TOTAL 近くまで寄せて「終わってからpinまでの間延び」を無くす。
-                const TOTAL = 6;
+                const TOTAL = 8;
                 if (!mobile) {
-                    preTl.to(globe, { x: 0, duration: 2.2, ease: 'power2.out' }, TOTAL * 0.6);
+                    preTl.to(globe, { x: 0, duration: 3.0, ease: 'power2.out' }, TOTAL * 0.6);
                 }
                 preTl.to(
                     headlineChars,
@@ -81,8 +81,8 @@ export const StackHeroSection: React.FC = () => {
                         opacity: 1,
                         yPercent: 0,
                         y: 0,
-                        stagger: 0.035,
-                        duration: 0.18,
+                        stagger: 0.05,
+                        duration: 0.25,
                         ease: 'power3.out',
                     },
                     TOTAL * 0.72,
