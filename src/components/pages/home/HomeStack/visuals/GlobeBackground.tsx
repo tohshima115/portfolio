@@ -367,29 +367,21 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
         setMounted(true);
         if (reduced) return;
 
-        let touchPrevY = 0;
-
-        const onWheel = (e: WheelEvent) => {
-            const impulse = e.deltaY * 0.00015;
-            scrollVelRef.current = Math.max(-0.08, Math.min(0.40, scrollVelRef.current + impulse));
-        };
-        const onTouchStart = (e: TouchEvent) => {
-            touchPrevY = e.touches[0].clientY;
-        };
-        const onTouchMove = (e: TouchEvent) => {
-            const dy = touchPrevY - e.touches[0].clientY;
-            touchPrevY = e.touches[0].clientY;
-            const impulse = dy * 0.0003;
-            scrollVelRef.current = Math.max(-0.08, Math.min(0.40, scrollVelRef.current + impulse));
+        // wheel/touch 個別ハンドリングだと keyboard (PageDown等) や
+        // scrollbar drag での操作を取りこぼすため、window.scrollY の差分を
+        // 直接 impulse に変換する。上スクロールは dy が負になり自然に逆回転する。
+        let lastScrollY = window.scrollY;
+        const onScroll = () => {
+            const y = window.scrollY;
+            const dy = y - lastScrollY;
+            lastScrollY = y;
+            const impulse = dy * 0.0012;
+            scrollVelRef.current = Math.max(-0.08, Math.min(0.4, scrollVelRef.current + impulse));
         };
 
-        window.addEventListener('wheel', onWheel, { passive: true });
-        window.addEventListener('touchstart', onTouchStart, { passive: true });
-        window.addEventListener('touchmove', onTouchMove, { passive: true });
+        window.addEventListener('scroll', onScroll, { passive: true });
         return () => {
-            window.removeEventListener('wheel', onWheel);
-            window.removeEventListener('touchstart', onTouchStart);
-            window.removeEventListener('touchmove', onTouchMove);
+            window.removeEventListener('scroll', onScroll);
         };
     }, [reduced]);
 

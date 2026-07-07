@@ -84,6 +84,9 @@ export const StackHeroSection: React.FC = () => {
             }
 
             // ─── pin: Design/Engineering タグ reveal だけの短い pin ───
+            const progressFill = container.querySelector<HTMLElement>('[data-pin-progress-fill]');
+            if (progressFill) gsap.set(progressFill, { scaleX: 0 });
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: container,
@@ -93,6 +96,11 @@ export const StackHeroSection: React.FC = () => {
                     pinSpacing: true,
                     scrub: 0.6,
                     invalidateOnRefresh: true,
+                    // pin中はスクロールしても画面自体は動かないため、
+                    // 「あとどれくらいでpinが解けるか」を可視化するバーを進捗連動させる。
+                    onUpdate: (self) => {
+                        if (progressFill) gsap.set(progressFill, { scaleX: self.progress });
+                    },
                 },
             });
 
@@ -122,10 +130,27 @@ export const StackHeroSection: React.FC = () => {
                 className="relative w-full h-[100svh] overflow-hidden bg-background isolate"
             >
                 <HeroLayer />
+                {!reduced && <PinProgressBar />}
             </div>
         </section>
     );
 };
+
+// pin中はスクロールしても画面が動かないため、
+// 「どれくらいスクロールが進んでpinが解除されるか」を示す進捗バー。
+// bottom fixed の細い line + fill を scroll progress に応じて scaleX させるだけの軽量な指標。
+const PinProgressBar: React.FC = () => (
+    <div
+        aria-hidden
+        className="absolute inset-x-0 bottom-0 z-40 h-[2px] bg-foreground/10"
+    >
+        <div
+            data-pin-progress-fill
+            className="h-full w-full origin-left bg-accent"
+            style={{ transform: 'scaleX(0)' }}
+        />
+    </div>
+);
 
 // Cloudflare hero (z-10)
 const HeroLayer: React.FC = () => (
