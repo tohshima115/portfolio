@@ -375,8 +375,8 @@ export const GlobeBackground: React.FC<Props> = ({ className }) => {
             const y = window.scrollY;
             const dy = y - lastScrollY;
             lastScrollY = y;
-            const impulse = dy * 0.0012;
-            scrollVelRef.current = Math.max(-0.08, Math.min(0.4, scrollVelRef.current + impulse));
+            const impulse = dy * 0.0028;
+            scrollVelRef.current = Math.max(-0.3, Math.min(0.7, scrollVelRef.current + impulse));
         };
 
         window.addEventListener('scroll', onScroll, { passive: true });
