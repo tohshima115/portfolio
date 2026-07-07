@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { GridLayer } from '../visuals/GridLayer';
 import { ScanLines } from '../visuals/ScanLines';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
@@ -19,7 +18,6 @@ export const CTASection: React.FC = () => {
             className="relative w-full bg-background overflow-hidden"
         >
             <div className="relative w-full min-h-screen flex items-center justify-center py-32">
-                <GridLayer size={32} opacity={0.04} />
                 <SectionFrame inset={32} />
 
                 {/* 同心円 SVG */}

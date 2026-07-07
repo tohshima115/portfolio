@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
-import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { MediaVisual } from '../primitives/MediaFrame';
 import { PROJECTS } from './works/data';
@@ -144,7 +143,6 @@ export const WorksSection: React.FC = () => {
                 data-pin-inner
                 className="relative w-full h-[100svh] overflow-hidden bg-background isolate"
             >
-                <GridLayer size={32} opacity={0.04} />
                 <SectionFrame inset={32} />
 
                 {!reduced && (

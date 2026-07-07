@@ -1,24 +1,32 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // docs/career/profile.md + about-copywriting.md §12.1 facts より:
-// - Background timeline (経営学部 → 起業準備 → デザイン事務所) だけ簡潔に。
+// - Background timeline (起業準備 → Web制作会社) だけ簡潔に。学歴は割愛。
 // - Stack は StackHeroSection で既出のためここでは重複させない。
 // - このセクションは pin しない。通常スクロールでそのまま読めれば十分。
 
 interface TimelineRow {
     year: string;
     title: string;
+    detail?: string;
     highlight?: boolean;
 }
 
 const TIMELINE: TimelineRow[] = [
-    { year: '〜2022', title: '東京理科大学 経営学部卒' },
-    { year: '2022 — 2024', title: '起業準備' },
-    { year: '2025.07 —', title: 'デザイン事務所 (Web制作会社)', highlight: true },
+    {
+        year: '2024 — 2026',
+        title: '起業準備',
+        detail: '3人チームで社会起業に挑戦、デザインから実装まで担当',
+    },
+    {
+        year: '2025.07 —',
+        title: 'Web制作会社',
+        detail: 'Webデザイン〜実装、業務改善ツールの内製も並行',
+        highlight: true,
+    },
 ];
 
 export const AboutSection: React.FC = () => {
@@ -27,8 +35,7 @@ export const AboutSection: React.FC = () => {
             data-section="about"
             className="relative w-full bg-background"
         >
-            <div className="relative w-full min-h-screen py-24 md:py-32">
-                <GridLayer size={32} opacity={0.04} />
+            <div className="relative w-full py-20 md:py-28">
                 <SectionFrame inset={32} />
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
@@ -118,6 +125,11 @@ const TimelineItem: React.FC<{ row: TimelineRow; index: number }> = ({
             >
                 {row.title}
             </p>
+            {row.detail && (
+                <p className="mt-1 text-foreground/55 text-sm leading-relaxed">
+                    {row.detail}
+                </p>
+            )}
         </motion.li>
     );
 };
