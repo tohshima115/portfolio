@@ -5,39 +5,20 @@ import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // docs/career/profile.md + about-copywriting.md §12.1 facts より:
-// - Background timeline (経営学部 → 起業準備 → デザイン → 個人開発)
-// - Stack: Frontend / Edge & Backend
-// - Currently: 2026 夏退職 / 9 月以降入社可能
+// - Background timeline (経営学部 → 起業準備 → デザイン事務所) だけ簡潔に。
+// - Stack は StackHeroSection で既出のためここでは重複させない。
+// - このセクションは pin しない。通常スクロールでそのまま読めれば十分。
 
 interface TimelineRow {
     year: string;
     title: string;
-    detail?: string;
     highlight?: boolean;
 }
 
 const TIMELINE: TimelineRow[] = [
-    { year: '〜2022', title: '東京理科大学 経営学部卒', detail: '23歳卒業 / PL・事業構造の基礎' },
-    { year: '2022 — 2024', title: '起業準備 (Swept)', detail: '友人 2 人と 2〜3 年。リーン / ユーザーインタビューを実装' },
-    { year: '2025.07 —', title: 'デザイン事務所', detail: 'Web デザイン → 業務改善 → プロダクト開発へ重心移動' },
-    { year: '2026.01 —', title: 'AIChatClip 開発開始', detail: 'Cloudflare スタックでマルチサーフェス出荷', highlight: true },
-];
-
-const STACK_FRONTEND = [
-    'TypeScript',
-    'React 19',
-    'React Router v7',
-    'Astro 5',
-    'Tailwind v4',
-];
-const STACK_EDGE = [
-    'Cloudflare Workers',
-    'D1',
-    'Durable Objects',
-    'Workers AI',
-    'Zero Trust',
-    'Hono',
-    'WXT',
+    { year: '〜2022', title: '東京理科大学 経営学部卒' },
+    { year: '2022 — 2024', title: '起業準備' },
+    { year: '2025.07 —', title: 'デザイン事務所 (Web制作会社)', highlight: true },
 ];
 
 export const AboutSection: React.FC = () => {
@@ -51,40 +32,38 @@ export const AboutSection: React.FC = () => {
                 <SectionFrame inset={32} />
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
-                    {/* 名前 / 写真 / 縦書き BIO は WorksSection の pin 内 BioIntroStage で見せ済み。
-                        ここでは Timeline + Stack だけに絞る。 */}
-                    <h3 className="mt-16 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
-                        <span className="text-accent">+</span>
-                        <span>TIMELINE</span>
-                        <span className="flex-1 h-px bg-foreground/10" />
-                    </h3>
-
-                    <ol className="relative pl-6 border-l border-foreground/15">
-                        {TIMELINE.map((row, i) => (
-                            <TimelineItem key={i} row={row} index={i} />
-                        ))}
-                    </ol>
-
-                    <h3 className="mt-20 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
-                        <span className="text-accent">+</span>
-                        <span>STACK</span>
-                        <span className="flex-1 h-px bg-foreground/10" />
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                        <StackBlock label="Frontend" items={STACK_FRONTEND} />
-                        <StackBlock label="Edge & Backend" items={STACK_EDGE} />
+                    <div className="text-center mb-12 md:mb-16">
+                        <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                            About
+                        </span>
                     </div>
 
-                    <div className="mt-16">
-                        <a
-                            href="/about"
-                            className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
-                        >
-                            <span className="text-accent">+</span>
-                            <span>Read Full About</span>
-                            <span aria-hidden>→</span>
-                        </a>
+                    <div className="grid grid-cols-1 md:grid-cols-[13rem_1fr] gap-8 md:gap-14">
+                        {/* 顔写真枠: 実写を差し込むまでの placeholder */}
+                        <div className="mx-auto md:mx-0 w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] flex items-center justify-center shrink-0">
+                            <span className="font-mono text-3xs uppercase tracking-[0.3em] text-muted-foreground/40">
+                                Photo
+                            </span>
+                        </div>
+
+                        <div>
+                            <ol className="relative pl-6 border-l border-foreground/15">
+                                {TIMELINE.map((row, i) => (
+                                    <TimelineItem key={i} row={row} index={i} />
+                                ))}
+                            </ol>
+
+                            <div className="mt-10">
+                                <a
+                                    href="/about"
+                                    className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
+                                >
+                                    <span className="text-accent">+</span>
+                                    <span>Read Full About</span>
+                                    <span aria-hidden>→</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -139,30 +118,6 @@ const TimelineItem: React.FC<{ row: TimelineRow; index: number }> = ({
             >
                 {row.title}
             </p>
-            {row.detail && (
-                <p className="mt-1 text-foreground/55 text-sm leading-relaxed">
-                    {row.detail}
-                </p>
-            )}
         </motion.li>
     );
 };
-
-const StackBlock: React.FC<{ label: string; items: string[] }> = ({
-    label,
-    items,
-}) => (
-    <div>
-        <span className="font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground/80 block mb-4 border-l border-accent pl-3">
-            {label}
-        </span>
-        <ul className="space-y-1.5 font-mono text-sm text-foreground/85">
-            {items.map((it) => (
-                <li key={it} className="flex items-center gap-2">
-                    <span className="text-accent text-2xs">▸</span>
-                    <span>{it}</span>
-                </li>
-            ))}
-        </ul>
-    </div>
-);
