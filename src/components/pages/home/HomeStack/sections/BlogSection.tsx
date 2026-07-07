@@ -96,11 +96,15 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
             }
             if (firstText) {
                 tl.to(firstText, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.16);
-                tl.call(() => { firstText.style.pointerEvents = 'auto'; }, undefined, 0.16);
             }
-            tl.call(() => { setActiveDot(posts[0].slug); }, undefined, 0.12);
 
             // ─── pin中: 枠はそのまま、中身 (画像/動画 + テキスト) だけを順にクロスフェード ───
+            // どの投稿が「現在アクティブか」は tl.call() の片方向発火に頼らず、
+            // 各投稿の活性化しきい値 (activationTimes) と現在の再生位置を毎フレーム
+            // 比較して求める。scrub は上下どちらにも動くため、call() を出現方向にだけ
+            // 仕込む従来のやり方だと逆再生 (上スクロール) 時にインジケーターが1テンポ
+            // 遅れる不具合が起きていた。
+            const activationTimes = [0];
             let cursor = 0.22 + HOLD;
             for (let i = 1; i < mediaStages.length; i++) {
                 const prevMedia = mediaStages[i - 1];
@@ -112,17 +116,32 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
 
                 tl.to(prevMedia, { opacity: 0, duration: TRANS, ease: 'power2.in' }, outAt);
                 tl.to(prevText, { opacity: 0, y: -12, duration: TRANS, ease: 'power2.in' }, outAt);
-                tl.call(() => { prevText.style.pointerEvents = 'none'; }, undefined, outAt);
 
                 tl.to(curMedia, { opacity: 1, duration: TRANS, ease: 'power3.out' }, inAt);
                 tl.to(curText, { opacity: 1, y: 0, duration: TRANS, ease: 'power3.out' }, inAt);
-                tl.call(() => { curText.style.pointerEvents = 'auto'; }, undefined, inAt);
-                tl.call(() => { setActiveDot(posts[i].slug); }, undefined, inAt);
 
+                activationTimes.push(inAt);
                 cursor += TRANS + HOLD;
             }
             // 最終カードを見終わってから pin解除までの hold
             tl.to({}, { duration: 0.15 }, cursor);
+
+            let activeIndex = -1;
+            const applyActiveIndex = () => {
+                const t = tl.time();
+                let idx = 0;
+                for (let k = activationTimes.length - 1; k >= 0; k--) {
+                    if (t >= activationTimes[k]) { idx = k; break; }
+                }
+                if (idx === activeIndex) return;
+                activeIndex = idx;
+                textStages.forEach((el, k) => {
+                    el.style.pointerEvents = k === idx ? 'auto' : 'none';
+                });
+                setActiveDot(posts[idx].slug);
+            };
+            tl.eventCallback('onUpdate', applyActiveIndex);
+            applyActiveIndex();
         },
     });
 
