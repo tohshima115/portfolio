@@ -27,20 +27,20 @@ export const PROJECTS: Project[] = [
     },
     {
         id: '02',
-        slug: 'internal-tools',
-        name: '業務ツールいろいろ',
-        meta: 'Design Office · 社内運用',
-        description:
-            'Web 制作会社で「これは仕組みで何とかした方が早そう」と思った業務を片手間でツール化してきたやつ。PL ダッシュボード / 金属価格の毎日スクレイピング / カレンダー+LINE 配信などをまとめている。',
-    },
-    {
-        id: '03',
         slug: 'swept',
         name: 'Swept',
         meta: '社会起業 · チームプロジェクト · 2024–2026',
         description:
             '3人チームの社会起業プロジェクトに約2年関わった。デザイナーとして入って、途中から実装も担うようになった。方向性の違いで 2026 年初頭に離脱。',
         poster: sweptHero,
+    },
+    {
+        id: '03',
+        slug: 'foclock',
+        name: 'Foclock',
+        meta: '個人開発 · 拡張機能 / Web · Building',
+        description:
+            'SNSや動画サイトに溶かされる時間を取り戻すためのサイトブロッカー拡張機能。コア機能は無料、$3 の買い切りで高度機能が使える設計。拡張機能 + Web + 管理画面 + API を全部 Cloudflare で組んでいる、開発中のプロジェクト。',
     },
 ];
 

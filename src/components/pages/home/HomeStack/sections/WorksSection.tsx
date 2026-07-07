@@ -7,10 +7,10 @@ import { MediaFrame } from '../primitives/MediaFrame';
 import { PROJECTS } from './works/data';
 
 // WorksSection = 独立した pin セクション。
-// 通常スクロールで "WORKS" タイトルが先出しで見えている状態から、
-// pin発生とともに (1) タイトルが画面上部の小さいラベルに切り替わり
-// (2) 下からカード枠がせり上がってくる → カード内は video/poster + タイトル +
-// 説明 + CTA を、pin中スクロールに応じて 3 プロジェクトぶんクロスフェードする。
+// StackHeroSection と同じ構成トーンで、"WORKS" は常に画面上部に固定表示される
+// 太字タイトルとして出しっぱなしにし、その下・中央付近にプロジェクトカードが
+// 表示される。pin中はカード内の video/poster + タイトル + 説明 + CTA を、
+// スクロールに応じて 3 プロジェクトぶんクロスフェードする。
 // 全件見終わったら pin解除し、次の BlogSection へ通常スクロールでつながる。
 
 const WORKS_PIN_SCROLL_VH = 420;
@@ -30,17 +30,12 @@ export const WorksSection: React.FC = () => {
             const pinTarget = container.querySelector<HTMLElement>('[data-pin-inner]');
             if (!pinTarget) return;
 
-            const bigTitle = container.querySelector('[data-works-bigtitle]');
-            const miniLabel = container.querySelector('[data-works-minilabel]');
-            const mediaWrapper = container.querySelector('[data-media-wrapper]');
             const stages = container.querySelectorAll<HTMLElement>('[data-media-stage]');
 
-            gsap.set(mediaWrapper, { yPercent: 100 });
             gsap.set(stages, { opacity: 0, y: 18 });
             stages.forEach((el) => {
                 el.style.pointerEvents = 'none';
             });
-            gsap.set(miniLabel, { y: -8 });
 
             const tl = gsap.timeline({
                 scrollTrigger: {
@@ -54,25 +49,14 @@ export const WorksSection: React.FC = () => {
                 },
             });
 
-            // ─── タイトル: 中央の大きい "WORKS" → 上部の小さい常時可視ラベルへ ───
-            tl.to(bigTitle, { opacity: 0, duration: 0.08, ease: 'power2.out' }, 0);
-            tl.to(miniLabel, { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, 0.02);
-
-            // ─── カード枠が下からせり上がる ───
-            tl.to(mediaWrapper, { yPercent: 0, duration: 0.14, ease: 'power3.out' }, 0);
-
             const first = stages[0];
             if (first) {
-                tl.to(
-                    first,
-                    { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' },
-                    0.08,
-                );
-                tl.call(() => { first.style.pointerEvents = 'auto'; }, undefined, 0.08);
+                tl.to(first, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0);
+                tl.call(() => { first.style.pointerEvents = 'auto'; }, undefined, 0);
             }
 
             // ─── pin中: プロジェクトを順にクロスフェード ───
-            let cursor = 0.12 + HOLD;
+            let cursor = 0.1 + HOLD;
             for (let i = 1; i < stages.length; i++) {
                 const prev = stages[i - 1];
                 const cur = stages[i];
@@ -103,48 +87,40 @@ export const WorksSection: React.FC = () => {
                 <SectionFrame inset={32} />
 
                 {!reduced && (
-                    <>
-                        <div
-                            data-works-bigtitle
-                            className="absolute inset-0 z-10 flex items-center justify-center px-6"
-                        >
-                            <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(2rem,10svh,4rem)] md:text-[clamp(3rem,9vw,7.5rem)] leading-none">
-                                Works
-                            </span>
-                        </div>
+                    <div
+                        data-hero-layer
+                        className="absolute inset-0 z-10 flex items-center"
+                    >
+                        <div className="relative w-full flex flex-col items-center gap-[3svh] md:gap-10 px-6">
+                            <div className="text-center">
+                                <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                                    Works
+                                </span>
+                            </div>
 
-                        <div
-                            data-works-minilabel
-                            style={{ opacity: 0 }}
-                            className="absolute top-28 md:top-32 inset-x-0 z-20 flex items-center justify-center gap-4 px-6"
-                        >
-                            <span aria-hidden className="h-px bg-foreground/30 flex-1 max-w-[120px]" />
-                            <p className="font-mono text-2xs md:text-xs uppercase tracking-[0.5em] text-muted-foreground whitespace-nowrap">
-                                <span className="text-accent">+</span>
-                                <span className="ml-3">Works</span>
-                            </p>
-                            <span aria-hidden className="h-px bg-foreground/30 flex-1 max-w-[120px]" />
+                            <div
+                                data-media-wrapper
+                                className="relative w-full max-w-5xl h-[42svh] md:h-[58vh]"
+                            >
+                                {PROJECTS.map((p) => (
+                                    <MediaFrame
+                                        key={p.id}
+                                        stageId={p.id}
+                                        media={
+                                            p.poster
+                                                ? { type: 'video', poster: p.poster, videoSrc: p.videoSrc }
+                                                : { type: 'placeholder' }
+                                        }
+                                        eyebrow={`Project ${p.id} / ${p.meta}`}
+                                        title={p.name}
+                                        description={p.description}
+                                        ctaLabel="詳しくはこちら"
+                                        ctaHref={`/works/${p.slug}`}
+                                    />
+                                ))}
+                            </div>
                         </div>
-
-                        <div data-media-wrapper className="absolute inset-0 z-30">
-                            {PROJECTS.map((p) => (
-                                <MediaFrame
-                                    key={p.id}
-                                    stageId={p.id}
-                                    media={
-                                        p.poster
-                                            ? { type: 'video', poster: p.poster, videoSrc: p.videoSrc }
-                                            : { type: 'placeholder' }
-                                    }
-                                    eyebrow={`Project ${p.id} / ${p.meta}`}
-                                    title={p.name}
-                                    description={p.description}
-                                    ctaLabel="詳しくはこちら"
-                                    ctaHref={`/works/${p.slug}`}
-                                />
-                            ))}
-                        </div>
-                    </>
+                    </div>
                 )}
             </div>
 

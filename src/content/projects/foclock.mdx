@@ -1,0 +1,56 @@
+---
+title: Foclock
+meta:
+  date: 2026-05-12
+  duration: 2026.05〜現在 (Building)
+attributes:
+  roles:
+    - ui-design
+    - frontend-dev
+    - backend-dev
+  stack:
+    - React
+    - React Router v7
+    - Hono
+    - Cloudflare Workers
+    - Cloudflare D1
+    - Better Auth
+    - Stripe
+    - Drizzle ORM
+    - WXT
+    - Tailwind CSS
+    - Turborepo
+---
+
+## TL;DR
+
+Focus + Lock + Clock。SNS や動画サイトなど「時間泥棒」になりがちなサイトをブロックする拡張機能を、個人開発中です。コア機能はすべて無料、$3 のライフタイム買い切り(サブスクなし)で高度な機能とコミュニティ参加が使えるモデルにしています。現在ビルド中で、まだストア公開前です。
+
+| 項目 | 内容 |
+|---|---|
+| Status | 開発中 (ストア未公開) |
+| 構成 | 拡張機能 (Chrome / Edge / Firefox) + Web + 管理画面 + API |
+| Stack | Cloudflare Workers / D1 / Better Auth / Stripe / WXT / React Router v7 / Hono |
+| 課金モデル | コア機能無料、$3 ライフタイム買い切りで Pro 機能 |
+
+## 何を作っているか
+
+ブラウザの時間泥棒サイトをブロックする拡張機能で、AIChatClip と同じく Cloudflare 上に一人で組んでいます。モノレポ構成で、拡張機能本体 (WXT + React) に加えて、マーケティングサイト・管理画面・API までを Cloudflare Workers 上に同居させています。
+
+```
+apps/
+  extension/   WXT + React (拡張機能本体、Chrome/Edge/Firefox)
+  web/         React Router v7 on Workers Static Assets (foclock.app)
+  admin/       React Router v7 on Workers Static Assets (admin.foclock.app)
+  api/         Hono on Cloudflare Workers (api.foclock.app)
+
+packages/
+  shared/      共通の型定義・定数
+  ui/          共通UIコンポーネント
+```
+
+認証は Better Auth (Google OAuth) で AIChatClip と同じ選定、課金は Stripe のライフタイムプラン一本 (サブスクなし) で組んでいます。DB は Cloudflare D1 + Drizzle ORM。
+
+Pro 機能のクロスデバイス同期は独自サーバーを経由せず、`browser.storage.sync` (Chrome/Edge なら Google アカウント、Firefox なら Mozilla アカウント側の同期領域) にそのまま乗せる設計にしていて、Foclock の API はこの同期に一切関与しません。
+
+> このページは README の技術構成に基づいて作成した現在地のメモです。開発の背景や意思決定の詳しい話は、公開が近づいたタイミングで書き足します。
