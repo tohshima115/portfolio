@@ -66,8 +66,13 @@ export const StackHeroSection: React.FC = () => {
                         scrub: 0.4,
                     },
                 });
+                // start='top bottom' 〜 end='top top' の範囲は「セクションが画面下端から
+                // 上端まで通過する」距離そのものなので、進捗 0.5 = セクションが画面の
+                // ちょうど半分まで入った時点 (= 'top center') に一致する。
+                // globe/headline の発火をここまで遅らせ、全体を後ろ倒しにする。
+                const TOTAL = 4.2;
                 if (!mobile) {
-                    preTl.to(globe, { x: 0, duration: 1.3, ease: 'power2.out' }, 0.9);
+                    preTl.to(globe, { x: 0, duration: 1.4, ease: 'power2.out' }, TOTAL * 0.5);
                 }
                 preTl.to(
                     headlineChars,
@@ -75,12 +80,15 @@ export const StackHeroSection: React.FC = () => {
                         opacity: 1,
                         yPercent: 0,
                         y: 0,
-                        stagger: 0.035,
+                        stagger: 0.025,
                         duration: 0.12,
                         ease: 'power3.out',
                     },
-                    1.6,
+                    TOTAL * 0.62,
                 );
+                // 上記のタイミング比率を維持するための duration アンカー
+                // (headlineChars の stagger 込み終了時刻が TOTAL を超えないよう余白を確保している)
+                preTl.to({}, { duration: 0.001 }, TOTAL);
             }
 
             // ─── pin: Design/Engineering タグ reveal だけの短い pin ───
