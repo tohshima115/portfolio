@@ -77,47 +77,20 @@ export const CTASection: React.FC = () => {
 
                 <div className="relative z-10 max-w-3xl mx-auto px-6 md:px-12 text-center">
 
-                    <h2 className="font-sans font-bold text-foreground text-[clamp(1.75rem,4vw,3rem)] leading-[1.2] tracking-tight">
-                        <motion.span
-                            initial={reduced ? false : { opacity: 0, y: 16 }}
-                            animate={
-                                inView || reduced
-                                    ? { opacity: 1, y: 0 }
-                                    : { opacity: 0, y: 16 }
-                            }
-                            transition={{ duration: 0.7, delay: 0.15 }}
-                            className="block"
-                        >
-                            だいたい、こんな感じでやっています。
-                        </motion.span>
-                        <motion.span
-                            initial={reduced ? false : { opacity: 0, y: 16 }}
-                            animate={
-                                inView || reduced
-                                    ? { opacity: 1, y: 0 }
-                                    : { opacity: 0, y: 16 }
-                            }
-                            transition={{ duration: 0.7, delay: 0.3 }}
-                            className="block mt-3 text-foreground/70"
-                        >
-                            もしよければ、覗いていってください。
-                        </motion.span>
-                    </h2>
-
-                    <motion.p
+                    <motion.h2
                         initial={reduced ? false : { opacity: 0, y: 16 }}
                         animate={
                             inView || reduced
                                 ? { opacity: 1, y: 0 }
                                 : { opacity: 0, y: 16 }
                         }
-                        transition={{ duration: 0.7, delay: 0.5 }}
-                        className="mt-10 max-w-md mx-auto text-foreground/60 leading-relaxed text-sm md:text-base"
+                        transition={{ duration: 0.7, delay: 0.15 }}
+                        className="font-sans font-bold text-foreground text-[clamp(1.5rem,3.6vw,2.5rem)] leading-[1.4] tracking-tight max-w-lg mx-auto"
                     >
                         お仕事の話でも、ちょっと雑談したいでも、遊びのお誘いでも。
                         <br />
                         何かあれば、気軽にコンタクトまで。
-                    </motion.p>
+                    </motion.h2>
 
                     <motion.div
                         initial={reduced ? false : { opacity: 0, y: 16 }}
