@@ -58,22 +58,37 @@ export const StackHeroSection: React.FC = () => {
                 gsap.set(globe, { x: initialGlobeX });
                 gsap.set(headlineChars, { yPercent: -110, y: 0, opacity: 0 });
 
+                // start='top bottom' 〜 end='top top' はセクションが画面下端から上端まで
+                // 通過する物理スクロール距離 (= 常にビューポート高さ1つぶん) で、これ自体は
+                // 伸縮できない。そのため「発火後により多くのスクロール量を要求する」には
+                // (1) scrub の lag を強めて瞬間スクロールでは終わらないようにする、
+                // (2) 発火〜完了の割り当て比率 (duration/1.0) を目一杯まで広げる、
+                // の両方を使う。進捗は 0〜1 の割合そのものを直接指定する (TOTAL=1)。
+                const globeStart = 0.52;
+                const globeDuration = 0.46; // 0.52 → 0.98、pin直前まで使い切る
+                const headlineStart = 0.6;
+                const headlineEnd = 0.99;
+                const n = headlineChars.length;
+                const headlineDuration = 0.22;
+                const headlineStagger =
+                    n > 1 ? (headlineEnd - headlineStart - headlineDuration) / (n - 1) : 0;
+
                 const preTl = gsap.timeline({
                     scrollTrigger: {
                         trigger: container,
                         start: 'top bottom',
                         end: 'top top',
-                        scrub: 0.4,
+                        // lag を強めにかけて「勢いよく1回スクロールしただけでは終わらない」
+                        // 慣性のある動きにする。これが体感速度を大きく落とす主因。
+                        scrub: 1.4,
                     },
                 });
-                // start='top bottom' 〜 end='top top' の範囲は「セクションが画面下端から
-                // 上端まで通過する」距離そのものなので、進捗 0.6 はセクションが画面の
-                // 半分を過ぎたあたりに相当する。発火をさらに後ろ倒しにしつつ、
-                // 各アニメーション自体もゆっくり再生されるよう duration を伸ばし、
-                // 終了時刻を TOTAL 近くまで寄せて「終わってからpinまでの間延び」を無くす。
-                const TOTAL = 8;
                 if (!mobile) {
-                    preTl.to(globe, { x: 0, duration: 3.0, ease: 'power2.out' }, TOTAL * 0.6);
+                    preTl.to(
+                        globe,
+                        { x: 0, duration: globeDuration, ease: 'power2.inOut' },
+                        globeStart,
+                    );
                 }
                 preTl.to(
                     headlineChars,
@@ -81,15 +96,14 @@ export const StackHeroSection: React.FC = () => {
                         opacity: 1,
                         yPercent: 0,
                         y: 0,
-                        stagger: 0.05,
-                        duration: 0.25,
+                        stagger: headlineStagger,
+                        duration: headlineDuration,
                         ease: 'power3.out',
                     },
-                    TOTAL * 0.72,
+                    headlineStart,
                 );
-                // 上記のタイミング比率を維持するための duration アンカー
-                // (headlineChars の stagger 込み終了時刻が TOTAL を超えないよう余白を確保している)
-                preTl.to({}, { duration: 0.001 }, TOTAL);
+                // 上記の比率を維持するための duration アンカー
+                preTl.to({}, { duration: 0.001 }, 1);
             }
 
             // ─── pin: Design/Engineering タグ reveal だけの短い pin ───
