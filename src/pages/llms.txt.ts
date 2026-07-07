@@ -1,11 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { absoluteUrl, buildPlainTextResponse, projectSummary } from '@/utils/markdown-export';
+import { chapterSlugOf, getChapters, getHubs, projectSlugOf } from '@/utils/works';
 
 export const GET: APIRoute = async () => {
-    const projects = (await getCollection('projects')).sort(
-        (a, b) => new Date(b.data.meta.date).valueOf() - new Date(a.data.meta.date).valueOf(),
-    );
+    const projects = await getHubs();
     const posts = (await getCollection('blog')).sort(
         (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
     );
@@ -22,9 +21,16 @@ export const GET: APIRoute = async () => {
     lines.push('## Works');
     lines.push('');
     for (const entry of projects) {
-        const url = absoluteUrl(`/works/${entry.slug}.md`);
+        const projectSlug = projectSlugOf(entry);
+        const url = absoluteUrl(`/works/${projectSlug}.md`);
         const summary = projectSummary(entry);
         lines.push(`- [${entry.data.title}](${url}): ${summary}`);
+        // 章 (成果物単位の意思決定ページ) はネストして列挙
+        const chapters = await getChapters(projectSlug);
+        for (const ch of chapters) {
+            const chUrl = absoluteUrl(`/works/${projectSlug}/${chapterSlugOf(ch)}.md`);
+            lines.push(`  - [${ch.data.title}](${chUrl}): ${ch.data.chapter?.question} — ${ch.data.chapter?.answer}`);
+        }
     }
     lines.push('');
 

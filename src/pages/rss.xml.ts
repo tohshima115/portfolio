@@ -1,17 +1,11 @@
 import rss from '@astrojs/rss';
-import { getCollection } from 'astro:content';
+import { getHubs, projectSlugOf } from '@/utils/works';
 
 export const prerender = true;
 
 export async function GET(context) {
-    const projects = await getCollection('projects');
-
-    // Sort projects by date (newest first)
-    projects.sort((a, b) => {
-        const dateA = new Date(a.data.meta.date).getTime();
-        const dateB = new Date(b.data.meta.date).getTime();
-        return dateB - dateA;
-    });
+    // 章は含めず、プロジェクト (ハブ) 単位で配信する
+    const projects = await getHubs();
 
     return rss({
         title: 'Shogo Toyoshima Portfolio',
@@ -19,10 +13,9 @@ export async function GET(context) {
         site: context.site,
         items: projects.map((post) => ({
             title: post.data.title,
-            pubDate: new Date(post.data.meta.date),
+            pubDate: new Date(post.data.meta?.date ?? Date.now()),
             description: `New project added: ${post.data.title}`,
-            // If you have a description field in frontmatter, use post.data.description
-            link: `/works/${post.slug}/`,
+            link: `/works/${projectSlugOf(post)}/`,
         })),
         customData: `<language>ja-jp</language>`,
     });

@@ -4,12 +4,16 @@ import { getProjectLogo } from "@/utils/projectLogos";
 
 export interface Props {
     project: any;
+    /** 正規化済みプロジェクト slug ("aichatclip" 等)。entry.slug は "aichatclip/index" 形式のため */
+    slug: string;
     index: number;
 }
 
-const { project, index } = Astro.props;
-const logo = getProjectLogo(project.slug);
+const { project, slug, index } = Astro.props;
+const logo = getProjectLogo(slug);
 const delay = index * 0.08;
+const roles: string[] = project.data.attributes?.roles ?? [];
+const stack: string[] = project.data.attributes?.stack ?? [];
 
 function getRoleLabel(value: string): string {
     const role = ROLES.find((r) => r.value === value);
@@ -18,12 +22,10 @@ function getRoleLabel(value: string): string {
 ---
 
 <a
-    href={`/works/${project.slug}`}
+    href={`/works/${slug}`}
     class="group project-card flex flex-col gap-5 py-8 px-1 cursor-pointer"
-    id={`project-card-${project.slug}`}
-    data-tags={JSON.stringify(
-        project.data.attributes.stack.map((t: string) => t.toLowerCase()),
-    )}
+    id={`project-card-${slug}`}
+    data-tags={JSON.stringify(stack.map((t: string) => t.toLowerCase()))}
     style={`--delay: ${delay}s;`}
 >
     <!-- Logo -->
@@ -53,13 +55,13 @@ function getRoleLabel(value: string): string {
             {project.data.title}
         </h2>
         <span class="font-mono text-[11px] text-muted-foreground tracking-wide">
-            {project.data.meta.duration}
+            {project.data.meta?.duration}
         </span>
     </div>
 
     <!-- Roles -->
     <div class="flex flex-wrap gap-1.5">
-        {project.data.attributes.roles.map((role: string) => (
+        {roles.map((role: string) => (
             <span class="ui-tag-role group-hover:border-accent/30 transition-colors duration-300">
                 {getRoleLabel(role)}
             </span>
@@ -68,7 +70,7 @@ function getRoleLabel(value: string): string {
 
     <!-- Stack -->
     <div class="flex flex-wrap gap-1.5">
-        {project.data.attributes.stack.map((tech: string) => (
+        {stack.map((tech: string) => (
             <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-mono tracking-wide uppercase text-accent/70 bg-accent/8 border border-accent/15">
                 {tech}
             </span>

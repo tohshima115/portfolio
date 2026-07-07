@@ -6,10 +6,12 @@ export default config({
         kind: 'local',
     },
     collections: {
+        // ハブ&スポーク構造のうち、ハブ ([slug]/index.mdx) のみ Keystatic で編集可能。
+        // 章 ([slug]/*.mdx) は frontmatter が別スキーマ (chapter.*) のため MDX を直接編集する。
         projects: collection({
             label: '実績 (Projects)',
             slugField: 'title',
-            path: 'src/content/projects/*', // Removed trailing slash for file mode
+            path: 'src/content/projects/*/index',
             format: { contentField: 'content' }, // Maps MDX body to 'content' field
             schema: {
                 title: fields.slug({ name: { label: 'プロジェクト名' } }),
@@ -19,12 +21,12 @@ export default config({
                     thumbnail: fields.image({
                         label: 'サムネイル画像',
                         directory: 'src/assets/projects',
-                        publicPath: '../../assets/projects/',
+                        publicPath: '../../../assets/projects/',
                     }),
                     icon: fields.image({
                         label: 'アイコン画像 (正方形推奨・省略時はサムネイル使用)',
                         directory: 'src/assets/projects',
-                        publicPath: '../../assets/projects/',
+                        publicPath: '../../../assets/projects/',
                     }),
                     date: fields.date({ label: 'プロジェクト完了年月' }),
                     updatedDate: fields.date({ label: '最終更新日', description: '更新一覧に表示される日時' }),
@@ -44,13 +46,21 @@ export default config({
                     ),
                 }, { label: '属性・スキル' }),
 
-                // 3. 本文エディタ (MDX)
+                // 3. 30秒サマリー (ハブページの Hero 直下に出る)
+                summary: fields.object({
+                    tagline: fields.text({ label: 'タグライン (一言)' }),
+                    what: fields.text({ label: '何を作ったか', multiline: true }),
+                    why: fields.text({ label: 'なぜ作ったか', multiline: true }),
+                    now: fields.text({ label: '今どうなっているか', multiline: true }),
+                }, { label: '30秒サマリー' }),
+
+                // 4. 本文エディタ (MDX)
                 content: fields.mdx({
-                    label: 'プロジェクト詳細 (Context, Approach, Result...)',
+                    label: 'プロジェクト概要本文 (なんで作ったか / いまの状況 / 学び)',
                     options: {
                         image: {
                             directory: 'src/assets/projects',
-                            publicPath: '../../assets/projects/',
+                            publicPath: '../../../assets/projects/',
                         },
                     },
                 }),

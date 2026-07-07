@@ -1,27 +1,13 @@
 ---
-import { getCollection } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { ROLES } from "@/consts";
+import { getHubs, projectSlugOf } from "@/utils/works";
 import { SystemGraph } from "@/components/common/SystemGraph";
 import { ScrollUpTransition } from "@/components/pages/projects/ScrollUpTransition";
 import ProjectHeader from "@/components/pages/projects/ProjectList/ProjectHeader.astro";
 import ProjectCard from "@/components/pages/projects/ProjectList/ProjectCard.astro";
 
-const projects = await getCollection("projects");
-const blogs = await getCollection("blog"); // Will use later if we combine, for now just loading it if needed
-
-// Sort by date (newest first)
-const sortedProjects = projects.sort((a, b) => {
-    const dateA = new Date(a.data.meta.date);
-    const dateB = new Date(b.data.meta.date);
-    return dateB.getTime() - dateA.getTime();
-});
-
-// Helper to get role label from value
-function getRoleLabel(value: string): string {
-    const role = ROLES.find((r) => r.value === value);
-    return role ? role.label : value;
-}
+// ハブ (index.mdx) のみを一覧に出す。章は各プロジェクトページからたどる
+const sortedProjects = await getHubs();
 
 // Generate Graph Data combining Projects and Tags
 const graphNodes: any[] = [];
@@ -29,15 +15,16 @@ const graphLinks: any[] = [];
 const tagsSet = new Set<string>();
 
 sortedProjects.forEach((project) => {
-    const projectId = `projects-${project.slug}`;
+    const slug = projectSlugOf(project);
+    const projectId = `projects-${slug}`;
     graphNodes.push({
         id: projectId,
         name: project.data.title,
         type: "projects",
-        url: `/works/${project.slug}`,
+        url: `/works/${slug}`,
     });
 
-    const stackTags = project.data.attributes.stack || [];
+    const stackTags = project.data.attributes?.stack || [];
     stackTags.forEach((tech: string) => {
         const tagId = `tag-${tech}`;
         if (!tagsSet.has(tagId)) {
@@ -117,7 +104,11 @@ sortedProjects.forEach((project) => {
                     >
                         {
                             sortedProjects.map((project, index) => (
-                                <ProjectCard project={project} index={index} />
+                                <ProjectCard
+                                    project={project}
+                                    slug={projectSlugOf(project)}
+                                    index={index}
+                                />
                             ))
                         }
                     </div>
