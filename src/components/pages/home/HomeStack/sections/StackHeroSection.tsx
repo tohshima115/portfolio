@@ -67,12 +67,13 @@ export const StackHeroSection: React.FC = () => {
                     },
                 });
                 // start='top bottom' 〜 end='top top' の範囲は「セクションが画面下端から
-                // 上端まで通過する」距離そのものなので、進捗 0.5 = セクションが画面の
-                // ちょうど半分まで入った時点 (= 'top center') に一致する。
-                // globe/headline の発火をここまで遅らせ、全体を後ろ倒しにする。
-                const TOTAL = 4.2;
+                // 上端まで通過する」距離そのものなので、進捗 0.6 はセクションが画面の
+                // 半分を過ぎたあたりに相当する。発火をさらに後ろ倒しにしつつ、
+                // 各アニメーション自体もゆっくり再生されるよう duration を伸ばし、
+                // 終了時刻を TOTAL 近くまで寄せて「終わってからpinまでの間延び」を無くす。
+                const TOTAL = 6;
                 if (!mobile) {
-                    preTl.to(globe, { x: 0, duration: 1.4, ease: 'power2.out' }, TOTAL * 0.5);
+                    preTl.to(globe, { x: 0, duration: 2.2, ease: 'power2.out' }, TOTAL * 0.6);
                 }
                 preTl.to(
                     headlineChars,
@@ -80,11 +81,11 @@ export const StackHeroSection: React.FC = () => {
                         opacity: 1,
                         yPercent: 0,
                         y: 0,
-                        stagger: 0.025,
-                        duration: 0.12,
+                        stagger: 0.035,
+                        duration: 0.18,
                         ease: 'power3.out',
                     },
-                    TOTAL * 0.62,
+                    TOTAL * 0.72,
                 );
                 // 上記のタイミング比率を維持するための duration アンカー
                 // (headlineChars の stagger 込み終了時刻が TOTAL を超えないよう余白を確保している)
