@@ -64,7 +64,7 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
     </div>
 );
 
-const MediaVisual: React.FC<{ media: MediaFrameMedia }> = ({ media }) => {
+export const MediaVisual: React.FC<{ media: MediaFrameMedia }> = ({ media }) => {
     if (media.type === 'video') {
         return (
             // eslint-disable-next-line jsx-a11y/media-has-caption
