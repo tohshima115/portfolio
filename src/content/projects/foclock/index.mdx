@@ -29,24 +29,23 @@ summary:
 
 ## 何を作っているか
 
-Focus + Lock + Clock。SNS や動画サイトなど「時間泥棒」になりがちなサイトをブロックする拡張機能を、個人開発中です。コア機能はすべて無料、$3 のライフタイム買い切り(サブスクなし)で高度な機能とコミュニティ参加が使えるモデルにしています。現在ビルド中で、まだストア公開前です。
-
-ブラウザの時間泥棒サイトをブロックする拡張機能で、AIChatClip と同じく Cloudflare 上に一人で組んでいます。モノレポ構成で、拡張機能本体 (WXT + React) に加えて、マーケティングサイト・管理画面・API までを Cloudflare Workers 上に同居させています。
+Focus + Lock + Clock。SNS や動画サイトなど「時間泥棒」になりがちなサイトをブロックする拡張機能です。AIChatClip と同じく Cloudflare 上に一人で構築していて、拡張機能本体 (WXT + React) に加えて、マーケティングサイト・管理画面・API を Cloudflare Workers に同居させています。
 
 ```
 apps/
-  extension/   WXT + React (拡張機能本体、Chrome/Edge/Firefox)
+  extension/   WXT + React (Chrome/Edge/Firefox)
   web/         React Router v7 on Workers Static Assets (foclock.app)
   admin/       React Router v7 on Workers Static Assets (admin.foclock.app)
   api/         Hono on Cloudflare Workers (api.foclock.app)
-
 packages/
   shared/      共通の型定義・定数
   ui/          共通UIコンポーネント
 ```
 
-認証は Better Auth (Google OAuth) で AIChatClip と同じ選定、課金は Stripe のライフタイムプラン一本 (サブスクなし) で組んでいます。DB は Cloudflare D1 + Drizzle ORM。
+認証は Better Auth (Google OAuth) で AIChatClip と同じ選定、課金は Stripe のライフタイム買い切り一本 (サブスクなし)。DB は Cloudflare D1 + Drizzle ORM です。
 
-Pro 機能のクロスデバイス同期は独自サーバーを経由せず、`browser.storage.sync` (Chrome/Edge なら Google アカウント、Firefox なら Mozilla アカウント側の同期領域) にそのまま乗せる設計にしていて、Foclock の API はこの同期に一切関与しません。
+## 設計上の判断: 同期にサーバーを噛ませない
 
-> このページは README の技術構成に基づいて作成した現在地のメモです。開発の背景や意思決定の詳しい話は、公開が近づいたタイミングで書き足します。
+Pro 機能のクロスデバイス同期は、独自サーバーを経由せず `browser.storage.sync` (Chrome/Edge は Google、Firefox は Mozilla アカウントの同期領域) にそのまま乗せています。Foclock の API はこの同期に一切関与しません。**同期のためのサーバーとその運用を丸ごと持たずに済む** という判断です。
+
+> 現状は技術構成の現在地メモです。背景や意思決定の詳細は公開が近づいたら書き足します。
