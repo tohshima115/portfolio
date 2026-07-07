@@ -38,12 +38,26 @@ export const WorksSection: React.FC = () => {
             const textFrame = container.querySelector<HTMLElement>('[data-text-frame]');
             const mediaStages = container.querySelectorAll<HTMLElement>('[data-media-stage]');
             const textStages = container.querySelectorAll<HTMLElement>('[data-text-stage]');
+            const dots = container.querySelectorAll<HTMLElement>('[data-media-dot]');
+
+            const setActiveDot = (id: string) => {
+                dots.forEach((dot) => {
+                    const active = dot.dataset.mediaId === id;
+                    gsap.to(dot, {
+                        height: active ? 22 : 6,
+                        backgroundColor: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.4)',
+                        duration: 0.3,
+                        ease: 'power2.out',
+                    });
+                });
+            };
 
             // ─── 初期状態: 枠は画面下 70% ぶんはみ出た縮小状態、中身は全部非表示 ───
             gsap.set(mediaFrame, { yPercent: 70, scale: 0.55, transformOrigin: '50% 100%' });
             gsap.set(textFrame, { opacity: 0, y: 16 });
             gsap.set(mediaStages, { opacity: 0 });
             gsap.set(textStages, { opacity: 0, y: 10 });
+            gsap.set(dots, { height: 6, backgroundColor: 'rgba(255,255,255,0.4)' });
             textStages.forEach((el) => {
                 el.style.pointerEvents = 'none';
             });
@@ -60,8 +74,8 @@ export const WorksSection: React.FC = () => {
                 },
             });
 
-            // ─── entrance: 枠がせり上がりながら拡大 → テキスト → 1本目の中身 ───
-            tl.to(mediaFrame, { yPercent: 0, scale: 1, duration: 0.22, ease: 'back.out(1.3)' }, 0);
+            // ─── entrance: 枠がせり上がりながら拡大 (往復させず、そのまま止まる) → テキスト → 1本目の中身 ───
+            tl.to(mediaFrame, { yPercent: 0, scale: 1, duration: 0.22, ease: 'power3.out' }, 0);
             tl.to(textFrame, { opacity: 1, y: 0, duration: 0.12, ease: 'power2.out' }, 0.1);
 
             const firstMedia = mediaStages[0];
@@ -73,6 +87,7 @@ export const WorksSection: React.FC = () => {
                 tl.to(firstText, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.16);
                 tl.call(() => { firstText.style.pointerEvents = 'auto'; }, undefined, 0.16);
             }
+            tl.call(() => { setActiveDot(PROJECTS[0].id); }, undefined, 0.12);
 
             // ─── pin中: 枠はそのまま、中身 (画像/動画 + テキスト) だけを順にクロスフェード ───
             let cursor = 0.22 + HOLD;
@@ -91,6 +106,7 @@ export const WorksSection: React.FC = () => {
                 tl.to(curMedia, { opacity: 1, duration: TRANS, ease: 'power3.out' }, inAt);
                 tl.to(curText, { opacity: 1, y: 0, duration: TRANS, ease: 'power3.out' }, inAt);
                 tl.call(() => { curText.style.pointerEvents = 'auto'; }, undefined, inAt);
+                tl.call(() => { setActiveDot(PROJECTS[i].id); }, undefined, inAt);
 
                 cursor += TRANS + HOLD;
             }
@@ -146,6 +162,21 @@ export const WorksSection: React.FC = () => {
                                             />
                                         </div>
                                     ))}
+
+                                    {/* 現在地インジケーター: 何枚中の何枚目かをスライド風に示す */}
+                                    <div
+                                        aria-hidden
+                                        className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-10 flex flex-col items-center gap-2 md:gap-2.5"
+                                    >
+                                        {PROJECTS.map((p) => (
+                                            <span
+                                                key={p.id}
+                                                data-media-dot
+                                                data-media-id={p.id}
+                                                className="block w-1.5 rounded-full"
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* テキスト枠: メディアとは分離、下に一段スペースを空けて配置 */}
@@ -160,10 +191,6 @@ export const WorksSection: React.FC = () => {
                                             data-media-id={p.id}
                                             className="absolute inset-x-0 top-0 flex flex-col items-start gap-2 md:gap-3"
                                         >
-                                            <p className="font-mono text-2xs md:text-xs uppercase tracking-[0.4em] text-muted-foreground">
-                                                <span className="text-accent">+</span>
-                                                <span className="ml-3">{`Project ${p.id} / ${p.meta}`}</span>
-                                            </p>
                                             <h3 className="font-sans font-black text-foreground text-[clamp(1.5rem,4vw,2.75rem)] leading-tight tracking-tight">
                                                 {p.name}
                                             </h3>
@@ -201,9 +228,6 @@ const ReducedFallback: React.FC = () => (
             </p>
             {PROJECTS.map((p) => (
                 <article key={p.id} className="border-l-2 border-accent/40 pl-6">
-                    <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
-                        Project {p.id} / {p.meta}
-                    </p>
                     <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
                         {p.name}
                     </h3>

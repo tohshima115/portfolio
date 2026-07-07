@@ -8,7 +8,6 @@ export interface Project {
     id: string;
     slug: string;
     name: string;
-    meta: string;
     description: string;
     /** 実演動画/静止画のposter。無ければ抽象プレースホルダー表示にフォールバック。 */
     poster?: ImageMetadata;
@@ -21,7 +20,6 @@ export const PROJECTS: Project[] = [
         id: '01',
         slug: 'aichatclip',
         name: 'AIChatClip',
-        meta: '個人開発 · Chrome / Firefox · Ongoing',
         description:
             'AI チャットの回答って、放っておくと履歴の海に沈んでいく。それが気になって、ワンクリックで Obsidian に送り込む拡張機能を作った。Cloudflare で一人で動かしている。',
     },
@@ -29,7 +27,6 @@ export const PROJECTS: Project[] = [
         id: '02',
         slug: 'swept',
         name: 'Swept',
-        meta: '社会起業 · チームプロジェクト · 2024–2026',
         description:
             '3人チームの社会起業プロジェクトに約2年関わった。デザイナーとして入って、途中から実装も担うようになった。方向性の違いで 2026 年初頭に離脱。',
         poster: sweptHero,
@@ -38,7 +35,6 @@ export const PROJECTS: Project[] = [
         id: '03',
         slug: 'foclock',
         name: 'Foclock',
-        meta: '個人開発 · 拡張機能 / Web · Building',
         description:
             'SNSや動画サイトに溶かされる時間を取り戻すためのサイトブロッカー拡張機能。コア機能は無料、$3 の買い切りで高度機能が使える設計。拡張機能 + Web + 管理画面 + API を全部 Cloudflare で組んでいる、開発中のプロジェクト。',
     },
