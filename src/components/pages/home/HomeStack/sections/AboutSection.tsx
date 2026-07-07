@@ -4,7 +4,8 @@ import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // docs/career/profile.md + about-copywriting.md §12.1 facts より:
-// - Background timeline (起業準備 → Web制作会社) だけ簡潔に。学歴は割愛。
+// - Background timeline (東京理科大学卒 → 起業準備 → Web制作会社) を簡潔に。
+//   学歴は年齢の目安として年だけ書ければ十分、詳細は不要。
 // - Stack は StackHeroSection で既出のためここでは重複させない。
 // - このセクションは pin しない。通常スクロールでそのまま読めれば十分。
 
@@ -16,6 +17,7 @@ interface TimelineRow {
 }
 
 const TIMELINE: TimelineRow[] = [
+    { year: '2023', title: '東京理科大学 経営学部卒' },
     {
         year: '2024 — 2026',
         title: '起業準備',
@@ -45,15 +47,15 @@ export const AboutSection: React.FC = () => {
                         </span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-[13rem_1fr] gap-8 md:gap-14">
+                    <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 md:gap-16">
                         {/* 顔写真枠: 実写を差し込むまでの placeholder */}
-                        <div className="mx-auto md:mx-0 w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] flex items-center justify-center shrink-0">
+                        <div className="w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] flex items-center justify-center shrink-0">
                             <span className="font-mono text-3xs uppercase tracking-[0.3em] text-muted-foreground/40">
                                 Photo
                             </span>
                         </div>
 
-                        <div>
+                        <div className="w-full max-w-sm md:max-w-md">
                             <ol className="relative pl-6 border-l border-foreground/15">
                                 {TIMELINE.map((row, i) => (
                                     <TimelineItem key={i} row={row} index={i} />
