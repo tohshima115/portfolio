@@ -16,6 +16,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* 動的ルートのディレクトリ名 [project] がグロブの文字クラスとして解釈され、
+   配下の .astro が Tailwind のソーススキャンから漏れるため明示する */
+@source "../pages/works";
+
 /* -----------------------------------------------------------------------------
    Custom Theme Configuration (Tailwind CSS v4 style)
    ----------------------------------------------------------------------------- */
