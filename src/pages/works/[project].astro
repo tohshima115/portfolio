@@ -1,0 +1,305 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import WorkDome from "@/components/pages/works/WorkDome.astro";
+import ScrollCue from "@/components/pages/works/ScrollCue.astro";
+import ChapterCard from "@/components/pages/works/ChapterCard.astro";
+import { WORK_PROSE_CLASS } from "@/components/pages/works/prose";
+import { SystemGraph } from "@/components/common/SystemGraph";
+import { getProjectLogo } from "@/utils/projectLogos";
+import { getProjectTheme } from "@/utils/projectTheme";
+import { getChapters, getHubs, projectSlugOf, kindMeta } from "@/utils/works";
+import { ROLES } from "@/consts";
+
+export async function getStaticPaths() {
+    const hubs = await getHubs();
+    return hubs.map((entry) => ({
+        params: { project: projectSlugOf(entry) },
+        props: { entry, hubs },
+    }));
+}
+
+const { entry, hubs } = Astro.props;
+const slug = projectSlugOf(entry);
+const { Content } = await entry.render();
+
+const theme = getProjectTheme(slug);
+const logo = getProjectLogo(slug);
+const chapters = await getChapters(slug);
+const summary = entry.data.summary;
+const meta = entry.data.meta;
+const roles = entry.data.attributes?.roles ?? [];
+const stack = entry.data.attributes?.stack ?? [];
+
+const roleLabel = (value: string) =>
+    ROLES.find((r) => r.value === value)?.label ?? value;
+
+// ---- 前後プロジェクトナビ (日付降順の並び) ----
+const index = hubs.findIndex((h) => projectSlugOf(h) === slug);
+const prev = index > 0 ? hubs[index - 1] : null;
+const next = index < hubs.length - 1 ? hubs[index + 1] : null;
+
+// ---- Context Graph ----
+// 従来どおり stack タグでプロジェクト同士を接続しつつ、章の kind ノードでも接続する。
+// 「ロゴ制作」「技術構成」のような成果物の横断性がグラフに乗る。
+const graphNodes: any[] = [];
+const graphLinks: any[] = [];
+const nodeSet = new Set<string>();
+
+const currentId = `projects-${slug}`;
+nodeSet.add(currentId);
+graphNodes.push({ id: currentId, name: entry.data.title, type: "projects" });
+
+const addProjectNode = (hub: (typeof hubs)[number]) => {
+    const pSlug = projectSlugOf(hub);
+    const id = `projects-${pSlug}`;
+    if (!nodeSet.has(id)) {
+        nodeSet.add(id);
+        graphNodes.push({
+            id,
+            name: hub.data.title,
+            type: "projects",
+            url: `/works/${pSlug}`,
+        });
+    }
+    return id;
+};
+
+const addLink = (source: string, target: string) => {
+    if (!graphLinks.some((l) => l.source === source && l.target === target)) {
+        graphLinks.push({ source, target });
+    }
+};
+
+// 1. stack タグ経由の接続
+for (const tech of stack) {
+    const tagId = `tag-${tech}`;
+    if (!nodeSet.has(tagId)) {
+        nodeSet.add(tagId);
+        graphNodes.push({ id: tagId, name: tech, type: "tag" });
+    }
+    addLink(currentId, tagId);
+
+    for (const hub of hubs) {
+        if (projectSlugOf(hub) === slug) continue;
+        if ((hub.data.attributes?.stack ?? []).includes(tech)) {
+            addLink(addProjectNode(hub), tagId);
+        }
+    }
+}
+
+// 2. 章の kind 経由の接続
+const kindChapters = new Map<string, string[]>(); // kind -> project slugs
+for (const hub of hubs) {
+    const pSlug = projectSlugOf(hub);
+    for (const ch of await getChapters(pSlug)) {
+        const kind = ch.data.chapter!.kind;
+        const arr = kindChapters.get(kind) ?? [];
+        if (!arr.includes(pSlug)) arr.push(pSlug);
+        kindChapters.set(kind, arr);
+    }
+}
+for (const ch of chapters) {
+    const kind = ch.data.chapter!.kind;
+    const others = (kindChapters.get(kind) ?? []).filter((p) => p !== slug);
+    if (others.length === 0) continue; // 横断しない kind はノイズなので出さない
+    const kindId = `kind-${kind}`;
+    if (!nodeSet.has(kindId)) {
+        nodeSet.add(kindId);
+        graphNodes.push({ id: kindId, name: kindMeta(kind).label, type: "tag" });
+    }
+    addLink(currentId, kindId);
+    for (const other of others) {
+        const hub = hubs.find((h) => projectSlugOf(h) === other);
+        if (hub) addLink(addProjectNode(hub), kindId);
+    }
+}
+
+const description = summary?.what;
+---
+
+<BaseLayout title={`${entry.data.title} | Works`} description={description}>
+    <div class="relative w-full">
+        <!-- ══ Hero: プロジェクト色相のドームグラデーション ══ -->
+        <section class="relative w-full min-h-[92svh] flex items-center justify-center overflow-hidden">
+            <WorkDome theme={theme} />
+
+            <div class="relative z-10 flex flex-col items-center gap-5 px-6 text-center">
+                {logo?.mark && (
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-white shadow-lg overflow-hidden flex items-center justify-center">
+                        <img
+                            src={logo.mark}
+                            alt=""
+                            class="w-full h-full object-cover"
+                            aria-hidden="true"
+                        />
+                    </div>
+                )}
+                <h1 class="font-sans font-black tracking-tight leading-none text-white text-5xl sm:text-6xl md:text-7xl">
+                    {entry.data.title}
+                </h1>
+                {summary?.tagline && (
+                    <p class="font-mono text-xs sm:text-sm tracking-[0.2em] uppercase text-white/70 max-w-xl leading-relaxed">
+                        {summary.tagline}
+                    </p>
+                )}
+            </div>
+
+            <ScrollCue />
+        </section>
+
+        <div class="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-10 pb-24 md:pb-32">
+            <!-- ══ 30秒サマリー ══ -->
+            {summary && (
+                <section class="pt-4 md:pt-8">
+                    <p class="ui-micro-label mb-8">
+                        <span class="text-accent">+</span>
+                        <span class="ml-3">Overview</span>
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+                        {[
+                            { label: "What", body: summary.what },
+                            { label: "Why", body: summary.why },
+                            { label: "Now", body: summary.now },
+                        ].map(({ label, body }) => (
+                            <div class="flex flex-col gap-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground">
+                                        {label}
+                                    </span>
+                                    <span aria-hidden="true" class="h-px flex-1 bg-foreground/10"></span>
+                                </div>
+                                <p class="font-sans text-sm md:text-base text-foreground/85 leading-relaxed">
+                                    {body}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <!-- メタ情報行 -->
+                    <div class="mt-10 md:mt-12 flex flex-col gap-5 border-t border-foreground/10 pt-6">
+                        <div class="flex flex-wrap items-baseline gap-x-8 gap-y-3">
+                            {meta?.duration && (
+                                <p class="flex items-baseline gap-3">
+                                    <span class="font-mono text-3xs uppercase tracking-[0.3em] text-muted-foreground">Duration</span>
+                                    <span class="font-mono text-sm text-foreground/80">{meta.duration}</span>
+                                </p>
+                            )}
+                            {meta?.link && (
+                                <a
+                                    href={meta.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 hover:border-accent hover:text-accent transition-colors"
+                                >
+                                    <span>Visit Site</span>
+                                    <span aria-hidden="true">↗</span>
+                                </a>
+                            )}
+                        </div>
+                        {roles.length > 0 && (
+                            <div class="flex flex-wrap gap-1.5">
+                                {roles.map((role: string) => (
+                                    <span class="ui-tag-role">{roleLabel(role)}</span>
+                                ))}
+                            </div>
+                        )}
+                        {stack.length > 0 && (
+                            <div class="flex flex-wrap gap-1.5">
+                                {stack.map((tech: string) => (
+                                    <span class="ui-tag-tech">{tech}</span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
+            )}
+
+            <!-- ══ 成果物マップ: 意思決定の Q&A ══ -->
+            {chapters.length > 0 && (
+                <section class="mt-20 md:mt-28">
+                    <h2 class="font-sans font-black uppercase tracking-tight text-foreground/90 text-3xl md:text-5xl leading-none">
+                        Decisions
+                    </h2>
+                    <p class="mt-4 font-sans text-sm md:text-base text-foreground/70 leading-relaxed max-w-xl">
+                        成果物ごとに「なぜそうしたか」を書いています。問いと結論だけ先に置くので、気になったものからどうぞ。
+                    </p>
+
+                    <div class="mt-8 md:mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        {chapters.map((ch) => <ChapterCard chapter={ch} />)}
+                    </div>
+                </section>
+            )}
+
+            <!-- ══ 概要本文 ══ -->
+            <section class="mt-20 md:mt-28">
+                <p class="ui-micro-label mb-10">
+                    <span class="text-accent">+</span>
+                    <span class="ml-3">Story</span>
+                </p>
+                <div class={`${WORK_PROSE_CLASS} max-w-3xl`}>
+                    <Content />
+                </div>
+            </section>
+
+            <!-- ══ Context Graph ══ -->
+            <section class="mt-20 md:mt-28">
+                <p class="ui-micro-label mb-6">
+                    <span class="text-accent">+</span>
+                    <span class="ml-3">Context_Graph</span>
+                </p>
+                <div class="relative h-[340px] md:h-[420px] rounded-2xl border border-foreground/15 bg-white/50 overflow-hidden">
+                    <SystemGraph
+                        client:only="react"
+                        nodes={graphNodes}
+                        links={graphLinks}
+                        activeNodeId={currentId}
+                        className="w-full h-full !bg-transparent"
+                    />
+                </div>
+            </section>
+
+            <!-- ══ 前後ナビ ══ -->
+            <nav class="mt-20 md:mt-28" aria-label="Other works">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="h-px flex-1 bg-border"></div>
+                    <a
+                        href="/works"
+                        class="font-mono text-2xs text-muted-foreground tracking-[0.3em] uppercase hover:text-accent transition-colors"
+                    >
+                        All_Works
+                    </a>
+                    <div class="h-px flex-1 bg-border"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    {prev ? (
+                        <a
+                            href={`/works/${projectSlugOf(prev)}`}
+                            class="group flex flex-col gap-2 rounded-2xl border border-foreground/15 p-5 md:p-6 hover:border-accent transition-colors"
+                        >
+                            <span class="font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground">← Prev</span>
+                            <span class="font-sans font-bold text-sm md:text-base tracking-tight">
+                                {prev.data.title}
+                            </span>
+                        </a>
+                    ) : (
+                        <span></span>
+                    )}
+                    {next ? (
+                        <a
+                            href={`/works/${projectSlugOf(next)}`}
+                            class="group flex flex-col items-end gap-2 rounded-2xl border border-foreground/15 p-5 md:p-6 text-right hover:border-accent transition-colors"
+                        >
+                            <span class="font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground">Next →</span>
+                            <span class="font-sans font-bold text-sm md:text-base tracking-tight">
+                                {next.data.title}
+                            </span>
+                        </a>
+                    ) : (
+                        <span></span>
+                    )}
+                </div>
+            </nav>
+        </div>
+    </div>
+</BaseLayout>

@@ -1,0 +1,57 @@
+---
+// TOP の ScrollCue (framer-motion 版) を CSS keyframes に置き換えた静的版。
+// 光の筋が上から下へ流れ、少し間を置いて繰り返す。
+---
+
+<div
+    class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-foreground/70"
+    aria-hidden="true"
+>
+    <span class="font-mono text-3xs sm:text-2xs tracking-[0.3em] uppercase">Scroll</span>
+    <div class="scroll-cue-track relative w-px overflow-hidden bg-foreground/15">
+        <span class="scroll-cue-streak absolute inset-x-0 top-0"></span>
+    </div>
+</div>
+
+<style>
+    .scroll-cue-track {
+        height: 56px;
+    }
+    .scroll-cue-streak {
+        height: 20px;
+        background: linear-gradient(
+            to bottom,
+            transparent,
+            var(--color-foreground),
+            transparent
+        );
+        animation: scroll-cue-fall 2.4s ease-in infinite;
+    }
+    @keyframes scroll-cue-fall {
+        0% {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        7% {
+            opacity: 1;
+        }
+        32% {
+            opacity: 1;
+        }
+        45% {
+            transform: translateY(56px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(56px);
+            opacity: 0;
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .scroll-cue-streak {
+            animation: none;
+            opacity: 0.5;
+            transform: translateY(18px);
+        }
+    }
+</style>
