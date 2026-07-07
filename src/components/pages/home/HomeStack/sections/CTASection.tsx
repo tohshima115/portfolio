@@ -88,7 +88,7 @@ export const CTASection: React.FC = () => {
                             transition={{ duration: 0.7, delay: 0.15 }}
                             className="block"
                         >
-                            2026 年夏に今の仕事を辞めます。
+                            だいたい、こんな感じでやっています。
                         </motion.span>
                         <motion.span
                             initial={reduced ? false : { opacity: 0, y: 16 }}
@@ -100,7 +100,7 @@ export const CTASection: React.FC = () => {
                             transition={{ duration: 0.7, delay: 0.3 }}
                             className="block mt-3 text-foreground/70"
                         >
-                            その後のことは、探しながら決めています。
+                            もしよければ、覗いていってください。
                         </motion.span>
                     </h2>
 
@@ -114,7 +114,9 @@ export const CTASection: React.FC = () => {
                         transition={{ duration: 0.7, delay: 0.5 }}
                         className="mt-10 max-w-md mx-auto text-foreground/60 leading-relaxed text-sm md:text-base"
                     >
-                        連絡してみたいと思ったら、してみてください。
+                        お仕事の話でも、ちょっと雑談したいでも、遊びのお誘いでも。
+                        <br />
+                        何かあれば、気軽にコンタクトまで。
                     </motion.p>
 
                     <motion.div
@@ -132,7 +134,7 @@ export const CTASection: React.FC = () => {
                             className="inline-flex items-center gap-3 px-7 py-4 bg-foreground text-background hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
                             <span>+</span>
-                            <span>Open Channel</span>
+                            <span>Contact</span>
                             <span aria-hidden>→</span>
                         </a>
                         <a
