@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 import { SystemGraph } from "@/components/common/SystemGraph";
 
 const posts = (await getCollection("blog")).sort(
@@ -124,6 +125,19 @@ posts.forEach(post => {
                                                 <div class="hidden md:flex flex-shrink-0 w-12 font-mono text-xs text-muted-foreground group-hover:text-accent transition-colors duration-300 pt-1">
                                                     {String(posts.length - index).padStart(3, '0')}
                                                 </div>
+
+                                                <!-- Thumbnail -->
+                                                {post.data.thumbnail && (
+                                                    <div class="flex-shrink-0 w-20 md:w-32 aspect-video overflow-hidden border border-border bg-muted/30">
+                                                        <Image
+                                                            src={post.data.thumbnail}
+                                                            alt=""
+                                                            width={256}
+                                                            height={144}
+                                                            class="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                )}
 
                                                 <!-- Content -->
                                                 <div class="flex-1 min-w-0 space-y-2">
