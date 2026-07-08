@@ -1,18 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { MotionConfig, motion } from 'framer-motion';
-import { Crosshair, Layers, Network, X } from 'lucide-react';
+import { Crosshair, Layers, List, Network, X } from 'lucide-react';
 import { SystemGraph, type GraphLink, type GraphNode } from '@/components/common/SystemGraph';
 
 /**
  * Works 一覧のステージ。
  *
- * 見た目はトップページの WorksSection を踏襲する (メディア枠 + 左の現在地ドット +
- * 枠下のタイトル/説明/CTA)。違いは駆動方法で、トップはスクロールスクラブ、こちらは
- * ドット / 矢印キー / グラフのノードクリックで切り替わる「アプリ」として振る舞う。
+ * 見た目も駆動もトップページの WorksSection を踏襲する。ステージを sticky で画面に
+ * 留め、その下に作品数ぶんのスクロール区間を敷いて、スクロール位置から現在の作品を
+ * 決める (GSAP の pin ではなく position: sticky なので、パネルを開いている間だけ
+ * 追従を止める、といった制御が素直に書ける)。
  *
- * 唯一の演出は右上の 3 ボタン。押すとボタン自身が枠に育って (framer-motion の
- * layoutId 共有レイアウト) その中にビューが開く。ボタン = 開いた先の枠、という
- * 対応が視覚的に切れないので、パネルがどこから来たのかが常に分かる。
+ * 唯一の演出はビューを開く 4 つのボタン。押すとボタン自身が枠に育つ
+ * (framer-motion の layoutId 共有レイアウト)。開き方だけ画面幅で変える:
+ *   - PC (lg〜) : 枠の外・右側に育ち、メディアと説明文がその分だけ左に縮む
+ *   - それ未満  : メディア枠の上にオーバーレイする
  */
 
 export interface WorkItem {
@@ -30,23 +32,33 @@ export interface WorkItem {
     thumbnail?: string;
 }
 
-type PanelKey = 'all' | 'focus' | 'stack';
+type PanelKey = 'list' | 'all' | 'focus' | 'stack';
 
 const PANELS: Record<PanelKey, { icon: React.ElementType; label: string; eyebrow: string }> = {
+    list: { icon: List, label: '作品リスト', eyebrow: 'Index' },
     all: { icon: Network, label: '全体マップ', eyebrow: 'All_Works' },
     focus: { icon: Crosshair, label: 'この作品を中心に', eyebrow: 'Focus' },
     stack: { icon: Layers, label: '使った技術', eyebrow: 'Stack' },
 };
 
-const PANEL_ORDER: PanelKey[] = ['all', 'focus', 'stack'];
+const PANEL_ORDER: PanelKey[] = ['list', 'all', 'focus', 'stack'];
 
-const SPRING = { type: 'spring' as const, stiffness: 380, damping: 36, mass: 0.9 };
+const SPRING = { type: 'spring' as const, stiffness: 300, damping: 34, mass: 0.9 };
 
 // パネルは横に広いキャンバスなので、既定値より少し広げる。ラベルの重なりは
 // 反発 (charge) ではなく衝突半径で解く。charge を上げすぎるとノードが枠外に出る
-const GRAPH_FORCES = { charge: -220, linkDistance: 95, collide: 40 };
+const GRAPH_FORCES = { charge: -170, linkDistance: 80, collide: 36 };
+
+/** 閉じているときの右側の占有幅 (ボタン 40px + 枠との間隔 16px) */
+const RAIL_W = 56;
+/** 開いているときのパネルと枠の間隔 */
+const GAP = 16;
+/** 1 作品あたりに割り当てるスクロール量 */
+const SCROLL_PER_WORK_VH = 85;
 
 export const projectNodeId = (slug: string) => `projects-${slug}`;
+
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 interface Props {
     works: WorkItem[];
@@ -55,44 +67,132 @@ interface Props {
 }
 
 export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
+    const sectionRef = useRef<HTMLElement>(null);
+    const stageRef = useRef<HTMLDivElement>(null);
+
     const [activeIndex, setActiveIndex] = useState(0);
     const [panel, setPanel] = useState<PanelKey | null>(null);
     // グラフ内でタグをクリックしたときの一時ハイライト。パネルを閉じたら捨てる
     const [highlightId, setHighlightId] = useState<string | null>(null);
 
+    const stageWidth = useElementWidth(stageRef);
+    const isDesktop = useMediaQuery('(min-width: 1024px)');
+    const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+
     const active = works[activeIndex];
 
-    const closePanel = () => {
-        setPanel(null);
-        setHighlightId(null);
-    };
+    // ── PC のときだけ、メディア列とパネルの実寸を出す ──
+    const sized = isDesktop && stageWidth > 0;
+    const panelWidth = sized ? clamp(Math.round(stageWidth * 0.5), 340, 600) : 0;
+    const mediaWidth = sized ? stageWidth - (panel ? panelWidth + GAP : RAIL_W) : 0;
+    // パネルの高さは「開く前に見えていたメディア枠の高さ」。ボタンを押した枠が
+    // そのまま右に生えてくる、という読みになる (縮んだあとの枠に合わせると低すぎる)
+    const panelHeight = sized ? Math.round(((stageWidth - RAIL_W) * 9) / 16) : 0;
+
+    // ── スクロール位置 ⇔ 現在の作品 ──
+    const indexFromScroll = useCallback(() => {
+        const section = sectionRef.current;
+        if (!section) return 0;
+        const range = section.offsetHeight - window.innerHeight;
+        if (range <= 0) return 0;
+        const top = section.getBoundingClientRect().top + window.scrollY;
+        const progress = clamp((window.scrollY - top) / range, 0, 0.9999);
+        return Math.floor(progress * works.length);
+    }, [works.length]);
+
+    const scrollToIndex = useCallback(
+        (index: number, behavior: ScrollBehavior) => {
+            const section = sectionRef.current;
+            if (!section) return;
+            const range = section.offsetHeight - window.innerHeight;
+            if (range <= 0) return;
+            const top = section.getBoundingClientRect().top + window.scrollY;
+            window.scrollTo({
+                top: top + range * ((index + 0.5) / works.length),
+                behavior,
+            });
+        },
+        [works.length],
+    );
+
+    // パネルを開いている間はスクロール追従を止める。ref で読むのは、
+    // scroll ハンドラを張り直さずに最新値を見たいだけのため
+    const panelRef = useRef(panel);
+    panelRef.current = panel;
+    const activeIndexRef = useRef(activeIndex);
+    activeIndexRef.current = activeIndex;
+
+    useEffect(() => {
+        let frame = 0;
+        const update = () => {
+            frame = 0;
+            if (panelRef.current) return;
+            setActiveIndex(indexFromScroll());
+        };
+        const onScroll = () => {
+            if (!frame) frame = requestAnimationFrame(update);
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        update();
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
+            if (frame) cancelAnimationFrame(frame);
+        };
+    }, [indexFromScroll]);
+
+    // パネルを開いている間は背後のページをスクロールさせない
+    useEffect(() => {
+        if (!panel) return;
+        const { body } = document;
+        const gutter = window.innerWidth - document.documentElement.clientWidth;
+        const prevOverflow = body.style.overflow;
+        const prevPadding = body.style.paddingRight;
+        body.style.overflow = 'hidden';
+        if (gutter > 0) body.style.paddingRight = `${gutter}px`;
+        return () => {
+            body.style.overflow = prevOverflow;
+            body.style.paddingRight = prevPadding;
+        };
+    }, [panel]);
 
     const openPanel = (key: PanelKey) => {
         setPanel(key);
         setHighlightId(null);
     };
 
-    const select = (index: number) => {
+    /** 閉じたあと、スクロール位置とパネル内で選んだ作品を合わせ直す */
+    const closePanel = () => {
+        setPanel(null);
+        setHighlightId(null);
+        requestAnimationFrame(() => {
+            const target = activeIndexRef.current;
+            if (indexFromScroll() !== target) scrollToIndex(target, 'auto');
+        });
+    };
+
+    /** ドットや作品リストから選ぶ。スクロール位置がそのまま現在地なので、そこへ運ぶ */
+    const select = (index: number, options?: { close?: boolean }) => {
         setActiveIndex(index);
         setHighlightId(null);
+        if (options?.close) {
+            setPanel(null);
+            requestAnimationFrame(() => scrollToIndex(index, 'auto'));
+            return;
+        }
+        if (!panelRef.current) {
+            scrollToIndex(index, prefersReducedMotion ? 'auto' : 'smooth');
+        }
     };
 
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && panel) {
-                closePanel();
-                return;
-            }
-            if (panel) return;
-            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-                setActiveIndex((i) => (i + 1) % works.length);
-            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-                setActiveIndex((i) => (i - 1 + works.length) % works.length);
-            }
+            if (e.key === 'Escape' && panelRef.current) closePanel();
         };
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
-    }, [panel, works.length]);
+    });
 
     // この作品を中心とした部分グラフ (半径2)。
     // 作品 → 使っている技術 → その技術を使っている他の作品、までを含める。
@@ -143,10 +243,9 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
         if (node.type === 'projects') {
             const index = works.findIndex((w) => projectNodeId(w.slug) === node.id);
             if (index === -1) return;
-            select(index);
             // 全体マップは「どれを見るか選ぶ」ビューなので、選んだら作品に戻る。
             // focus は「つながりをたどる」ビューなので、開いたまま中心を移す。
-            if (panel === 'all') closePanel();
+            select(index, { close: panel === 'all' });
             return;
         }
         setHighlightId((current) => (current === node.id ? null : node.id));
@@ -156,127 +255,157 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
 
     return (
         <MotionConfig reducedMotion="user" transition={SPRING}>
-            <div className="w-full max-w-5xl mx-auto">
-                {/* ステージ = メディア枠と同じ高さの箱。パネルはこの箱を基準に開く */}
-                <div className="relative w-full">
-                {/* ── メディア枠。中身だけが切り替わる ── */}
-                <div className="relative w-full aspect-video overflow-hidden rounded-2xl md:rounded-3xl border border-foreground/15 bg-foreground/[0.02]">
-                    {works.map((work, index) => (
-                        <motion.div
-                            key={work.slug}
-                            className="absolute inset-0"
-                            initial={false}
-                            animate={{ opacity: index === activeIndex ? 1 : 0 }}
-                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                            aria-hidden={index !== activeIndex}
-                        >
-                            <WorkVisual work={work} index={index} />
-                        </motion.div>
-                    ))}
-
-                    {/* 現在地インジケーター兼セレクター */}
-                    <div className="absolute left-2.5 md:left-4 top-1/2 z-20 -translate-y-1/2">
-                        <div className="flex flex-col items-center gap-1 rounded-full border border-foreground/10 bg-background/70 px-1 py-1.5 backdrop-blur-md">
-                            {works.map((work, index) => (
-                                <button
-                                    key={work.slug}
-                                    type="button"
-                                    onClick={() => select(index)}
-                                    aria-label={work.title}
-                                    aria-current={index === activeIndex}
-                                    className="group/dot relative flex h-7 w-6 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground md:h-6 md:w-5"
-                                >
-                                    <motion.span
-                                        className={`block w-1.5 rounded-full ${
-                                            index === activeIndex
-                                                ? 'bg-foreground'
-                                                : 'bg-foreground/30 group-hover/dot:bg-foreground/60'
-                                        }`}
-                                        animate={{ height: index === activeIndex ? 18 : 6 }}
-                                        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                                    />
-                                    <span className="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded-full border border-foreground/10 bg-background/90 px-2 py-1 font-mono text-3xs uppercase tracking-widest text-foreground opacity-0 backdrop-blur-md transition-opacity duration-200 group-hover/dot:opacity-100 md:block">
-                                        {work.title}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* ── シグネチャ: このボタンがそのままパネルの外枠に育つ ──
-                        パネルが開いている間、残りのボタンはパネルのヘッダー行に移る */}
-                    {!panel && (
-                        <div className="absolute right-2.5 md:right-4 top-2.5 md:top-4 z-20 flex flex-col gap-1.5 md:gap-2">
-                            {PANEL_ORDER.map((key) => (
-                                <PanelButton key={key} panelKey={key} onOpen={openPanel} morph />
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* パネルはメディア枠の外に置く。モバイルでは枠より下まで伸ばして
-                    グラフに高さを確保する (aspect-video のままだと潰れて読めない) */}
-                {panel && (
-                    <motion.div
-                        key={panel}
-                        layoutId={`works-panel-${panel}`}
-                        style={{ borderRadius: 16 }}
-                        className="absolute left-0 right-0 top-0 z-30 flex h-[min(72vh,26rem)] flex-col overflow-hidden border border-foreground/12 bg-background shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)] md:inset-3 md:h-auto md:bg-background/95 md:backdrop-blur-xl"
+            <section
+                ref={sectionRef}
+                className="relative"
+                style={{ height: `${works.length * SCROLL_PER_WORK_VH}vh` }}
+            >
+                <div className="sticky top-16 flex h-[calc(100svh-4rem)] items-center md:top-20 md:h-[calc(100svh-5rem)]">
+                    <div
+                        ref={stageRef}
+                        className="relative w-full"
+                        style={{ minHeight: panel && sized ? panelHeight : undefined }}
                     >
-                        <PanelBody
-                            panel={panel}
-                            active={active}
-                            onOpen={openPanel}
-                            onClose={closePanel}
-                            allNodes={nodes}
-                            allLinks={links}
-                            focusGraph={focusGraph}
-                            graphActiveId={graphActiveId}
-                            onNodeClick={handleNodeClick}
-                            stackUsage={stackUsage}
-                        />
-                    </motion.div>
-                )}
-                </div>
+                        {/* ── メディア枠と説明文。パネルが開くとこの列が左に縮む ── */}
+                        <motion.div
+                            className="relative"
+                            animate={{ width: sized ? mediaWidth : '100%' }}
+                            initial={false}
+                        >
+                            <div className="relative w-full aspect-video overflow-hidden rounded-2xl md:rounded-3xl border border-foreground/15 bg-foreground/[0.02]">
+                                {works.map((work, index) => (
+                                    <motion.div
+                                        key={work.slug}
+                                        className="absolute inset-0"
+                                        initial={false}
+                                        animate={{ opacity: index === activeIndex ? 1 : 0 }}
+                                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                        aria-hidden={index !== activeIndex}
+                                    >
+                                        <WorkVisual work={work} index={index} />
+                                    </motion.div>
+                                ))}
 
-                {/* ── 枠下のテキスト。grid で重ねて、切り替え時に高さが跳ねないようにする ── */}
-                <div className="mt-5 md:mt-8 grid">
-                    {works.map((work, index) => {
-                        const isActive = index === activeIndex;
-                        return (
-                            <motion.div
-                                key={work.slug}
-                                className="col-start-1 row-start-1 flex flex-col items-start gap-2 md:gap-3"
-                                initial={false}
-                                animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 8 }}
-                                transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                                style={{ pointerEvents: isActive ? 'auto' : 'none' }}
-                                aria-hidden={!isActive}
+                                {/* 現在地インジケーター兼セレクター */}
+                                <div className="absolute left-2.5 top-1/2 z-20 -translate-y-1/2 md:left-4">
+                                    <div className="flex flex-col items-center gap-1 rounded-full border border-foreground/10 bg-background/70 px-1 py-1.5 backdrop-blur-md">
+                                        {works.map((work, index) => (
+                                            <button
+                                                key={work.slug}
+                                                type="button"
+                                                onClick={() => select(index)}
+                                                aria-label={work.title}
+                                                aria-current={index === activeIndex}
+                                                className="group/dot relative flex h-7 w-6 items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-foreground md:h-6 md:w-5"
+                                            >
+                                                <motion.span
+                                                    className={`block w-1.5 rounded-full ${
+                                                        index === activeIndex
+                                                            ? 'bg-foreground'
+                                                            : 'bg-foreground/30 group-hover/dot:bg-foreground/60'
+                                                    }`}
+                                                    animate={{ height: index === activeIndex ? 18 : 6 }}
+                                                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                                                />
+                                                <span className="pointer-events-none absolute left-full ml-2 hidden whitespace-nowrap rounded-full border border-foreground/10 bg-background/90 px-2 py-1 font-mono text-3xs uppercase tracking-widest text-foreground opacity-0 backdrop-blur-md transition-opacity duration-200 group-hover/dot:opacity-100 md:block">
+                                                    {work.title}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* ── 枠下のテキスト。grid で重ねて、切り替え時に高さが跳ねないようにする ── */}
+                            <div className="mt-5 grid md:mt-8">
+                                {works.map((work, index) => {
+                                    const isActive = index === activeIndex;
+                                    return (
+                                        <motion.div
+                                            key={work.slug}
+                                            className="col-start-1 row-start-1 flex flex-col items-start gap-2 md:gap-3"
+                                            initial={false}
+                                            animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 8 }}
+                                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                            style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+                                            aria-hidden={!isActive}
+                                        >
+                                            <h2 className="font-sans font-black text-foreground text-[clamp(1.5rem,3.2vw,2.75rem)] leading-tight tracking-tight">
+                                                {work.title}
+                                            </h2>
+                                            <p className="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">
+                                                {work.duration}
+                                                <span className="mx-2 text-border">/</span>
+                                                {work.roles.join(' · ')}
+                                            </p>
+                                            <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-3">
+                                                {work.what}
+                                            </p>
+                                            <a
+                                                href={`/works/${work.slug}`}
+                                                tabIndex={isActive ? 0 : -1}
+                                                className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                                            >
+                                                <span>詳しくはこちら</span>
+                                                <span aria-hidden>→</span>
+                                            </a>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+
+                        {/* ── シグネチャ: このボタンがそのままパネルの外枠に育つ ──
+                            PC では枠の外・右側、それ未満ではメディア枠の右上に置く */}
+                        {!panel && (
+                            <div
+                                className={`absolute z-20 ${
+                                    isDesktop
+                                        ? 'right-0 top-0 flex flex-col gap-2'
+                                        : // 枠の中に納めるため、狭い画面では 2 列に折る
+                                          'right-2.5 top-2.5 grid grid-cols-2 gap-1.5'
+                                }`}
                             >
-                                <h2 className="font-sans font-black text-foreground text-[clamp(1.5rem,4vw,2.75rem)] leading-tight tracking-tight">
-                                    {work.title}
-                                </h2>
-                                <p className="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">
-                                    {work.duration}
-                                    <span className="mx-2 text-border">/</span>
-                                    {work.roles.join(' · ')}
-                                </p>
-                                <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-3">
-                                    {work.what}
-                                </p>
-                                <a
-                                    href={`/works/${work.slug}`}
-                                    tabIndex={isActive ? 0 : -1}
-                                    className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-                                >
-                                    <span>詳しくはこちら</span>
-                                    <span aria-hidden>→</span>
-                                </a>
+                                {PANEL_ORDER.map((key) => (
+                                    <PanelButton key={key} panelKey={key} onOpen={openPanel} morph />
+                                ))}
+                            </div>
+                        )}
+
+                        {panel && (
+                            <motion.div
+                                key={panel}
+                                layoutId={`works-panel-${panel}`}
+                                style={
+                                    sized
+                                        ? { borderRadius: 16, width: panelWidth, height: panelHeight }
+                                        : { borderRadius: 16 }
+                                }
+                                className={`absolute z-30 flex flex-col overflow-hidden border border-foreground/12 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)] ${
+                                    sized
+                                        ? 'right-0 top-0 bg-background/95 backdrop-blur-xl'
+                                        : 'left-0 right-0 top-0 h-[min(72vh,26rem)] bg-background'
+                                }`}
+                            >
+                                <PanelBody
+                                    panel={panel}
+                                    works={works}
+                                    activeIndex={activeIndex}
+                                    onSelect={select}
+                                    onOpen={openPanel}
+                                    onClose={closePanel}
+                                    allNodes={nodes}
+                                    allLinks={links}
+                                    focusGraph={focusGraph}
+                                    graphActiveId={graphActiveId}
+                                    onNodeClick={handleNodeClick}
+                                    stackUsage={stackUsage}
+                                />
                             </motion.div>
-                        );
-                    })}
+                        )}
+                    </div>
                 </div>
-            </div>
+            </section>
         </MotionConfig>
     );
 };
@@ -284,8 +413,8 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * 閉じているときは枠の右上の縦列に、開いているときはパネルのヘッダー行に居る同じボタン。
- * layoutId (= パネルの外枠へ育つモーフ) を持つのは縦列のボタンだけ。ヘッダーのボタンにも
+ * 閉じているときはボタンの列に、開いているときはパネルのヘッダー行に居る同じボタン。
+ * layoutId (= パネルの外枠へ育つモーフ) を持つのは列のボタンだけ。ヘッダーのボタンにも
  * 同じ layoutId を付けると、パネルとその中のボタンが同一 id を取り合って両方消える。
  */
 const PanelButton: React.FC<{
@@ -304,7 +433,7 @@ const PanelButton: React.FC<{
             className="group/btn relative grid h-10 w-10 shrink-0 place-items-center border border-foreground/12 bg-background/75 text-foreground/70 backdrop-blur-md transition-colors hover:bg-background hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
         >
             <Icon size={16} strokeWidth={1.75} aria-hidden />
-            <span className="pointer-events-none absolute right-full mr-2 top-1/2 hidden -translate-y-1/2 whitespace-nowrap rounded-full border border-foreground/10 bg-background/90 px-2.5 py-1 font-mono text-3xs uppercase tracking-widest text-foreground opacity-0 backdrop-blur-md transition-opacity duration-200 group-hover/btn:opacity-100 md:block">
+            <span className="pointer-events-none absolute right-full top-1/2 mr-2 hidden -translate-y-1/2 whitespace-nowrap rounded-full border border-foreground/10 bg-background/90 px-2.5 py-1 font-mono text-3xs uppercase tracking-widest text-foreground opacity-0 backdrop-blur-md transition-opacity duration-200 group-hover/btn:opacity-100 md:block">
                 {label}
             </span>
         </motion.button>
@@ -313,7 +442,9 @@ const PanelButton: React.FC<{
 
 const PanelBody: React.FC<{
     panel: PanelKey;
-    active: WorkItem;
+    works: WorkItem[];
+    activeIndex: number;
+    onSelect: (index: number, options?: { close?: boolean }) => void;
     onOpen: (key: PanelKey) => void;
     onClose: () => void;
     allNodes: GraphNode[];
@@ -324,7 +455,9 @@ const PanelBody: React.FC<{
     stackUsage: Map<string, number>;
 }> = ({
     panel,
-    active,
+    works,
+    activeIndex,
+    onSelect,
     onOpen,
     onClose,
     allNodes,
@@ -334,15 +467,16 @@ const PanelBody: React.FC<{
     onNodeClick,
     stackUsage,
 }) => {
+    const active = works[activeIndex];
     const { eyebrow } = PANELS[panel];
 
     const title = panel === 'focus' ? `${active.title} を中心に` : PANELS[panel].label;
-    const hint =
-        panel === 'all'
-            ? '作品のノードを押すと、その作品に切り替わります'
-            : panel === 'focus'
-              ? '同じ技術を使っている作品が、技術ノード越しにつながって見えます'
-              : '数字は、この技術を使っている作品の数です';
+    const hint = {
+        list: '押すと、その作品に切り替わります',
+        all: '作品のノードを押すと、その作品に切り替わります',
+        focus: '同じ技術を使っている作品が、技術ノード越しにつながって見えます',
+        stack: '数字は、この技術を使っている作品の数です',
+    }[panel];
 
     const fadeIn = {
         initial: { opacity: 0 },
@@ -377,9 +511,11 @@ const PanelBody: React.FC<{
             </div>
 
             <motion.div className="relative min-h-0 flex-1" {...fadeIn}>
-                {panel === 'stack' ? (
-                    <StackView active={active} stackUsage={stackUsage} />
-                ) : (
+                {panel === 'list' && (
+                    <ListView works={works} activeIndex={activeIndex} onSelect={onSelect} />
+                )}
+                {panel === 'stack' && <StackView active={active} stackUsage={stackUsage} />}
+                {(panel === 'all' || panel === 'focus') && (
                     <SystemGraph
                         key={panel === 'focus' ? `focus-${active.slug}` : 'all'}
                         chrome={false}
@@ -401,6 +537,52 @@ const PanelBody: React.FC<{
         </div>
     );
 };
+
+const ListView: React.FC<{
+    works: WorkItem[];
+    activeIndex: number;
+    onSelect: (index: number, options?: { close?: boolean }) => void;
+}> = ({ works, activeIndex, onSelect }) => (
+    <ul className="h-full overflow-y-auto p-2">
+        {works.map((work, index) => {
+            const isActive = index === activeIndex;
+            return (
+                <li key={work.slug}>
+                    <button
+                        type="button"
+                        onClick={() => onSelect(index, { close: true })}
+                        aria-current={isActive}
+                        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground ${
+                            isActive ? 'bg-foreground/[0.06]' : 'hover:bg-foreground/[0.03]'
+                        }`}
+                    >
+                        <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg border border-foreground/10 bg-background">
+                            {work.logo ? (
+                                <img src={work.logo} alt="" aria-hidden className="h-full w-full object-cover" />
+                            ) : (
+                                <span className="font-sans text-sm font-black text-foreground/30">
+                                    {work.title.charAt(0)}
+                                </span>
+                            )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block truncate font-sans text-sm font-bold text-foreground">
+                                {work.title}
+                            </span>
+                            <span className="block truncate font-mono text-3xs uppercase tracking-wider text-muted-foreground">
+                                {work.duration}
+                            </span>
+                        </span>
+                        <span
+                            aria-hidden
+                            className={`h-1.5 w-1.5 shrink-0 rounded-full ${isActive ? 'bg-accent' : 'bg-transparent'}`}
+                        />
+                    </button>
+                </li>
+            );
+        })}
+    </ul>
+);
 
 const StackView: React.FC<{ active: WorkItem; stackUsage: Map<string, number> }> = ({
     active,
@@ -472,7 +654,7 @@ const WorkVisual: React.FC<{ work: WorkItem; index: number }> = ({ work, index }
                     alt=""
                     aria-hidden
                     loading={index === 0 ? 'eager' : 'lazy'}
-                    className="aspect-square w-[18%] min-w-16 max-w-32 object-contain drop-shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
+                    className="aspect-square w-[18%] min-w-16 max-w-32 rounded-[22%] object-contain drop-shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
                 />
             ) : (
                 <span className="font-sans text-5xl font-black tracking-tight text-foreground/20">
@@ -482,3 +664,32 @@ const WorkVisual: React.FC<{ work: WorkItem; index: number }> = ({ work, index }
         </div>
     );
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+function useElementWidth(ref: React.RefObject<HTMLElement | null>) {
+    const [width, setWidth] = useState(0);
+    useLayoutEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const observer = new ResizeObserver(([entry]) => {
+            if (entry) setWidth(entry.contentRect.width);
+        });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [ref]);
+    return width;
+}
+
+/** SSR では常に false。PC 判定は hydrate 後に確定する */
+function useMediaQuery(query: string) {
+    const [matches, setMatches] = useState(false);
+    useEffect(() => {
+        const list = window.matchMedia(query);
+        setMatches(list.matches);
+        const onChange = (e: MediaQueryListEvent) => setMatches(e.matches);
+        list.addEventListener('change', onChange);
+        return () => list.removeEventListener('change', onChange);
+    }, [query]);
+    return matches;
+}

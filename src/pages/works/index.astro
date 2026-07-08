@@ -55,8 +55,9 @@ for (const work of works) {
         <!-- 最上部でさらに上へスクロールすると Home へ戻るジェスチャー -->
         <ScrollUpTransition client:idle />
 
-        <main class="mx-auto max-w-5xl px-6 pb-28 md:px-8">
-            <header class="pt-24 pb-8 md:pt-28 md:pb-12">
+        <!-- ステージの縦幅はメディア枠 (16:9) が画面高に収まる範囲で決まる -->
+        <main class="mx-auto w-full max-w-[min(72rem,112vh)] px-6 pb-24 md:px-8">
+            <header class="pt-24 pb-8 md:pt-28 md:pb-10">
                 <nav
                     aria-label="Breadcrumb"
                     class="mb-4 flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
