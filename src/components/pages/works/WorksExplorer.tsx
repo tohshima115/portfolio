@@ -260,7 +260,31 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                 className="relative"
                 style={{ height: `${works.length * SCROLL_PER_WORK_VH}vh` }}
             >
-                <div className="sticky top-16 flex h-[calc(100svh-4rem)] items-center md:top-20 md:h-[calc(100svh-5rem)]">
+                {/* 見出しは sticky の外に置かない。外に置くと、その高さぶんスクロール
+                    するまでステージが画面に収まらない。ホームの WorksSection と同じく
+                    見出しごと 100svh の中に入れて、到達した瞬間から絵が完成している状態にする */}
+                <div className="sticky top-0 flex h-[100svh] flex-col justify-center gap-[2.5svh] pt-16 md:pt-20">
+                    <header>
+                        <nav
+                            aria-label="Breadcrumb"
+                            className="mb-3 flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
+                        >
+                            <a href="/" className="transition-colors hover:text-accent">
+                                Home
+                            </a>
+                            <span className="text-border">/</span>
+                            <span className="text-foreground">Works</span>
+                        </nav>
+                        <div className="flex items-baseline justify-between gap-6">
+                            <h1 className="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
+                                Works
+                            </h1>
+                            <span className="shrink-0 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground">
+                                {works.length} Entries
+                            </span>
+                        </div>
+                    </header>
+
                     <div
                         ref={stageRef}
                         className="relative w-full"
@@ -317,7 +341,7 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                             </div>
 
                             {/* ── 枠下のテキスト。grid で重ねて、切り替え時に高さが跳ねないようにする ── */}
-                            <div className="mt-5 grid md:mt-8">
+                            <div className="mt-4 grid md:mt-[3svh]">
                                 {works.map((work, index) => {
                                     const isActive = index === activeIndex;
                                     return (
