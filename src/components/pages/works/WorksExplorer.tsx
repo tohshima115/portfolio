@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MotionConfig, motion } from 'framer-motion';
 import { Crosshair, Layers, List, Network, X } from 'lucide-react';
 import { SystemGraph, type GraphLink, type GraphNode } from '@/components/common/SystemGraph';
@@ -11,10 +11,9 @@ import { SystemGraph, type GraphLink, type GraphNode } from '@/components/common
  * 決める (GSAP の pin ではなく position: sticky なので、パネルを開いている間だけ
  * 追従を止める、といった制御が素直に書ける)。
  *
- * 唯一の演出はビューを開く 4 つのボタン。押すとボタン自身が枠に育つ
- * (framer-motion の layoutId 共有レイアウト)。開き方だけ画面幅で変える:
- *   - PC (lg〜) : 枠の外・右側に育ち、メディアと説明文がその分だけ左に縮む
- *   - それ未満  : メディア枠の上にオーバーレイする
+ * 唯一の演出はビューを開く 4 つのボタン。押すとボタン自身がメディア枠いっぱいの
+ * パネルに育つ (framer-motion の layoutId 共有レイアウト)。枠の中で開閉が完結するので、
+ * 画面幅によらず同じ挙動になる。
  */
 
 export interface WorkItem {
@@ -49,10 +48,6 @@ const SPRING = { type: 'spring' as const, stiffness: 300, damping: 34, mass: 0.9
 // 反発 (charge) ではなく衝突半径で解く。charge を上げすぎるとノードが枠外に出る
 const GRAPH_FORCES = { charge: -170, linkDistance: 80, collide: 36 };
 
-/** 閉じているときの右側の占有幅 (ボタン 40px + 枠との間隔 16px) */
-const RAIL_W = 56;
-/** 開いているときのパネルと枠の間隔 */
-const GAP = 16;
 /** 1 作品あたりに割り当てるスクロール量 */
 const SCROLL_PER_WORK_VH = 85;
 
@@ -68,26 +63,15 @@ interface Props {
 
 export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
     const sectionRef = useRef<HTMLElement>(null);
-    const stageRef = useRef<HTMLDivElement>(null);
 
     const [activeIndex, setActiveIndex] = useState(0);
     const [panel, setPanel] = useState<PanelKey | null>(null);
     // グラフ内でタグをクリックしたときの一時ハイライト。パネルを閉じたら捨てる
     const [highlightId, setHighlightId] = useState<string | null>(null);
 
-    const stageWidth = useElementWidth(stageRef);
-    const isDesktop = useMediaQuery('(min-width: 1024px)');
     const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
     const active = works[activeIndex];
-
-    // ── PC のときだけ、メディア列とパネルの実寸を出す ──
-    const sized = isDesktop && stageWidth > 0;
-    const panelWidth = sized ? clamp(Math.round(stageWidth * 0.5), 340, 600) : 0;
-    const mediaWidth = sized ? stageWidth - (panel ? panelWidth + GAP : RAIL_W) : 0;
-    // パネルの高さは「開く前に見えていたメディア枠の高さ」。ボタンを押した枠が
-    // そのまま右に生えてくる、という読みになる (縮んだあとの枠に合わせると低すぎる)
-    const panelHeight = sized ? Math.round(((stageWidth - RAIL_W) * 9) / 16) : 0;
 
     // ── スクロール位置 ⇔ 現在の作品 ──
     const indexFromScroll = useCallback(() => {
@@ -264,10 +248,10 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                     するまでステージが画面に収まらない。ホームの WorksSection と同じく
                     見出しごと 100svh の中に入れて、到達した瞬間から絵が完成している状態にする */}
                 <div className="sticky top-0 flex h-[100svh] flex-col justify-center gap-[2.5svh] pt-16 md:pt-20">
-                    <header>
+                    <header className="text-center">
                         <nav
                             aria-label="Breadcrumb"
-                            className="mb-3 flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
+                            className="mb-3 flex items-center justify-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
                         >
                             <a href="/" className="transition-colors hover:text-accent">
                                 Home
@@ -275,27 +259,14 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                             <span className="text-border">/</span>
                             <span className="text-foreground">Works</span>
                         </nav>
-                        <div className="flex items-baseline justify-between gap-6">
-                            <h1 className="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
-                                Works
-                            </h1>
-                            <span className="shrink-0 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground">
-                                {works.length} Entries
-                            </span>
-                        </div>
+                        <h1 className="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
+                            Works
+                        </h1>
                     </header>
 
-                    <div
-                        ref={stageRef}
-                        className="relative w-full"
-                        style={{ minHeight: panel && sized ? panelHeight : undefined }}
-                    >
-                        {/* ── メディア枠と説明文。パネルが開くとこの列が左に縮む ── */}
-                        <motion.div
-                            className="relative"
-                            animate={{ width: sized ? mediaWidth : '100%' }}
-                            initial={false}
-                        >
+                    <div>
+                        {/* ステージ = メディア枠と同じ高さの箱。パネルはこの箱を基準に開く */}
+                        <div className="relative w-full">
                             <div className="relative w-full aspect-video overflow-hidden rounded-2xl md:rounded-3xl border border-foreground/15 bg-foreground/[0.02]">
                                 {works.map((work, index) => (
                                     <motion.div
@@ -340,93 +311,79 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                                 </div>
                             </div>
 
-                            {/* ── 枠下のテキスト。grid で重ねて、切り替え時に高さが跳ねないようにする ── */}
-                            <div className="mt-4 grid md:mt-[3svh]">
-                                {works.map((work, index) => {
-                                    const isActive = index === activeIndex;
-                                    return (
-                                        <motion.div
-                                            key={work.slug}
-                                            className="col-start-1 row-start-1 flex flex-col items-start gap-2 md:gap-3"
-                                            initial={false}
-                                            animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 8 }}
-                                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                                            style={{ pointerEvents: isActive ? 'auto' : 'none' }}
-                                            aria-hidden={!isActive}
+                            {/* ── シグネチャ: このボタンがそのままパネルの外枠に育つ ── */}
+                            {!panel && (
+                                <div className="absolute right-2.5 top-2.5 z-20 grid grid-cols-2 gap-1.5 md:right-4 md:top-4 md:grid-cols-1 md:gap-2">
+                                    {PANEL_ORDER.map((key) => (
+                                        <PanelButton key={key} panelKey={key} onOpen={openPanel} morph />
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* パネルはメディア枠の外に置く。狭い画面では枠より下まで伸ばして
+                                グラフに高さを確保する (aspect-video のままだと潰れて読めない) */}
+                            {panel && (
+                                <motion.div
+                                    key={panel}
+                                    layoutId={`works-panel-${panel}`}
+                                    style={{ borderRadius: 16 }}
+                                    className="absolute left-0 right-0 top-0 z-30 flex h-[min(72vh,26rem)] flex-col overflow-hidden border border-foreground/12 bg-background shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)] md:inset-3 md:h-auto md:bg-background/95 md:backdrop-blur-xl"
+                                >
+                                    <PanelBody
+                                        panel={panel}
+                                        works={works}
+                                        activeIndex={activeIndex}
+                                        onSelect={select}
+                                        onOpen={openPanel}
+                                        onClose={closePanel}
+                                        allNodes={nodes}
+                                        allLinks={links}
+                                        focusGraph={focusGraph}
+                                        graphActiveId={graphActiveId}
+                                        onNodeClick={handleNodeClick}
+                                        stackUsage={stackUsage}
+                                    />
+                                </motion.div>
+                            )}
+                        </div>
+
+                        {/* ── 枠下のテキスト。grid で重ねて、切り替え時に高さが跳ねないようにする ── */}
+                        <div className="mt-4 grid md:mt-[3svh]">
+                            {works.map((work, index) => {
+                                const isActive = index === activeIndex;
+                                return (
+                                    <motion.div
+                                        key={work.slug}
+                                        className="col-start-1 row-start-1 flex flex-col items-start gap-2 md:gap-3"
+                                        initial={false}
+                                        animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 8 }}
+                                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                        style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+                                        aria-hidden={!isActive}
+                                    >
+                                        <h2 className="font-sans font-black text-foreground text-[clamp(1.5rem,3.2vw,2.75rem)] leading-tight tracking-tight">
+                                            {work.title}
+                                        </h2>
+                                        <p className="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">
+                                            {work.duration}
+                                            <span className="mx-2 text-border">/</span>
+                                            {work.roles.join(' · ')}
+                                        </p>
+                                        <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-3">
+                                            {work.what}
+                                        </p>
+                                        <a
+                                            href={`/works/${work.slug}`}
+                                            tabIndex={isActive ? 0 : -1}
+                                            className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                                         >
-                                            <h2 className="font-sans font-black text-foreground text-[clamp(1.5rem,3.2vw,2.75rem)] leading-tight tracking-tight">
-                                                {work.title}
-                                            </h2>
-                                            <p className="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">
-                                                {work.duration}
-                                                <span className="mx-2 text-border">/</span>
-                                                {work.roles.join(' · ')}
-                                            </p>
-                                            <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-3">
-                                                {work.what}
-                                            </p>
-                                            <a
-                                                href={`/works/${work.slug}`}
-                                                tabIndex={isActive ? 0 : -1}
-                                                className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-                                            >
-                                                <span>詳しくはこちら</span>
-                                                <span aria-hidden>→</span>
-                                            </a>
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-                        </motion.div>
-
-                        {/* ── シグネチャ: このボタンがそのままパネルの外枠に育つ ──
-                            PC では枠の外・右側、それ未満ではメディア枠の右上に置く */}
-                        {!panel && (
-                            <div
-                                className={`absolute z-20 ${
-                                    isDesktop
-                                        ? 'right-0 top-0 flex flex-col gap-2'
-                                        : // 枠の中に納めるため、狭い画面では 2 列に折る
-                                          'right-2.5 top-2.5 grid grid-cols-2 gap-1.5'
-                                }`}
-                            >
-                                {PANEL_ORDER.map((key) => (
-                                    <PanelButton key={key} panelKey={key} onOpen={openPanel} morph />
-                                ))}
-                            </div>
-                        )}
-
-                        {panel && (
-                            <motion.div
-                                key={panel}
-                                layoutId={`works-panel-${panel}`}
-                                style={
-                                    sized
-                                        ? { borderRadius: 16, width: panelWidth, height: panelHeight }
-                                        : { borderRadius: 16 }
-                                }
-                                className={`absolute z-30 flex flex-col overflow-hidden border border-foreground/12 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)] ${
-                                    sized
-                                        ? 'right-0 top-0 bg-background/95 backdrop-blur-xl'
-                                        : 'left-0 right-0 top-0 h-[min(72vh,26rem)] bg-background'
-                                }`}
-                            >
-                                <PanelBody
-                                    panel={panel}
-                                    works={works}
-                                    activeIndex={activeIndex}
-                                    onSelect={select}
-                                    onOpen={openPanel}
-                                    onClose={closePanel}
-                                    allNodes={nodes}
-                                    allLinks={links}
-                                    focusGraph={focusGraph}
-                                    graphActiveId={graphActiveId}
-                                    onNodeClick={handleNodeClick}
-                                    stackUsage={stackUsage}
-                                />
-                            </motion.div>
-                        )}
+                                            <span>詳しくはこちら</span>
+                                            <span aria-hidden>→</span>
+                                        </a>
+                                    </motion.div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -567,7 +524,7 @@ const ListView: React.FC<{
     activeIndex: number;
     onSelect: (index: number, options?: { close?: boolean }) => void;
 }> = ({ works, activeIndex, onSelect }) => (
-    <ul className="h-full overflow-y-auto p-2">
+    <ul className="mx-auto h-full max-w-xl overflow-y-auto p-2 md:p-3">
         {works.map((work, index) => {
             const isActive = index === activeIndex;
             return (
@@ -691,21 +648,7 @@ const WorkVisual: React.FC<{ work: WorkItem; index: number }> = ({ work, index }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-function useElementWidth(ref: React.RefObject<HTMLElement | null>) {
-    const [width, setWidth] = useState(0);
-    useLayoutEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-        const observer = new ResizeObserver(([entry]) => {
-            if (entry) setWidth(entry.contentRect.width);
-        });
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, [ref]);
-    return width;
-}
-
-/** SSR では常に false。PC 判定は hydrate 後に確定する */
+/** SSR では常に false。hydrate 後に確定する */
 function useMediaQuery(query: string) {
     const [matches, setMatches] = useState(false);
     useEffect(() => {
