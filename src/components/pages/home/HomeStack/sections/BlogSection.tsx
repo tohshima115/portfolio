@@ -64,10 +64,13 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                 });
             };
 
-            // ─── 初期状態: 枠は画面下 70% ぶんはみ出た縮小状態、中身は全部非表示 ───
+            // ─── 初期状態: 枠は画面下 70% ぶんはみ出た縮小状態。
+            // 1本目のサムネイルだけは枠が小さいうちから既に見えている状態にし、
+            // 枠と一緒に拡大させる (テキストと2本目以降の画像は引き続き非表示)。
             gsap.set(mediaFrame, { yPercent: 70, scale: 0.55, transformOrigin: '50% 100%' });
             gsap.set(textFrame, { opacity: 0, y: 16 });
             gsap.set(mediaStages, { opacity: 0 });
+            if (mediaStages[0]) gsap.set(mediaStages[0], { opacity: 1 });
             gsap.set(textStages, { opacity: 0, y: 10 });
             gsap.set(dots, { height: 6, backgroundColor: 'rgba(255,255,255,0.4)' });
             textStages.forEach((el) => {
@@ -86,15 +89,12 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                 },
             });
 
-            // ─── entrance: 枠がせり上がりながら拡大 (往復させず、そのまま止まる) → テキスト → 1本目の中身 ───
+            // ─── entrance: 枠がせり上がりながら拡大 (往復させず、そのまま止まる) → テキスト ───
+            // 1本目のサムネイルは最初から見えているので、ここではフェードインさせない。
             tl.to(mediaFrame, { yPercent: 0, scale: 1, duration: 0.22, ease: 'power3.out' }, 0);
             tl.to(textFrame, { opacity: 1, y: 0, duration: 0.12, ease: 'power2.out' }, 0.1);
 
-            const firstMedia = mediaStages[0];
             const firstText = textStages[0];
-            if (firstMedia) {
-                tl.to(firstMedia, { opacity: 1, duration: 0.12, ease: 'power2.out' }, 0.12);
-            }
             if (firstText) {
                 tl.to(firstText, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.16);
             }
