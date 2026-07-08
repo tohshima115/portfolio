@@ -3,6 +3,7 @@ title: "「とりあえず出す」ができるようになったのは前職の
 description: "納得いくまで出せないタイプだった自分が、Web制作会社で「まず出す」を叩き込まれた。このサイトも全然納得いってない部分があるけど、出してます、という話。"
 pubDate: 2026-05-18
 tags: ["career", "portfolio", "vibe-coding"]
+thumbnail: ../../assets/blog/just-ship-it.png
 ---
 
 このサイト、正直まだ自分でも「ここダサいな」と思っている部分がちょこちょこあります。
