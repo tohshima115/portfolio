@@ -3,6 +3,7 @@ title: "OOUIの本を読んでいたのに、使いにくいUIに気づけなか
 description: "バイト先の基幹システム刷新で目撃した、「慣れ」がいかに認知を歪めるか。"
 pubDate: 2026-05-21
 tags: ["design", "career"]
+thumbnail: ../../assets/blog/ooui-blind-spot.png
 ---
 
 大手の物流会社の受付でバイトをしていた時期に、ちょうど基幹システムの刷新がありました。
