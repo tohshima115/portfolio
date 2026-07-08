@@ -3,6 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { ScanLines } from '../visuals/ScanLines';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { CONTACT, xUrl } from '@/consts';
 
 const RINGS = [1200, 900, 600, 360];
 
@@ -10,6 +11,7 @@ export const CTASection: React.FC = () => {
     const ref = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
     const inView = useInView(ref, { once: true, amount: 0.4 });
+    const x = xUrl();
 
     return (
         <section
@@ -126,25 +128,29 @@ export const CTASection: React.FC = () => {
                         className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-xs tracking-[0.2em] text-muted-foreground"
                     >
                         <a
-                            href="https://github.com/tohshima115"
+                            href={CONTACT.github}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-foreground transition-colors"
                         >
                             GITHUB ↗
                         </a>
+                        {x && (
+                            <>
+                                <span className="text-muted-foreground/30">/</span>
+                                <a
+                                    href={x}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-foreground transition-colors"
+                                >
+                                    X ↗
+                                </a>
+                            </>
+                        )}
                         <span className="text-muted-foreground/30">/</span>
                         <a
-                            href="https://x.com/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-foreground transition-colors"
-                        >
-                            X ↗
-                        </a>
-                        <span className="text-muted-foreground/30">/</span>
-                        <a
-                            href="mailto:tohshima115@gmail.com"
+                            href={`mailto:${CONTACT.email}`}
                             className="hover:text-foreground transition-colors"
                         >
                             EMAIL

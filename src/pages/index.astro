@@ -10,6 +10,7 @@ import SiteHeader from "../components/common/SiteHeader.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
 import { SmoothScroll } from "../components/common/SmoothScroll";
 import { ogImagePath } from "../utils/og-path";
+import { CONTACT, xUrl } from "../consts";
 
 const description =
 	"Product Engineer / Designer ポートフォリオサイト。Cloudflareスタックで個人プロダクトを出荷。";
@@ -54,9 +55,7 @@ const personSchema = {
 		"UI Design",
 		"Visual Identity",
 	],
-	// X のハンドルが決まったら "https://x.com/{handle}" を足す。
-	// プレースホルダの URL を載せると構造化データとして不正になるので置かない。
-	sameAs: ["https://github.com/tohshima115"],
+	sameAs: [CONTACT.github, xUrl()].filter(Boolean),
 };
 ---
 

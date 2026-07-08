@@ -19,6 +19,31 @@ export const CHAPTER_KINDS = [
 
 export type ChapterKind = typeof CHAPTER_KINDS[number]['value'];
 
+/**
+ * 連絡先。サイト内の SNS リンクはすべてここを参照する。
+ * `xHandle` が空のあいだは X のリンク自体を出さない (プレースホルダの URL を
+ * 踏ませたり、構造化データに載せたりしないため)。
+ */
+export const CONTACT = {
+    email: 'tohshima115@gmail.com',
+    github: 'https://github.com/tohshima115',
+    /** 例: 'tohshima115' を入れると X のリンクが各所に出る */
+    xHandle: '',
+} as const;
+
+export const xUrl = (): string | null =>
+    CONTACT.xHandle ? `https://x.com/${CONTACT.xHandle}` : null;
+
+/**
+ * 就職活動中だけ出すステータス。このサイトは就活が終わっても動かし続けるので、
+ * 就活文脈はここ 1 箇所に閉じ込める。決まったら `null` にすればサイトから消える。
+ */
+export const JOB_STATUS: readonly string[] | null = [
+    '2026年8月に現職を退職予定',
+    '9月以降に入社可能',
+    'カジュアル面談歓迎',
+];
+
 export const ROLES = [
     { label: 'UX Research', value: 'ux-research' },
     { label: 'UI Design', value: 'ui-design' },
