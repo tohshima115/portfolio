@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import type { ImageMetadata } from 'astro';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
 import { SectionFrame } from '../visuals/SectionFrame';
@@ -6,7 +7,7 @@ import { MediaVisual } from '../primitives/MediaFrame';
 
 // BlogSection = WorksSection と全く同じ構成トーンの独立 pin セクション。
 // "BLOG" は常に画面上部に固定表示される太字タイトルとして出しっぱなしにし、
-// メディア枠 (今はサムネイル未用意なので抽象プレースホルダー) とテキストは
+// メディア枠 (サムネイル未設定の記事は抽象プレースホルダーにフォールバック) とテキストは
 // 別コンポーネントとして分離、pin中は枠自体はそのまま中身だけがクロスフェードする。
 // 初回登場時だけ、枠が画面下から大きくせり上がりながら拡大する entrance を演出する。
 
@@ -15,6 +16,7 @@ export interface BlogPostItem {
     title: string;
     description: string;
     pubDate: string; // ISO string
+    thumbnail?: ImageMetadata;
 }
 
 interface Props {
@@ -183,7 +185,13 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                                             data-media-id={post.slug}
                                             className="absolute inset-0"
                                         >
-                                            <MediaVisual media={{ type: 'placeholder' }} />
+                                            <MediaVisual
+                                                media={
+                                                    post.thumbnail
+                                                        ? { type: 'image', src: post.thumbnail }
+                                                        : { type: 'placeholder' }
+                                                }
+                                            />
                                         </div>
                                     ))}
 

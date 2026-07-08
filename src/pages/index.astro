@@ -22,6 +22,7 @@ const latestBlogPosts = blogPostsCollection
 		title: b.data.title,
 		description: b.data.description,
 		pubDate: b.data.pubDate.toISOString(),
+		thumbnail: b.data.thumbnail,
 	}));
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
