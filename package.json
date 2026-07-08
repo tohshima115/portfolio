@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build && echo '_worker.js' > dist/.assetsignore",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "og:fonts": "node scripts/fetch-og-fonts.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.12",
@@ -34,12 +35,14 @@
     "three": "^0.184.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/d3-force": "^3.0.10",
     "@types/d3-selection": "^3.0.11",
     "@types/d3-zoom": "^3.0.8",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.184.0",
+    "satori": "^0.26.0",
     "wrangler": "^4.65.0"
   },
   "pnpm": {

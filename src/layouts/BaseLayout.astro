@@ -4,17 +4,19 @@ import { ClientRouter } from "astro:transitions";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
+import { ogImagePath } from "../utils/og-path";
 
 interface Props {
     title: string;
     description?: string;
+    /** 既定ではページごとに生成される OGP 画像 (/og/**.png) を使う */
     image?: string;
 }
 
 const {
     title,
     description = "Shogo Toyoshima Portfolio — Product Engineer / Designer. Cloudflare スタックで個人プロダクトを出荷している26歳。",
-    image = "/og-image.png",
+    image = ogImagePath(Astro.url.pathname),
 } = Astro.props;
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
@@ -44,10 +46,9 @@ const personSchema = {
         "UI Design",
         "Visual Identity",
     ],
-    sameAs: [
-        "https://github.com/tohshima115",
-        "https://x.com/",
-    ],
+    // X のハンドルが決まったら "https://x.com/{handle}" を足す。
+    // プレースホルダの URL を載せると構造化データとして不正になるので置かない。
+    sameAs: ["https://github.com/tohshima115"],
 };
 ---
 
@@ -64,10 +65,15 @@ const personSchema = {
 
         <!-- Open Graph -->
         <meta property="og:site_name" content="Shogo Toyoshima Portfolio" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={Astro.url.href} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:image" content={new URL(image, Astro.url)} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
         <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:image" content={new URL(image, Astro.url)} />
 
         <link
             rel="alternate"

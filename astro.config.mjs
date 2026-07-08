@@ -25,5 +25,11 @@ export default defineConfig({
     ],
     vite: {
         plugins: [tailwindcss()],
+        ssr: {
+            // OGP 画像生成 (src/pages/og/[...path].png.ts) はビルド時にだけ動く。
+            // resvg-js はネイティブアドオン (.node) を抱えていて rollup がバンドルできないため
+            // external にし、Node 側の require に任せる。satori も同様に素通しする。
+            external: ['@resvg/resvg-js', 'satori'],
+        },
     },
 });
