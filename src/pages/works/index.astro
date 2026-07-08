@@ -1,242 +1,88 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getHubs, projectSlugOf } from "@/utils/works";
-import { SystemGraph } from "@/components/common/SystemGraph";
+import { ROLES } from "@/consts";
+import { getProjectLogo } from "@/utils/projectLogos";
 import { ScrollUpTransition } from "@/components/pages/projects/ScrollUpTransition";
-import ProjectHeader from "@/components/pages/projects/ProjectList/ProjectHeader.astro";
-import ProjectCard from "@/components/pages/projects/ProjectList/ProjectCard.astro";
+import {
+    WorksExplorer,
+    type WorkItem,
+} from "@/components/pages/works/WorksExplorer";
 
 // ハブ (index.mdx) のみを一覧に出す。章は各プロジェクトページからたどる
-const sortedProjects = await getHubs();
+const hubs = await getHubs();
 
-// Generate Graph Data combining Projects and Tags
-const graphNodes: any[] = [];
-const graphLinks: any[] = [];
-const tagsSet = new Set<string>();
+const roleLabel = (value: string) =>
+    ROLES.find((r) => r.value === value)?.label ?? value;
 
-sortedProjects.forEach((project) => {
-    const slug = projectSlugOf(project);
-    const projectId = `projects-${slug}`;
-    graphNodes.push({
-        id: projectId,
-        name: project.data.title,
-        type: "projects",
-        url: `/works/${slug}`,
-    });
-
-    const stackTags = project.data.attributes?.stack || [];
-    stackTags.forEach((tech: string) => {
-        const tagId = `tag-${tech}`;
-        if (!tagsSet.has(tagId)) {
-            tagsSet.add(tagId);
-            graphNodes.push({
-                id: tagId,
-                name: tech,
-                type: "tag",
-                url: `/works?tag=${encodeURIComponent(tech)}`,
-            });
-        }
-        graphLinks.push({
-            source: projectId,
-            target: tagId,
-        });
-    });
+const works: WorkItem[] = hubs.map((hub) => {
+    const slug = projectSlugOf(hub);
+    return {
+        slug,
+        title: hub.data.title,
+        duration: hub.data.meta?.duration ?? "",
+        what: hub.data.summary?.what ?? "",
+        roles: (hub.data.attributes?.roles ?? []).map(roleLabel),
+        stack: hub.data.attributes?.stack ?? [],
+        logo: getProjectLogo(slug)?.mark,
+        thumbnail: hub.data.meta?.thumbnail?.src,
+    };
 });
+
+// 作品ノードと技術ノードの二部グラフ。遷移はステージ側のハンドラが受けるので
+// url は持たせない (グラフはページ内ビューとして完結させる)
+const nodes: any[] = [];
+const links: any[] = [];
+const seenTags = new Set<string>();
+
+for (const work of works) {
+    const projectId = `projects-${work.slug}`;
+    nodes.push({ id: projectId, name: work.title, type: "projects" });
+
+    for (const tech of work.stack) {
+        const tagId = `tag-${tech}`;
+        if (!seenTags.has(tagId)) {
+            seenTags.add(tagId);
+            nodes.push({ id: tagId, name: tech, type: "tag" });
+        }
+        links.push({ source: projectId, target: tagId });
+    }
+}
 ---
 
 <BaseLayout title="Works | Portfolio">
-    <div
-        class="min-h-screen bg-background text-foreground relative overflow-hidden"
-    >
-        <!-- Scroll Up Transition Indicator -->
+    <div class="min-h-screen bg-background text-foreground">
+        <!-- 最上部でさらに上へスクロールすると Home へ戻るジェスチャー -->
         <ScrollUpTransition client:idle />
 
-        <!-- Background Grid Pattern -->
-        <div
-            class="fixed inset-0 opacity-40 pointer-events-none z-0"
-            style="background-image: linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.08) 1px, transparent 1px); background-size: 40px 40px;"
-        >
-        </div>
-
-        <!-- Header Section -->
-        <ProjectHeader projectCount={sortedProjects.length} />
-
-        <!-- Main Content Area: Responsive Grid -->
-        <main
-            class="relative z-10 px-6 md:px-12 lg:px-20 pb-24 max-w-[1920px] mx-auto"
-        >
-            <div class="flex flex-col lg:flex-row gap-8 lg:gap-12">
-                <!-- Left Column: Projects List -->
-                <div class="flex-1">
-                    <!-- Active Filter Banner -->
-                    <div
-                        id="filter-banner"
-                        class="hidden mb-6 flex items-center gap-3 p-3 bg-accent/10 border border-accent/30 font-mono text-xs"
-                    >
-                        <span
-                            class="text-muted-foreground uppercase tracking-wider"
-                            >Filter:</span
-                        >
-                        <span
-                            id="filter-tag-name"
-                            class="text-accent font-bold uppercase"></span>
-                        <button
-                            id="filter-clear"
-                            class="ml-auto text-muted-foreground hover:text-accent transition-colors cursor-pointer flex items-center gap-1"
-                        >
-                            <svg
-                                class="w-3 h-3"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                ><path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M6 18L18 6M6 6l12 12"></path></svg
-                            >
-                            <span class="uppercase tracking-wider">Clear</span>
-                        </button>
-                    </div>
-                    <div
-                        id="projects-grid"
-                        class="grid grid-cols-1 md:grid-cols-2 gap-x-12 lg:gap-x-16"
-                    >
-                        {
-                            sortedProjects.map((project, index) => (
-                                <ProjectCard
-                                    project={project}
-                                    slug={projectSlugOf(project)}
-                                    index={index}
-                                />
-                            ))
-                        }
-                    </div>
-                    <!-- No results message -->
-                    <div
-                        id="no-results"
-                        class="hidden py-12 text-center font-mono text-sm text-muted-foreground uppercase tracking-wider"
-                    >
-                        No works found for this tag.
-                    </div>
-                </div>
-
-                <!-- Right Column: System Graph -->
-                <div
-                    class="w-full lg:w-[400px] xl:w-[500px] h-[500px] lg:h-[calc(100vh-200px)] lg:sticky lg:top-8 flex-shrink-0 animate-slide-from-right"
-                    style="animation-delay: 0.3s;"
+        <main class="mx-auto max-w-5xl px-6 pb-28 md:px-8">
+            <header class="pt-24 pb-8 md:pt-28 md:pb-12">
+                <nav
+                    aria-label="Breadcrumb"
+                    class="mb-4 flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
                 >
-                    <!-- Window Header Decor -->
-                    <div
-                        class="flex items-center justify-between border-t border-x border-border bg-muted/30 px-3 py-1.5"
+                    <a href="/" class="transition-colors hover:text-accent"
+                        >Home</a
                     >
-                        <span
-                            class="font-mono text-3xs uppercase tracking-[0.2em] text-muted-foreground"
-                            >Relation_Graph</span
-                        >
-                        <div class="flex gap-1.5">
-                            <div class="w-1.5 h-1.5 rounded-full bg-border">
-                            </div>
-                            <div class="w-1.5 h-1.5 rounded-full bg-border">
-                            </div>
-                            <div class="w-1.5 h-1.5 rounded-full bg-border">
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Client-only Graph -->
-                    <SystemGraph
-                        client:only="react"
-                        nodes={graphNodes}
-                        links={graphLinks}
-                        className="rounded-t-none"
-                    />
-                </div>
-            </div>
+                    <span class="text-border">/</span>
+                    <span class="text-foreground">Works</span>
+                </nav>
 
-            <!-- Footer / System Info -->
-            <div class="mt-20 flex items-center gap-4">
-                <div class="h-px flex-1 bg-border"></div>
-                <span
-                    class="font-mono text-2xs text-muted-foreground tracking-[0.3em] uppercase"
-                >
-                    End_of_Archive
-                </span>
-                <div class="h-px flex-1 bg-border"></div>
-            </div>
+                <div class="flex items-baseline justify-between gap-6">
+                    <h1
+                        class="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2.5rem,9vw,4.5rem)]"
+                    >
+                        Works
+                    </h1>
+                    <span
+                        class="shrink-0 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
+                    >
+                        {works.length} Entries
+                    </span>
+                </div>
+            </header>
+
+            <WorksExplorer client:load works={works} nodes={nodes} links={links} />
         </main>
     </div>
 </BaseLayout>
-
-<style>
-    .animate-slide-from-right {
-        animation: slideFromRight 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-    @keyframes slideFromRight {
-        0% {
-            transform: translateX(20px);
-            opacity: 0;
-        }
-        15% {
-            opacity: 1;
-        }
-        100% {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-</style>
-
-<script>
-    function applyFilter(tagName: string | null) {
-        const banner = document.getElementById("filter-banner");
-        const tagLabel = document.getElementById("filter-tag-name");
-        const noResults = document.getElementById("no-results");
-        const cards = document.querySelectorAll(
-            ".project-card",
-        ) as NodeListOf<HTMLElement>;
-
-        if (!tagName) {
-            // Show all
-            banner?.classList.add("hidden");
-            cards.forEach((card) => {
-                card.style.display = "";
-            });
-            noResults?.classList.add("hidden");
-            return;
-        }
-
-        // Show filter banner
-        banner?.classList.remove("hidden");
-        if (tagLabel) tagLabel.textContent = tagName;
-
-        let visibleCount = 0;
-        const lowerTag = tagName.toLowerCase();
-        cards.forEach((card) => {
-            const tags: string[] = JSON.parse(card.dataset.tags || "[]");
-            if (tags.includes(lowerTag)) {
-                card.style.display = "";
-                visibleCount++;
-            } else {
-                card.style.display = "none";
-            }
-        });
-
-        if (visibleCount === 0) {
-            noResults?.classList.remove("hidden");
-        } else {
-            noResults?.classList.add("hidden");
-        }
-    }
-
-    // Apply filter from URL on load
-    const params = new URLSearchParams(window.location.search);
-    const initialTag = params.get("tag");
-    if (initialTag) {
-        applyFilter(initialTag);
-    }
-
-    // Clear filter button - full navigation to reset the graph component too
-    document.getElementById("filter-clear")?.addEventListener("click", () => {
-        window.location.href = "/works";
-    });
-</script>
