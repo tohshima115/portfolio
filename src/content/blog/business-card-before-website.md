@@ -3,7 +3,7 @@ title: "ポートフォリオサイトが進捗80%で止まってたのに、名
 description: "サイト制作がずっと停滞していたので気分転換に名刺デザインを作ってみたら1日で完成。順番を間違えたなと後から気づいた話です。"
 pubDate: 2026-07-05
 tags: ["design", "career"]
-thumbnail: ../../assets/blog/business-card-before-website.png
+thumbnail: business-card-before-website
 ---
 
 このポートフォリオサイト、実は進捗80%くらいのところでずっと停滞してました。ある程度作ってはいるものの、そこから先が全然進まない、という状態が続いていて。

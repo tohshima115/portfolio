@@ -3,7 +3,7 @@ title: "Claude Codeにクソみたいなhookを書かせて、個人開発のバ
 description: "個人開発で巨大コミットが量産されがちな問題を、Claude Codeのstop hookで力技解決している話。"
 pubDate: 2026-05-08
 tags: ["vibe-coding", "dev", "ai"]
-thumbnail: ../../assets/blog/claude-code-hook-commit.png
+thumbnail: claude-code-hook-commit
 ---
 
 個人開発してると、気づいたらコミット1本にすべての変更が入っていることがあります。

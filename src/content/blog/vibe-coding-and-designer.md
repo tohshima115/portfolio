@@ -3,7 +3,7 @@ title: "「いい感じにして」で全然いい感じじゃないものが来
 description: "トップページをAIにお任せしたら、思ってたのと全然違うものが上がってきた。そこから自分とAIの関係と、デザイナーってなんだっけという話になった。"
 pubDate: 2026-04-14
 tags: ["design", "vibe-coding", "ai"]
-thumbnail: ../../assets/blog/vibe-coding-and-designer.png
+thumbnail: vibe-coding-and-designer
 ---
 
 「かっこいいトップページ作って」って頼んだら、確かにかっこいいものが出てきたんですよ。

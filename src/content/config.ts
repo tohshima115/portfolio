@@ -51,13 +51,16 @@ const projects = defineCollection({
 
 const blog = defineCollection({
     type: 'content',
-    schema: ({ image }) => z.object({
+    schema: z.object({
         title: z.string(),
         description: z.string(),
         pubDate: z.coerce.date(),
         updatedDate: z.coerce.date().optional(),
         tags: z.array(z.string()).optional(),
-        thumbnail: image().optional(),
+        // public/blog/<thumbnail>.{avif,webp,png} を指すbasename。
+        // Sharpが@astrojs/cloudflareのワーカーバンドルと相性が悪くastro:assets
+        // の image() が使えないため、事前生成した静的ファイルを直接参照する。
+        thumbnail: z.string().optional(),
     }),
 });
 

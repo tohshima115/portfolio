@@ -1,5 +1,4 @@
 import { useRef } from 'react';
-import type { ImageMetadata } from 'astro';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
 import { SectionFrame } from '../visuals/SectionFrame';
@@ -16,7 +15,7 @@ export interface BlogPostItem {
     title: string;
     description: string;
     pubDate: string; // ISO string
-    thumbnail?: ImageMetadata;
+    thumbnail?: string;
 }
 
 interface Props {

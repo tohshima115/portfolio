@@ -6,7 +6,10 @@ import { GridLayer } from '../visuals/GridLayer';
 // プレースホルダーにフォールバックする (実写が用意でき次第 videoSrc を足すだけでよい構造)。
 export type MediaFrameMedia =
     | { type: 'video'; poster: ImageMetadata; videoSrc?: string }
-    | { type: 'image'; src: ImageMetadata }
+    // src は public/blog/<name>.{avif,webp,png} のbasename。
+    // Sharpが@astrojs/cloudflareのワーカーバンドルと相性が悪くastro:assets
+    // 経由の画像処理が使えないため、事前生成した静的ファイルを<picture>で配信する。
+    | { type: 'image'; src: string }
     | { type: 'placeholder' };
 
 export interface MediaFrameProps {
@@ -81,12 +84,16 @@ export const MediaVisual: React.FC<{ media: MediaFrameMedia }> = ({ media }) => 
     }
     if (media.type === 'image') {
         return (
-            <img
-                src={media.src.src}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover"
-            />
+            <picture>
+                <source srcSet={`/blog/${media.src}.avif`} type="image/avif" />
+                <source srcSet={`/blog/${media.src}.webp`} type="image/webp" />
+                <img
+                    src={`/blog/${media.src}.png`}
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 w-full h-full object-cover"
+                />
+            </picture>
         );
     }
     return (

@@ -3,7 +3,7 @@ title: "「所詮チャットGPTとおしゃべりしてるだけやん」に何
 description: "vibe codingネイティブとしてコーディングとほぼ無縁に過ごしてきた自分が、競技プログラミングを始めた理由。コンプレックスと、Rustと、AtCoder。"
 pubDate: 2026-05-31
 tags: ["vibe-coding", "dev"]
-thumbnail: ../../assets/blog/competitive-programming-vibe-coding-native.png
+thumbnail: competitive-programming-vibe-coding-native
 ---
 
 心の中でこっそり「デザイナーじゃなくてツールが使える人やん」と訂正したくなる癖がある。
