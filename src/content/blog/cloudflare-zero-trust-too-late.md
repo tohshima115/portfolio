@@ -3,6 +3,7 @@ title: "認証を自前で実装した後にCloudflare Zero Trustの存在を知
 description: "社内ツールにGoogle OAuth認証をコードベースで実装し終えてから、Cloudflare Zero Trustを使えばよかったと気づいた話。"
 pubDate: 2026-05-12
 tags: ["dev", "vibe-coding"]
+thumbnail: ../../assets/blog/cloudflare-zero-trust-too-late.png
 ---
 
 社内ツールのログイン認証を実装してから、もっといい方法があったことを知りました。
