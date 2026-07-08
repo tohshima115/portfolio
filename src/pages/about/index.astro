@@ -1,22 +1,14 @@
 ---
 import { getEntry } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
-import { AboutDeepDive } from "@/components/pages/about/AboutDeepDive";
+import { AboutJourney } from "@/components/pages/about/AboutJourney";
 
 const entry = await getEntry("_pages", "about");
 if (!entry) {
     throw new Error("about entry not found in _pages collection");
 }
 const { Content } = await entry.render();
-const {
-    title,
-    description,
-    headline,
-    roleLabel,
-    consistencyTable,
-    statusText,
-    statusNote,
-} = entry.data;
+const { title, description, headline, roleLabel } = entry.data;
 const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
 ---
 
@@ -90,84 +82,8 @@ const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
                 </article>
             </section>
 
-            <!-- 一貫した行動パターン (cards) -->
-            {consistencyTable && consistencyTable.length > 0 && (
-                <section class="mb-16 -mt-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {consistencyTable.map((item) => (
-                            <div class="group relative border border-border bg-background/60 backdrop-blur-sm p-6 hover:border-accent/60 transition-colors duration-300">
-                                <div class="font-mono text-2xs text-accent tracking-widest uppercase mb-3">
-                                    {item.type}
-                                </div>
-                                <h3 class="text-lg font-bold mb-2 tracking-tight">
-                                    {item.title}
-                                </h3>
-                                <p class="text-sm text-muted-foreground leading-relaxed">
-                                    {item.body}
-                                </p>
-                                <div class="absolute top-2 right-3 font-mono text-2xs text-border">
-                                    ◇
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
-
-            <!-- Deep Dive (Modals) -->
-            <section class="mb-16">
-                <h2
-                    class="text-2xl md:text-3xl font-bold mb-3 border-l-4 border-accent pl-4"
-                >
-                    Deep Dive
-                </h2>
-                <p class="text-muted-foreground mb-8 pl-5 leading-relaxed text-sm md:text-base">
-                    詳細を読みたい方向け。クリックで展開、Esc または背景クリックで閉じます。
-                </p>
-                <AboutDeepDive client:load />
-            </section>
-
-            <!-- Status -->
-            {statusText && (
-                <section class="mb-12">
-                    <div
-                        class="border border-accent/40 bg-accent/5 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-                    >
-                        <div>
-                            <p
-                                class="font-mono text-2xs text-accent tracking-[0.3em] uppercase mb-2"
-                            >
-                                + STATUS
-                            </p>
-                            <p class="text-base md:text-lg font-bold">
-                                {statusText}
-                            </p>
-                            {statusNote && (
-                                <p class="text-sm text-muted-foreground mt-1">
-                                    {statusNote}
-                                </p>
-                            )}
-                        </div>
-                        <a
-                            href="/contact"
-                            class="group inline-flex items-center gap-2 px-6 py-3 bg-foreground text-background font-mono text-xs tracking-widest uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
-                        >
-                            Open Channel
-                            <svg
-                                class="w-3 h-3 group-hover:translate-x-1 transition-transform"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="2"
-                                ><path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg
-                            >
-                        </a>
-                    </div>
-                </section>
-            )}
+            <!-- 経歴タイムライン + 素顔 (インライン展開) -->
+            <AboutJourney client:load />
 
             <!-- Footer Decor -->
             <div class="mt-20 flex items-center gap-4">
