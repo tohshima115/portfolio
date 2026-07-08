@@ -3,7 +3,6 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getHubs, projectSlugOf } from "@/utils/works";
 import { ROLES } from "@/consts";
 import { getProjectLogo } from "@/utils/projectLogos";
-import { ScrollUpTransition } from "@/components/pages/projects/ScrollUpTransition";
 import {
     WorksExplorer,
     type WorkItem,
@@ -52,15 +51,14 @@ for (const work of works) {
 
 <BaseLayout title="Works | Portfolio">
     <div class="min-h-screen bg-background text-foreground">
-        <!-- 最上部でさらに上へスクロールすると Home へ戻るジェスチャー -->
-        <ScrollUpTransition client:idle />
-
         <!-- ステージの縦幅はメディア枠 (16:9) が画面高に収まる範囲で決まる -->
         <main class="mx-auto w-full max-w-[min(72rem,112vh)] px-6 pb-24 md:px-8">
-            <header class="pt-24 pb-8 md:pt-28 md:pb-10">
+            <!-- ステージは見出しの下から sticky で始まる。見出しぶんは最初の
+                 スクロールで消化されるので、その見切れが最小になる高さに抑える -->
+            <header class="pt-20 pb-4 md:pt-24 md:pb-6">
                 <nav
                     aria-label="Breadcrumb"
-                    class="mb-4 flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
+                    class="mb-3 flex items-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
                 >
                     <a href="/" class="transition-colors hover:text-accent"
                         >Home</a
@@ -71,7 +69,7 @@ for (const work of works) {
 
                 <div class="flex items-baseline justify-between gap-6">
                     <h1
-                        class="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2.5rem,9vw,4.5rem)]"
+                        class="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2.25rem,8vw,3.75rem)]"
                     >
                         Works
                     </h1>
