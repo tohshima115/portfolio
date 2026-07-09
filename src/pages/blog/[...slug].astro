@@ -1,5 +1,5 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { SystemGraph } from "@/components/common/SystemGraph";
 import ThumbnailPicture from "@/components/common/ThumbnailPicture.astro";
@@ -7,20 +7,20 @@ import ThumbnailPicture from "@/components/common/ThumbnailPicture.astro";
 export async function getStaticPaths() {
     const posts = await getCollection("blog");
     return posts.map((post) => ({
-        params: { slug: post.slug },
+        params: { slug: post.id },
         props: { post, posts },
     }));
 }
 
 const { post, posts } = Astro.props;
-const { Content, headings } = await post.render();
+const { Content, headings } = await render(post);
 
 // Generate relation graph based ONLY on tags associated with this blog post
 const graphNodes: any[] = [];
 const graphLinks: any[] = [];
 const nodeSet = new Set<string>();
 
-const currentPostId = `blog-${post.slug}`;
+const currentPostId = `blog-${post.id}`;
 nodeSet.add(currentPostId);
 graphNodes.push({
     id: currentPostId,
@@ -40,11 +40,11 @@ currentTags.forEach((tech: string) => {
 
     // 2. Add other logs with this tag
     posts.forEach((p: any) => {
-        if (p.slug === post.slug) return;
+        if (p.id === post.id) return;
 
         const pTags = p.data.tags || [];
         if (pTags.includes(tech)) {
-            const pId = `blog-${p.slug}`;
+            const pId = `blog-${p.id}`;
 
             if (!nodeSet.has(pId)) {
                 nodeSet.add(pId);
@@ -52,7 +52,7 @@ currentTags.forEach((tech: string) => {
                     id: pId,
                     name: p.data.title,
                     type: "blog",
-                    url: `/blog/${p.slug}`,
+                    url: `/blog/${p.id}`,
                 });
             }
 
@@ -215,7 +215,7 @@ currentTags.forEach((tech: string) => {
                             client:only="react"
                             nodes={graphNodes}
                             links={graphLinks}
-                            activeNodeId={`blog-${post.slug}`}
+                            activeNodeId={`blog-${post.id}`}
                             className="rounded-t-none h-full border border-border"
                         />
                     ) : (

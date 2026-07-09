@@ -10,16 +10,14 @@
     "og:fonts": "node scripts/fetch-og-fonts.mjs"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^12.6.12",
-    "@astrojs/mdx": "^4.3.13",
-    "@astrojs/react": "^4.4.2",
-    "@astrojs/rss": "^4.0.15",
-    "@keystatic/astro": "^5.0.6",
-    "@keystatic/core": "^0.5.48",
+    "@astrojs/cloudflare": "^14.1.2",
+    "@astrojs/mdx": "^7.0.2",
+    "@astrojs/react": "^6.0.1",
+    "@astrojs/rss": "^4.0.19",
     "@react-three/fiber": "^9.6.0",
     "@tailwindcss/typography": "^0.5.19",
-    "@tailwindcss/vite": "^4.1.18",
-    "astro": "^5.17.1",
+    "@tailwindcss/vite": "^4.3.2",
+    "astro": "^7.0.7",
     "clsx": "^2.1.1",
     "d3-force": "^3.0.0",
     "d3-selection": "^3.0.0",
@@ -43,7 +41,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.184.0",
     "satori": "^0.26.0",
-    "wrangler": "^4.65.0"
+    "wrangler": "^4.107.1"
   },
   "pnpm": {
     "ignoredBuiltDependencies": [

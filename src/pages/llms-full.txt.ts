@@ -37,7 +37,7 @@ export const GET: APIRoute = async () => {
     );
 
     for (const entry of pages) {
-        const path = entry.slug === 'home' ? '/' : `/${entry.slug}`;
+        const path = entry.id === 'home' ? '/' : `/${entry.id}`;
         sections.push(pageMarkdown(entry, path));
     }
 

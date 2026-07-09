@@ -8,6 +8,7 @@ import { SystemGraph } from "@/components/common/SystemGraph";
 import { getProjectLogo } from "@/utils/projectLogos";
 import { getProjectTheme } from "@/utils/projectTheme";
 import { getChapters, getHubs, projectSlugOf, kindMeta } from "@/utils/works";
+import { render } from "astro:content";
 import { ROLES } from "@/consts";
 
 export async function getStaticPaths() {
@@ -20,7 +21,7 @@ export async function getStaticPaths() {
 
 const { entry, hubs } = Astro.props;
 const slug = projectSlugOf(entry);
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 const theme = getProjectTheme(slug);
 const logo = getProjectLogo(slug);

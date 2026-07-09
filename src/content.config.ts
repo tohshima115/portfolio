@@ -1,8 +1,16 @@
 import { defineCollection, z } from 'astro:content';
-import { CHAPTER_KINDS, ROLES } from '../consts';
+import { glob } from 'astro/loaders';
+import { CHAPTER_KINDS, ROLES } from './consts';
 
 const roleValues = ROLES.map((r) => r.value) as [string, ...string[]];
 const chapterKindValues = CHAPTER_KINDS.map((k) => k.value) as [string, ...string[]];
+
+// Content Layer (glob) では entry.id がファイルパス由来になる。
+// 旧 Content Collections の entry.slug 挙動を維持するため generateId を明示する。
+//   - 拡張子を落とす
+//   - ハブ (projects/<name>/index.mdx) は末尾 /index を落として "<name>" にする
+const stripExt = (entry: string) => entry.replace(/\.mdx?$/, '');
+const dropIndex = (entry: string) => stripExt(entry).replace(/\/index$/, '');
 
 /**
  * projects コレクションは「ディレクトリ = プロジェクト、ファイル = 章」の
@@ -13,6 +21,7 @@ const chapterKindValues = CHAPTER_KINDS.map((k) => k.value) as [string, ...strin
  * それぞれ optional にして、utils/works.ts の型ガードで振り分ける。
  */
 const projects = defineCollection({
+    loader: glob({ pattern: '**/*.mdx', base: './src/content/projects', generateId: ({ entry }) => dropIndex(entry) }),
     schema: ({ image }) => z.object({
         title: z.string(),
         // ---- ハブ (index.mdx) 用 ----
@@ -22,7 +31,7 @@ const projects = defineCollection({
             date: z.string().or(z.date()),
             updatedDate: z.coerce.date().optional(),
             duration: z.string(),
-            link: z.string().url().optional(),
+            link: z.url().optional(),
         }).optional(),
         attributes: z.object({
             roles: z.array(z.enum(roleValues)),
@@ -50,7 +59,7 @@ const projects = defineCollection({
 });
 
 const blog = defineCollection({
-    type: 'content',
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog', generateId: ({ entry }) => stripExt(entry) }),
     schema: z.object({
         title: z.string(),
         description: z.string(),
@@ -65,7 +74,7 @@ const blog = defineCollection({
 });
 
 const _pages = defineCollection({
-    type: 'content',
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/_pages', generateId: ({ entry }) => stripExt(entry) }),
     schema: z.object({
         title: z.string(),
         description: z.string().optional(),

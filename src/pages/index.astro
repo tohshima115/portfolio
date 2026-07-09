@@ -24,7 +24,7 @@ const latestBlogPosts = blogPostsCollection
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
 	.slice(0, 3)
 	.map((b) => ({
-		slug: b.slug,
+		slug: b.id,
 		title: b.data.title,
 		description: b.data.description,
 		pubDate: b.data.pubDate.toISOString(),

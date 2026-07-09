@@ -28,9 +28,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
 
     const chapters = await Promise.all(
         (await getHubs()).map(async (hub) => {
-            const list = await getChapters(hub.slug);
+            const list = await getChapters(hub.id);
             return list.map((chapter) => ({
-                params: { path: `works/${hub.slug}/${chapter.slug.split('/').slice(1).join('/')}` },
+                params: { path: `works/${hub.id}/${chapter.id.split('/').slice(1).join('/')}` },
                 props: {
                     label: `Works / ${hub.data.title}`,
                     title: chapter.data.title,
@@ -42,11 +42,11 @@ export const getStaticPaths: GetStaticPaths = async () => {
     return [
         ...STATIC_PAGES.map(({ path, ...props }) => ({ params: { path }, props })),
         ...posts.map((post) => ({
-            params: { path: `blog/${post.slug}` },
+            params: { path: `blog/${post.id}` },
             props: { label: 'Blog', title: post.data.title } satisfies OgContent,
         })),
         ...(await getHubs()).map((hub) => ({
-            params: { path: `works/${hub.slug}` },
+            params: { path: `works/${hub.id}` },
             props: { label: 'Works', title: hub.data.title } satisfies OgContent,
         })),
         ...chapters.flat(),

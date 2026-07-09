@@ -10,6 +10,7 @@ import {
     kindMeta,
     projectSlugOf,
 } from "@/utils/works";
+import { render } from "astro:content";
 
 export async function getStaticPaths() {
     const hubs = await getHubs();
@@ -29,12 +30,12 @@ export async function getStaticPaths() {
 
 const { entry, hub, chapters } = Astro.props;
 const projectSlug = projectSlugOf(entry);
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 
 const ch = entry.data.chapter!;
 const kind = kindMeta(ch.kind);
 const logo = getProjectLogo(projectSlug);
-const others = chapters.filter((c) => c.slug !== entry.slug);
+const others = chapters.filter((c) => c.id !== entry.id);
 
 const description = `${ch.question} — ${ch.answer}`;
 ---

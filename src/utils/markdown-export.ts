@@ -99,13 +99,13 @@ export function blogMarkdown(entry: CollectionEntry<'blog'>): string {
         pubDate: entry.data.pubDate,
         updatedDate: entry.data.updatedDate,
         tags: entry.data.tags,
-        canonical_url: absoluteUrl(`/blog/${entry.slug}`),
+        canonical_url: absoluteUrl(`/blog/${entry.id}`),
     });
     return `${fm}\n\n# ${entry.data.title}\n\n${entry.body ?? ''}`;
 }
 
 export function pageMarkdown(entry: CollectionEntry<'_pages'>, canonicalPath: string): string {
-    if (entry.slug === 'about') {
+    if (entry.id === 'about') {
         return aboutMarkdown(entry, canonicalPath);
     }
     const fm = formatFrontmatter({

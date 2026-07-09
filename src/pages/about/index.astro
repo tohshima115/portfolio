@@ -1,5 +1,5 @@
 ---
-import { getEntry } from "astro:content";
+import { getEntry, render } from "astro:content";
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { AboutJourney } from "@/components/pages/about/AboutJourney";
 
@@ -7,7 +7,7 @@ const entry = await getEntry("_pages", "about");
 if (!entry) {
     throw new Error("about entry not found in _pages collection");
 }
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 const { title, description, headline, roleLabel } = entry.data;
 const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
 ---

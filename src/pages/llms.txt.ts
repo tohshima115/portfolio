@@ -38,7 +38,7 @@ export const GET: APIRoute = async () => {
         lines.push('## Blog');
         lines.push('');
         for (const entry of posts) {
-            const url = absoluteUrl(`/blog/${entry.slug}.md`);
+            const url = absoluteUrl(`/blog/${entry.id}.md`);
             lines.push(`- [${entry.data.title}](${url}): ${entry.data.description}`);
         }
         lines.push('');
@@ -47,7 +47,7 @@ export const GET: APIRoute = async () => {
     lines.push('## Pages');
     lines.push('');
     for (const entry of pages) {
-        const path = entry.slug === 'home' ? '/index.md' : `/${entry.slug}.md`;
+        const path = entry.id === 'home' ? '/index.md' : `/${entry.id}.md`;
         const url = absoluteUrl(path);
         const desc = entry.data.description ?? entry.data.title;
         lines.push(`- [${entry.data.title}](${url}): ${desc}`);

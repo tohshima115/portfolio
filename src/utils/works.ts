@@ -3,26 +3,26 @@ import { CHAPTER_KINDS, type ChapterKind } from '@/consts';
 
 /**
  * projects コレクション (ハブ&スポーク構造) を扱うヘルパー。
- *   - ハブ: [project]/index.mdx → entry.slug = "aichatclip" (Astro が /index を落とす)
- *   - 章 : [project]/logo.mdx  → entry.slug = "aichatclip/logo"
+ *   - ハブ: [project]/index.mdx → entry.id = "aichatclip" (content.config.ts の generateId が /index を落とす)
+ *   - 章 : [project]/logo.mdx  → entry.id = "aichatclip/logo"
  * URL 上は /works/aichatclip と /works/aichatclip/logo に対応する。
  */
 
 export type ProjectEntry = CollectionEntry<'projects'>;
 
 export const isHub = (entry: ProjectEntry): boolean =>
-    !entry.slug.includes('/');
+    !entry.id.includes('/');
 
 export const isChapter = (entry: ProjectEntry): boolean =>
     !isHub(entry) && entry.data.chapter !== undefined;
 
 /** entry が属するプロジェクトの slug ("aichatclip" 等) */
 export const projectSlugOf = (entry: ProjectEntry): string =>
-    entry.slug.split('/')[0];
+    entry.id.split('/')[0];
 
 /** 章の slug ("logo" 等)。ハブに対して呼ぶと "index" が返るので注意 */
 export const chapterSlugOf = (entry: ProjectEntry): string =>
-    entry.slug.split('/').slice(1).join('/');
+    entry.id.split('/').slice(1).join('/');
 
 /** 全ハブを日付降順で返す */
 export async function getHubs(): Promise<ProjectEntry[]> {
