@@ -23,12 +23,6 @@ const LOGOS: Record<string, ProjectLogo> = {
     foclock: {
         mark: '/Foclock/logoMark.png',
     },
-    hobby: {
-        mark: '/Hobby/logoMark.svg',
-    },
-    'design-works': {
-        mark: '/DesignWorks/logoMark.svg',
-    },
 };
 
 export const getProjectLogo = (slug: string): ProjectLogo | undefined =>

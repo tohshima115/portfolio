@@ -5,11 +5,11 @@
  * oklch の L/C ラダーに一般化して色相だけ差し替える。
  *
  * hue はロゴの実色から採っている:
- *   swept        #00a0c1 (シアン)
- *   hobby        #3730a3 (インディゴ)
- *   design-works #9f1239 (ローズ)
- *   foclock      サイトブランドと同じ緑
- *   aichatclip   ロゴが墨色なので低彩度のグラファイト
+ *   swept                  #00a0c1 (シアン)
+ *   koto-walking-gomihiroi #3730a3 (インディゴ)
+ *   kodaira-tsunagari-fes  #9f1239 (ローズ)
+ *   foclock                サイトブランドと同じ緑
+ *   aichatclip             ロゴが墨色なので低彩度のグラファイト
  */
 
 export interface ProjectTheme {
@@ -22,8 +22,8 @@ const THEMES: Record<string, ProjectTheme> = {
     aichatclip: { hue: 100, chroma: 0.12 },
     foclock: { hue: 140, chroma: 1 },
     swept: { hue: 215, chroma: 0.9 },
-    hobby: { hue: 275, chroma: 0.85 },
-    'design-works': { hue: 15, chroma: 0.85 },
+    'koto-walking-gomihiroi': { hue: 275, chroma: 0.85 },
+    'kodaira-tsunagari-fes': { hue: 15, chroma: 0.85 },
 };
 
 const DEFAULT_THEME: ProjectTheme = { hue: 135, chroma: 1 };
