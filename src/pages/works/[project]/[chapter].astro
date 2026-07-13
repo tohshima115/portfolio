@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import ChapterCard from "@/components/pages/works/ChapterCard.astro";
+import Lightbox from "@/components/pages/works/Lightbox.astro";
 import { WORK_PROSE_CLASS } from "@/components/pages/works/prose";
 import { getProjectLogo } from "@/utils/projectLogos";
 import {
@@ -91,9 +92,10 @@ const description = `${ch.question} — ${ch.answer}`;
         )}
 
         <!-- ══ 本文 ══ -->
-        <div class={`${WORK_PROSE_CLASS} max-w-3xl mt-12 md:mt-16`}>
+        <div class={`${WORK_PROSE_CLASS} max-w-3xl mt-12 md:mt-16`} data-zoom-scope>
             <Content />
         </div>
+        <Lightbox />
 
         <!-- ══ 同プロジェクトの他の意思決定 ══ -->
         {others.length > 0 && (

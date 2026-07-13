@@ -5,10 +5,10 @@ chapter:
   order: 1
   question: 仮説検証を、どこまで自分たちの手でやり切ったか
   answer: ペルソナ・エンパシーマップ・カスタマージャーニー・リーンキャンバスを Figma で自作し、通算100人超のインタビューにかけた。旅行テーマは撤退したが、その判断に迷いはなかった。
-  hero:
-    src: /works/swept/lean-cover.png
-    alt: リーン顧客開発で使ったフレームワーク群
+  hero: ../../../assets/projects/swept/lean-cover.png
 ---
+
+import ImageGrid from '@/components/pages/works/ImageGrid.astro';
 
 ## 教科書ではなく、手を動かして
 
@@ -25,9 +25,11 @@ chapter:
 
 まず空のテンプレートを用意しておき、インタビューで得た情報を流し込むと 1 枚のペルソナになる。下は左が自作テンプレート、右が流し込んだ例です(登場するのは実在の人物ではなく、架空の想定ユーザー)。
 
+<ImageGrid>
 ![Figma で自作したペルソナのテンプレート](/works/swept/persona-template.png)
 
 ![テンプレートに情報を流し込んだペルソナの例](/works/swept/persona-example.png)
+</ImageGrid>
 
 運用としては、ユーザーインタビューの後にチーム内で認識を揃えるため、対象者ごとにペルソナとエンパシーマップを起こしていました。
 
