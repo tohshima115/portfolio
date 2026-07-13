@@ -25,6 +25,7 @@ const works: WorkItem[] = hubs.map((hub) => {
         stack: hub.data.attributes?.stack ?? [],
         logo: getProjectLogo(slug)?.mark,
         thumbnail: hub.data.meta?.thumbnail?.src,
+        thumbnailVideo: hub.data.meta?.thumbnailVideo,
     };
 });
 

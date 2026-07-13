@@ -29,6 +29,8 @@ export interface WorkItem {
     logo?: string;
     /** ヒーロー画像。無い場合はロゴマークのフィールドにフォールバック */
     thumbnail?: string;
+    /** public/ 配下の動画パス。あればサムネイル枠でループ再生し、thumbnail は poster に使う */
+    thumbnailVideo?: string;
 }
 
 type PanelKey = 'list' | 'all' | 'focus' | 'stack';
@@ -609,6 +611,22 @@ const StackView: React.FC<{ active: WorkItem; stackUsage: Map<string, number> }>
  * "Preview" のプレースホルダーより、そのプロジェクトの顔が出ている方が一覧として速い。
  */
 const WorkVisual: React.FC<{ work: WorkItem; index: number }> = ({ work, index }) => {
+    if (work.thumbnailVideo) {
+        return (
+            <video
+                src={work.thumbnailVideo}
+                poster={work.thumbnail}
+                aria-hidden
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload={index === 0 ? 'auto' : 'metadata'}
+                className="absolute inset-0 h-full w-full object-cover"
+            />
+        );
+    }
+
     if (work.thumbnail) {
         return (
             <img

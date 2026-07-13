@@ -27,6 +27,9 @@ const projects = defineCollection({
         // ---- ハブ (index.mdx) 用 ----
         meta: z.object({
             thumbnail: image().optional(),
+            // public/ 配下の動画パス (例: /works/swept-hero.webm)。
+            // 指定するとサムネイル枠でループ再生し、thumbnail は poster に使う
+            thumbnailVideo: z.string().optional(),
             icon: image().optional(),
             date: z.string().or(z.date()),
             updatedDate: z.coerce.date().optional(),
