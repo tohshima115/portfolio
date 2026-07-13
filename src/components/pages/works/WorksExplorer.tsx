@@ -279,7 +279,11 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                                         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                                         aria-hidden={index !== activeIndex}
                                     >
-                                        <WorkVisual work={work} index={index} />
+                                        <WorkVisual
+                                            work={work}
+                                            index={index}
+                                            isActive={index === activeIndex}
+                                        />
                                     </motion.div>
                                 ))}
 
@@ -610,18 +614,38 @@ const StackView: React.FC<{ active: WorkItem; stackUsage: Map<string, number> }>
  * ヒーロー画像があればそれを、無ければブランドのロゴマークを敷いたフィールドを出す。
  * "Preview" のプレースホルダーより、そのプロジェクトの顔が出ている方が一覧として速い。
  */
-const WorkVisual: React.FC<{ work: WorkItem; index: number }> = ({ work, index }) => {
+const WorkVisual: React.FC<{ work: WorkItem; index: number; isActive: boolean }> = ({
+    work,
+    index,
+    isActive,
+}) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    // autoPlay 任せにせず、アクティブになった動画だけを明示的に再生する。
+    // ブラウザの自動再生ポリシーは muted プロパティが確実に立っていることを要求するため、
+    // play() の直前に muted を再設定する。非アクティブは止めて負荷と帯域を抑える。
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+        video.muted = true;
+        if (isActive) {
+            void video.play().catch(() => {});
+        } else {
+            video.pause();
+        }
+    }, [isActive]);
+
     if (work.thumbnailVideo) {
         return (
             <video
+                ref={videoRef}
                 src={work.thumbnailVideo}
                 poster={work.thumbnail}
                 aria-hidden
-                autoPlay
                 loop
                 muted
                 playsInline
-                preload={index === 0 ? 'auto' : 'metadata'}
+                preload={isActive ? 'auto' : 'none'}
                 className="absolute inset-0 h-full w-full object-cover"
             />
         );

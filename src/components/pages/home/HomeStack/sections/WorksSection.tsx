@@ -114,6 +114,21 @@ export const WorksSection: React.FC = () => {
             // 最終カードを見終わってから pin解除までの hold
             tl.to({}, { duration: 0.15 }, cursor);
 
+            // アクティブなカードの動画だけを再生する。autoPlay 任せだと全カードの動画が
+            // 同時に読み込まれて競合するため、見えているものだけ play / 他は pause にする。
+            const playOnlyActiveVideo = (idx: number) => {
+                mediaStages.forEach((stage, k) => {
+                    const video = stage.querySelector('video');
+                    if (!video) return;
+                    if (k === idx) {
+                        video.muted = true;
+                        void video.play().catch(() => {});
+                    } else {
+                        video.pause();
+                    }
+                });
+            };
+
             let activeIndex = -1;
             const applyActiveIndex = () => {
                 const t = tl.time();
@@ -127,6 +142,7 @@ export const WorksSection: React.FC = () => {
                     el.style.pointerEvents = k === idx ? 'auto' : 'none';
                 });
                 setActiveDot(PROJECTS[idx].id);
+                playOnlyActiveVideo(idx);
             };
             tl.eventCallback('onUpdate', applyActiveIndex);
             applyActiveIndex();

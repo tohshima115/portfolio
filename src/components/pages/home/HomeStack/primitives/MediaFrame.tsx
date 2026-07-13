@@ -71,14 +71,16 @@ export const MediaVisual: React.FC<{ media: MediaFrameMedia }> = ({ media }) => 
     if (media.type === 'video') {
         return (
             // eslint-disable-next-line jsx-a11y/media-has-caption
+            // 再生は WorksSection 側が「アクティブなカードだけ play」で制御する。
+            // ここで autoPlay しないのは、全カードの動画が同時に読み込まれるのを避けるため。
             <video
                 className="absolute inset-0 w-full h-full object-cover"
                 poster={media.poster?.src}
                 src={media.videoSrc}
-                autoPlay={!!media.videoSrc}
                 muted
                 loop
                 playsInline
+                preload="none"
             />
         );
     }
