@@ -5,7 +5,7 @@ import { GridLayer } from '../visuals/GridLayer';
 // video が無いプロジェクト/記事は poster 静止画、それも無ければ抽象パターンの
 // プレースホルダーにフォールバックする (実写が用意でき次第 videoSrc を足すだけでよい構造)。
 export type MediaFrameMedia =
-    | { type: 'video'; poster: ImageMetadata; videoSrc?: string }
+    | { type: 'video'; poster?: ImageMetadata; videoSrc?: string }
     // src は public/blog/<name>.{avif,webp,png} のbasename。
     // Sharpが@astrojs/cloudflareのワーカーバンドルと相性が悪くastro:assets
     // 経由の画像処理が使えないため、事前生成した静的ファイルを<picture>で配信する。
@@ -73,7 +73,7 @@ export const MediaVisual: React.FC<{ media: MediaFrameMedia }> = ({ media }) => 
             // eslint-disable-next-line jsx-a11y/media-has-caption
             <video
                 className="absolute inset-0 w-full h-full object-cover"
-                poster={media.poster.src}
+                poster={media.poster?.src}
                 src={media.videoSrc}
                 autoPlay={!!media.videoSrc}
                 muted

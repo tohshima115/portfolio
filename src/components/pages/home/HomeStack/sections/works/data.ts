@@ -11,7 +11,7 @@ export interface Project {
     description: string;
     /** 実演動画/静止画のposter。無ければ抽象プレースホルダー表示にフォールバック。 */
     poster?: ImageMetadata;
-    /** 将来 mp4 を差し込む用。今は未用意なので常に undefined。 */
+    /** public/ 配下のループ再生動画パス (例: /works/swept-hero.webm)。 */
     videoSrc?: string;
 }
 
@@ -22,6 +22,7 @@ export const PROJECTS: Project[] = [
         name: 'AIChatClip',
         description:
             'AI チャットの回答って、放っておくと履歴の海に沈んでいく。それが気になって、ワンクリックで Obsidian に送り込む拡張機能を作った。Cloudflare で一人で動かしている。',
+        videoSrc: '/AIChatClip/aichatclip.webm',
     },
     {
         id: '02',
@@ -30,6 +31,7 @@ export const PROJECTS: Project[] = [
         description:
             '3人チームの社会起業プロジェクトに約2年関わった。デザイナーとして入って、途中から実装も担うようになった。方向性の違いで 2026 年初頭に離脱。',
         poster: sweptHero,
+        videoSrc: '/works/swept-hero.webm',
     },
     {
         id: '03',

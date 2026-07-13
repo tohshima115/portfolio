@@ -172,7 +172,7 @@ export const WorksSection: React.FC = () => {
                                         >
                                             <MediaVisual
                                                 media={
-                                                    p.poster
+                                                    p.poster || p.videoSrc
                                                         ? { type: 'video', poster: p.poster, videoSrc: p.videoSrc }
                                                         : { type: 'placeholder' }
                                                 }
