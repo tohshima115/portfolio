@@ -35,10 +35,11 @@ export const PROJECTS: Project[] = [
     },
     {
         id: '03',
-        slug: 'foclock',
-        name: 'Foclock',
+        slug: 'kodaira-tsunagari-fes',
+        name: 'こだいらつながりフェス',
         description:
-            'SNSや動画サイトに溶かされる時間を取り戻すためのサイトブロッカー拡張機能。コア機能は無料、$3 の買い切りで高度機能が使える設計。拡張機能 + Web + 管理画面 + API を全部 Cloudflare で組んでいる、開発中のプロジェクト。',
+            '小平市内60〜70団体が同日分散開催するイベントの、パンフレット裏面マップを制作。会場・時刻・団体情報を1枚に集約し、幅広い年齢層が説明なしで読める情報設計にした。',
+        videoSrc: '/kodaira-tsunagari-fes/kodaira-tsunagari-fes.webm',
     },
 ];
 

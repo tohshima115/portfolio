@@ -24,6 +24,8 @@ const projects = defineCollection({
     loader: glob({ pattern: '**/*.mdx', base: './src/content/projects', generateId: ({ entry }) => dropIndex(entry) }),
     schema: ({ image }) => z.object({
         title: z.string(),
+        // ハブ全体を一覧・ルーティングから外す (時期尚早な案件など)
+        draft: z.boolean().default(false),
         // ---- ハブ (index.mdx) 用 ----
         meta: z.object({
             thumbnail: image().optional(),

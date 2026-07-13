@@ -28,7 +28,7 @@ export const chapterSlugOf = (entry: ProjectEntry): string =>
 export async function getHubs(): Promise<ProjectEntry[]> {
     const entries = await getCollection('projects');
     return entries
-        .filter(isHub)
+        .filter((e) => isHub(e) && !e.data.draft)
         .sort(
             (a, b) =>
                 new Date(String(b.data.meta?.date ?? 0)).getTime() -
