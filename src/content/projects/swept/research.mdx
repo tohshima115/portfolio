@@ -9,6 +9,7 @@ chapter:
 ---
 
 import ImageGrid from '@/components/pages/works/ImageGrid.astro';
+import Figure from '@/components/pages/works/Figure.astro';
 
 ## 教科書ではなく、手を動かして
 
@@ -26,34 +27,36 @@ import ImageGrid from '@/components/pages/works/ImageGrid.astro';
 事業全体の仮説を整理する **リーンキャンバス** と、個々の仮説を実験で検証していく **ジャベリンボード** も同様にテンプレート化して使っていました。
 
 <ImageGrid>
-![リーンキャンバスのテンプレート](/works/swept/lean-canvas-template.png)
-
-![ジャベリンボードのテンプレート](/works/swept/javelin-board-template.png)
+<Figure src="/works/swept/lean-canvas-template.png" alt="リーンキャンバスのテンプレート" caption="リーンキャンバスのテンプレート" />
+<Figure src="/works/swept/javelin-board-template.png" alt="ジャベリンボードのテンプレート" caption="ジャベリンボードのテンプレート" />
 </ImageGrid>
 
 まず空のテンプレートを用意しておき、インタビューで得た情報を流し込むと 1 枚のペルソナになる。下は左が自作テンプレート、右が流し込んだ例です(登場するのは実在の人物ではなく、架空の想定ユーザー)。
 
 <ImageGrid>
-![Figma で自作したペルソナのテンプレート](/works/swept/persona-template.png)
-
-![テンプレートに情報を流し込んだペルソナの例](/works/swept/persona-example.png)
+<Figure src="/works/swept/persona-template.png" alt="Figma で自作したペルソナのテンプレート" caption="ペルソナのテンプレート" />
+<Figure src="/works/swept/persona-example.png" alt="テンプレートに情報を流し込んだペルソナの例" caption="テンプレートに情報を流し込んだ例" />
 </ImageGrid>
 
 運用としては、ユーザーインタビューの後にチーム内で認識を揃えるため、対象者ごとにペルソナとエンパシーマップを起こしていました。
 
 <ImageGrid>
-![エンパシーマップのテンプレート](/works/swept/empathy-template.png)
-
-![インタビューの発言を整理したエンパシーマップの例](/works/swept/empathy-example.png)
+<Figure src="/works/swept/empathy-template.png" alt="エンパシーマップのテンプレート" caption="エンパシーマップのテンプレート" />
+<Figure src="/works/swept/empathy-example.png" alt="インタビューの発言を整理したエンパシーマップの例" caption="インタビューの発言を整理した例" />
 </ImageGrid>
 
 ## インタビューを鍛える
 
 『ユーザーインタビューをはじめよう』を読み、書かれていた作法を実践しました。特に効いたのが **沈黙** — 「○○ですよね?」と確認して引き出すよりバイアスがかからず、黙っていると相手が自分から補足を足してくる。
 
-本番の前に、チーム 3 人で互いにインタビューし合って練習し、「ここはこうした方がいい」と改善点を出してから臨みました。
+本番の前に、チーム 3 人で互いにインタビューし合って練習しました。インタビュー役とインタビューされる役を両方経験できるのが良く、「こう聞かれるとこう感じる」という感覚を自分の体でも掴めます。練習後は改善点を文章にまとめてから本番に臨みました。
 
-旅行テーマ特有の工夫として、**旅行を想起させる写真カード** も自作。今まさに旅行中の人にアポを取るのは難しく、対象はどうしても「旅行から時間が経った人」になりがちです。こちらのバイアスをかけすぎない範囲で当時を思い出してもらうために、写真を載せた小さなカードを見せる — という手法を本から採り入れました。
+旅行テーマ特有の工夫として、**旅行を想起させる写真カード** も自作。今まさに旅行中の人にアポを取るのは難しく、対象はどうしても「旅行から時間が経った人」になりがちです。こちらのバイアスをかけすぎない範囲で当時を思い出してもらうために、写真を載せた小さなカードを見せる — という手法を本から採り入れました。カードに使う写真は自分が用意し、実際に手に取れる物理カードに仕立てる作業は他のメンバーが担当しています。
+
+<ImageGrid>
+<Figure src="/works/swept/interview-practice-feedback.png" alt="チーム内練習インタビューの振り返りメモ" caption="練習インタビューの振り返りメモ" />
+<Figure src="/works/swept/recall-cards-source.png" alt="想起カードに使った写真素材" caption="想起カードに使った写真素材" />
+</ImageGrid>
 
 ## フィールドの実態 — ターゲットを3回振り直す
 
@@ -64,9 +67,8 @@ import ImageGrid from '@/components/pages/works/ImageGrid.astro';
 **(c) 国内旅行 → 実は「後片付け」が本丸** — カスタマージャーニーマップで分解すると、ペインは「用意」ではなく「洗濯と後片付け」だと判明。ただ解決策を詰めると IT ではなくコインランドリー的なローカル事業になり、「コインランドリーでよくない?」に着地。旅行テーマ自体を畳みました。
 
 <ImageGrid>
-![カスタマージャーニーマップのテンプレート](/works/swept/journey-template.png)
-
-![旅行前後の行動を分解したカスタマージャーニーマップの例](/works/swept/journey-example.png)
+<Figure src="/works/swept/journey-template.png" alt="カスタマージャーニーマップのテンプレート" caption="カスタマージャーニーマップのテンプレート" />
+<Figure src="/works/swept/journey-example.png" alt="旅行前後の行動を分解したカスタマージャーニーマップの例" caption="旅行前後の行動を分解した例" />
 </ImageGrid>
 
 ## 撤退という結論に、迷いがなかった理由

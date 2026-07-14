@@ -1,0 +1,22 @@
+---
+/**
+ * キャプション付き画像。ImageGrid の子要素としても、単体でも使える。
+ */
+interface Props {
+    src: string;
+    alt: string;
+    caption?: string;
+    class?: string;
+}
+
+const { src, alt, caption, class: className } = Astro.props;
+---
+
+<figure class:list={["not-prose my-8", className]}>
+    <img src={src} alt={alt} class="w-full h-auto rounded-xl border border-foreground/10" />
+    {caption && (
+        <figcaption class="mt-2.5 text-center font-mono text-2xs uppercase tracking-[0.15em] text-muted-foreground">
+            {caption}
+        </figcaption>
+    )}
+</figure>
