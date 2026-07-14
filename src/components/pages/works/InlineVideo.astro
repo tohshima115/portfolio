@@ -1,0 +1,54 @@
+---
+/**
+ * 本文中に埋め込む動画。WorkVisual (一覧サムネイル) と同じ思想で、
+ * autoPlay 任せにせず画面内に入っている間だけ明示的に play() する。
+ */
+interface Props {
+    src: string;
+    caption?: string;
+}
+
+const { src, caption } = Astro.props;
+---
+
+<figure class="not-prose my-8">
+    <div class="relative aspect-video overflow-hidden rounded-xl border border-foreground/10 bg-foreground/[0.03]">
+        <video
+            class="inline-video absolute inset-0 h-full w-full object-cover"
+            src={src}
+            muted
+            loop
+            playsInline
+            preload="none"
+        ></video>
+    </div>
+    {caption && (
+        <figcaption class="mt-2.5 text-center font-mono text-2xs uppercase tracking-[0.15em] text-muted-foreground">
+            {caption}
+        </figcaption>
+    )}
+</figure>
+
+<script>
+    function initInlineVideos() {
+        document.querySelectorAll<HTMLVideoElement>(".inline-video").forEach((video) => {
+            video.muted = true;
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting) {
+                            video.muted = true;
+                            void video.play().catch(() => {});
+                        } else {
+                            video.pause();
+                        }
+                    }
+                },
+                { threshold: 0.3 },
+            );
+            observer.observe(video);
+        });
+    }
+
+    document.addEventListener("astro:page-load", initInlineVideos);
+</script>

@@ -1,8 +1,12 @@
 {
     "name": "portfolio",
-    "main": "./dist/_worker.js/index.js",
+    // @astrojs/cloudflare v13+ は Cloudflare Vite プラグインを使い、dev/本番とも
+    // この統一エントリーポイントを起点にする (ビルド出力パスを直接指すのは廃止)。
+    "main": "@astrojs/cloudflare/entrypoints/server",
     "compatibility_date": "2026-02-07",
+    "compatibility_flags": ["nodejs_compat"],
     "assets": {
-        "directory": "./dist"
+        "directory": "./dist",
+        "binding": "ASSETS"
     }
 }

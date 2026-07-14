@@ -2,6 +2,7 @@
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
 import { SystemGraph } from "@/components/common/SystemGraph";
+import ThumbnailPicture from "@/components/common/ThumbnailPicture.astro";
 
 const posts = (await getCollection("blog")).sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
@@ -13,12 +14,12 @@ const graphLinks: any[] = [];
 const tagsSet = new Set<string>();
 
 posts.forEach(post => {
-    const postId = `blog-${post.slug}`;
+    const postId = `blog-${post.id}`;
     graphNodes.push({
         id: postId,
         name: post.data.title,
         type: 'blog',
-        url: `/blog/${post.slug}`
+        url: `/blog/${post.id}`
     });
 
     const stackTags = post.data.tags || [];
@@ -113,10 +114,10 @@ posts.forEach(post => {
 
                                     return (
                                         <a
-                                            href={`/blog/${post.slug}`}
+                                            href={`/blog/${post.id}`}
                                             class="group relative block border-b border-border hover:bg-muted/30 transition-all duration-300 animate-slide-from-right blog-card"
                                             style={`animation-delay: ${rowDelay};`}
-                                            id={`blog-entry-${post.slug}`}
+                                            id={`blog-entry-${post.id}`}
                                             data-tags={JSON.stringify((post.data.tags || []).map((t: string) => t.toLowerCase()))}
                                         >
                                             <div class="flex items-start gap-4 md:gap-6 py-6 md:py-8">
@@ -124,6 +125,16 @@ posts.forEach(post => {
                                                 <div class="hidden md:flex flex-shrink-0 w-12 font-mono text-xs text-muted-foreground group-hover:text-accent transition-colors duration-300 pt-1">
                                                     {String(posts.length - index).padStart(3, '0')}
                                                 </div>
+
+                                                <!-- Thumbnail -->
+                                                {post.data.thumbnail && (
+                                                    <div class="flex-shrink-0 w-20 md:w-32 aspect-video overflow-hidden border border-border bg-muted/30">
+                                                        <ThumbnailPicture
+                                                            name={post.data.thumbnail}
+                                                            class="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                )}
 
                                                 <!-- Content -->
                                                 <div class="flex-1 min-w-0 space-y-2">

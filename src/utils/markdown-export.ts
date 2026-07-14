@@ -1,4 +1,5 @@
 import type { CollectionEntry } from 'astro:content';
+import { chapterSlugOf, isChapter, projectSlugOf } from '@/utils/works';
 
 const SITE = 'https://toyoshima.work';
 
@@ -57,15 +58,36 @@ export function absoluteUrl(path: string): string {
 }
 
 export function projectMarkdown(entry: CollectionEntry<'projects'>): string {
+    const projectSlug = projectSlugOf(entry);
+
+    // 章 (スポーク): 意思決定のQ&Aをフロントマターに含める
+    if (isChapter(entry)) {
+        const ch = entry.data.chapter!;
+        const fm = formatFrontmatter({
+            title: entry.data.title,
+            project: projectSlug,
+            kind: ch.kind,
+            question: ch.question,
+            answer: ch.answer,
+            canonical_url: absoluteUrl(`/works/${projectSlug}/${chapterSlugOf(entry)}`),
+        });
+        return `${fm}\n\n# ${entry.data.title}\n\n${entry.body ?? ''}`;
+    }
+
+    // ハブ (index.mdx)
     const fm = formatFrontmatter({
         title: entry.data.title,
-        date: entry.data.meta.date instanceof Date ? entry.data.meta.date : String(entry.data.meta.date),
-        updatedDate: entry.data.meta.updatedDate,
-        duration: entry.data.meta.duration,
-        roles: entry.data.attributes.roles,
-        stack: entry.data.attributes.stack,
-        link: entry.data.meta.link,
-        canonical_url: absoluteUrl(`/projects/${entry.slug}`),
+        date:
+            entry.data.meta?.date instanceof Date
+                ? entry.data.meta.date
+                : String(entry.data.meta?.date ?? ''),
+        updatedDate: entry.data.meta?.updatedDate,
+        duration: entry.data.meta?.duration,
+        roles: entry.data.attributes?.roles,
+        stack: entry.data.attributes?.stack,
+        link: entry.data.meta?.link,
+        tagline: entry.data.summary?.tagline,
+        canonical_url: absoluteUrl(`/works/${projectSlug}`),
     });
     return `${fm}\n\n# ${entry.data.title}\n\n${entry.body ?? ''}`;
 }
@@ -77,13 +99,13 @@ export function blogMarkdown(entry: CollectionEntry<'blog'>): string {
         pubDate: entry.data.pubDate,
         updatedDate: entry.data.updatedDate,
         tags: entry.data.tags,
-        canonical_url: absoluteUrl(`/blog/${entry.slug}`),
+        canonical_url: absoluteUrl(`/blog/${entry.id}`),
     });
     return `${fm}\n\n# ${entry.data.title}\n\n${entry.body ?? ''}`;
 }
 
 export function pageMarkdown(entry: CollectionEntry<'_pages'>, canonicalPath: string): string {
-    if (entry.slug === 'about') {
+    if (entry.id === 'about') {
         return aboutMarkdown(entry, canonicalPath);
     }
     const fm = formatFrontmatter({
@@ -151,6 +173,9 @@ AI チャットの会話をクリップしたくて作りました。Chrome / Fi
 }
 
 export function projectSummary(entry: CollectionEntry<'projects'>): string {
+    if (entry.data.summary?.what) {
+        return entry.data.summary.what.replace(/\s+/g, ' ').slice(0, 160);
+    }
     const body = entry.body ?? '';
     const firstSentence = body
         .split('\n')
@@ -169,6 +194,6 @@ export function projectSummary(entry: CollectionEntry<'projects'>): string {
     if (firstSentence) {
         return firstSentence.replace(/\s+/g, ' ').slice(0, 160);
     }
-    const stack = entry.data.attributes.stack ?? [];
+    const stack = entry.data.attributes?.stack ?? [];
     return `Stack: ${stack.join(', ')}`;
 }

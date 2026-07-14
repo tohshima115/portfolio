@@ -20,14 +20,8 @@ const LOGOS: Record<string, ProjectLogo> = {
         horizontal: '/Swept/logoHorizontal.svg',
         vertical: '/Swept/logoVertical.svg',
     },
-    'internal-tools': {
-        mark: '/InternalTools/logoMark.svg',
-    },
-    hobby: {
-        mark: '/Hobby/logoMark.svg',
-    },
-    'design-works': {
-        mark: '/DesignWorks/logoMark.svg',
+    foclock: {
+        mark: '/Foclock/logoMark.png',
     },
 };
 

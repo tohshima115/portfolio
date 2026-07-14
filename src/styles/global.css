@@ -16,6 +16,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* 動的ルートのディレクトリ名 [project] がグロブの文字クラスとして解釈され、
+   配下の .astro が Tailwind のソーススキャンから漏れるため明示する */
+@source "../pages/works";
+
 /* -----------------------------------------------------------------------------
    Custom Theme Configuration (Tailwind CSS v4 style)
    ----------------------------------------------------------------------------- */
@@ -54,6 +58,16 @@
   /* Accent Colors (Yellow override) */
   --color-accent: oklch(0.82 0.18 85);
   --color-accent-foreground: oklch(0.20 0.02 100);
+
+  /* Hero gradient (Home TOP ファーストビュー用。FourClock (別プロジェクト) の
+     options 画面ドーム型グラデーションと同じ 6 段階構成を、緑寄りの配色に
+     置き換えたもの。0% は次セクションの --color-background とぴったり
+     揃えて継ぎ目を作らないため、専用の色は持たず var(--color-background) を直接使う。 */
+  --color-hero-gradient-2: #e3f1d8;
+  --color-hero-gradient-3: #7fc95d;
+  --color-hero-gradient-4: #2c7a3c;
+  --color-hero-gradient-5: #081b0f;
+  --color-hero-gradient-6: #020603;
 
   /* Surface / Neutral extensions (kept inside @theme so any change here cascades) */
   --color-surface-deep: oklch(0.16 0.005 100);     /* ≈ #0a0a0a 系の暗背景 */

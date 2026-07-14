@@ -1,14 +1,13 @@
 import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
-import { CornerLabel } from '../primitives/CornerLabel';
-import { GridLayer } from '../visuals/GridLayer';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // docs/career/profile.md + about-copywriting.md §12.1 facts より:
-// - Background timeline (経営学部 → 起業準備 → デザイン → 個人開発)
-// - Stack: Frontend / Edge & Backend
-// - Currently: 2026 夏退職 / 9 月以降入社可能
+// - Background timeline (東京理科大学卒 → 起業準備 → Web制作会社) を簡潔に。
+//   学歴は年齢の目安として年だけ書ければ十分、詳細は不要。
+// - Stack は StackHeroSection で既出のためここでは重複させない。
+// - このセクションは pin しない。通常スクロールでそのまま読めれば十分。
 
 interface TimelineRow {
     year: string;
@@ -18,27 +17,18 @@ interface TimelineRow {
 }
 
 const TIMELINE: TimelineRow[] = [
-    { year: '〜2022', title: '東京理科大学 経営学部卒', detail: '23歳卒業 / PL・事業構造の基礎' },
-    { year: '2022 — 2024', title: '起業準備 (Swept)', detail: '友人 2 人と 2〜3 年。リーン / ユーザーインタビューを実装' },
-    { year: '2025.07 —', title: 'デザイン事務所', detail: 'Web デザイン → 業務改善 → プロダクト開発へ重心移動' },
-    { year: '2026.01 —', title: 'AIChatClip 開発開始', detail: 'Cloudflare スタックでマルチサーフェス出荷', highlight: true },
-];
-
-const STACK_FRONTEND = [
-    'TypeScript',
-    'React 19',
-    'React Router v7',
-    'Astro 5',
-    'Tailwind v4',
-];
-const STACK_EDGE = [
-    'Cloudflare Workers',
-    'D1',
-    'Durable Objects',
-    'Workers AI',
-    'Zero Trust',
-    'Hono',
-    'WXT',
+    { year: '2023', title: '東京理科大学 経営学部卒' },
+    {
+        year: '2024 — 2026',
+        title: '起業準備',
+        detail: '3人チームで社会起業に挑戦、デザインから実装まで担当',
+    },
+    {
+        year: '2025.07 —',
+        title: 'Web制作会社',
+        detail: 'Webデザイン〜実装、業務改善ツールの内製も並行',
+        highlight: true,
+    },
 ];
 
 export const AboutSection: React.FC = () => {
@@ -47,49 +37,42 @@ export const AboutSection: React.FC = () => {
             data-section="about"
             className="relative w-full bg-background"
         >
-            <div className="relative w-full min-h-screen py-24 md:py-32">
-                <GridLayer size={32} opacity={0.04} />
+            <div className="relative w-full py-20 md:py-28">
                 <SectionFrame inset={32} />
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
-                    {/* 名前 / 写真 / 縦書き BIO は WorksSection の pin 内 BioIntroStage で見せ済み。
-                        ここでは ABOUT corner label + Timeline + Stack だけに絞る。 */}
-                    <div className="mb-16">
-                        <CornerLabel label="ABOUT" id="02" />
+                    <div className="text-center mb-12 md:mb-16">
+                        <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                            About
+                        </span>
                     </div>
 
-                    <h3 className="font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
-                        <span className="text-accent">+</span>
-                        <span>TIMELINE</span>
-                        <span className="flex-1 h-px bg-foreground/10" />
-                    </h3>
+                    <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 md:gap-16">
+                        {/* 顔写真枠: 実写を差し込むまでの placeholder */}
+                        <div className="w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] flex items-center justify-center shrink-0">
+                            <span className="font-mono text-3xs uppercase tracking-[0.3em] text-muted-foreground/40">
+                                Photo
+                            </span>
+                        </div>
 
-                    <ol className="relative pl-6 border-l border-foreground/15">
-                        {TIMELINE.map((row, i) => (
-                            <TimelineItem key={i} row={row} index={i} />
-                        ))}
-                    </ol>
+                        <div className="w-full max-w-sm md:max-w-md">
+                            <ol className="relative pl-6 border-l border-foreground/15">
+                                {TIMELINE.map((row, i) => (
+                                    <TimelineItem key={i} row={row} index={i} />
+                                ))}
+                            </ol>
 
-                    <h3 className="mt-20 font-mono text-2xs uppercase tracking-[0.4em] text-muted-foreground mb-6 flex items-center gap-3">
-                        <span className="text-accent">+</span>
-                        <span>STACK</span>
-                        <span className="flex-1 h-px bg-foreground/10" />
-                    </h3>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                        <StackBlock label="Frontend" items={STACK_FRONTEND} />
-                        <StackBlock label="Edge & Backend" items={STACK_EDGE} />
-                    </div>
-
-                    <div className="mt-16">
-                        <a
-                            href="/about"
-                            className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
-                        >
-                            <span className="text-accent">+</span>
-                            <span>Read Full About</span>
-                            <span aria-hidden>→</span>
-                        </a>
+                            <div className="mt-10">
+                                <a
+                                    href="/about"
+                                    className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
+                                >
+                                    <span className="text-accent">+</span>
+                                    <span>Read Full About</span>
+                                    <span aria-hidden>→</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -152,22 +135,3 @@ const TimelineItem: React.FC<{ row: TimelineRow; index: number }> = ({
         </motion.li>
     );
 };
-
-const StackBlock: React.FC<{ label: string; items: string[] }> = ({
-    label,
-    items,
-}) => (
-    <div>
-        <span className="font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground/80 block mb-4 border-l border-accent pl-3">
-            {label}
-        </span>
-        <ul className="space-y-1.5 font-mono text-sm text-foreground/85">
-            {items.map((it) => (
-                <li key={it} className="flex items-center gap-2">
-                    <span className="text-accent text-2xs">▸</span>
-                    <span>{it}</span>
-                </li>
-            ))}
-        </ul>
-    </div>
-);

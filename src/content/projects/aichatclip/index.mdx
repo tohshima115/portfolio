@@ -1,0 +1,51 @@
+---
+title: AIChatClip
+meta:
+  thumbnailVideo: /AIChatClip/aichatclip.webm
+  date: 2026-03-27
+  duration: 2026.01〜現在 (Ongoing)
+  link: https://aichatclip.com
+attributes:
+  roles:
+    - ui-design
+    - frontend-dev
+    - backend-dev
+  stack:
+    - React Router v7
+    - Hono
+    - Cloudflare Workers
+    - Cloudflare D1
+    - Durable Objects
+    - Workers AI
+    - WXT
+    - Obsidian API
+    - Tailwind CSS
+    - Turborepo
+summary:
+  tagline: Don't Archive, Just Clip.
+  what: ChatGPT / Claude / Gemini / Grok の回答を、ワンクリックで Obsidian / Notion / Webhook に投げ込む個人開発の SaaS。企画から実装、ストア審査、運用、マーケまで一人でやっています。
+  why: 「いい回答が履歴の海に沈んでいく」個人的な不満が起点。友人の「月1,000円なら払う」という即決で、出していいやつだと判断しました。
+  now: Chrome / Firefox ストア公開済み。登録51人・有料ユーザー1人・インフラ費ほぼ0円で運用中。
+---
+
+## なんで作ったか
+
+起点は「AI チャットの良い回答が履歴に埋もれて掘り返せない」という自分の不満でした。Obsidian / Notion を知識ベースにしているなら流し込めばいいだけなのに、その最後の一手間が面倒、という穴です。
+
+最初は **n8n で自分用のパイプライン** を組み、ローカルフォルダに MD を直書きするだけの構成で回していました。これを友人に見せて「n8n で組むと半日かかる。月 1,000 円で使える形にするなら?」と聞くと即決で「やる」と。**課金意思を先に取れた** ので、出す価値があると判断して着手しています。
+
+技術選定の前提は **変動費ほぼ 0 円**。Cloudflare Workers / Workers AI / D1 なら固定費は初期の開発工数だけ、と試算できていました。AI を使った実装速度と合わせ、2026 年 1 月着手から **約 2〜3 ヶ月でストア公開** まで持っていきました。
+
+## 数字 (2026.05 半ば時点)
+
+- 登録ユーザー: 51 人(3 月末ローンチ、4 月半ばから増加、5 月は週 10 人強)
+- クリップ数: 週 41 前後
+- インフラ費: Cloudflare 月額ほぼ 0 円(直近 30 日の Workers リクエスト 26,000 回のうち大半は攻撃)
+- 有料ユーザー: 1 名
+- 公開状況: Chrome / Firefox ストア公開済み、Obsidian プラグインは自動更新対応版を配布中
+
+## やってみてわかったこと
+
+- 個人サービスで AI を組み込むなら、まず **埋め込みモデルで解けないか** を検討するのが良い。LLM の出力ブレはそのまま運用負荷になる
+- 拡張機能 / Web / API / Obsidian / リアルタイム同期を横断する構成は、モノレポで型を共有しないと破綻する
+- **課金意思を先に確認してから着手する** 動き方(Swept で身につけた仮説検証の習慣)が効いて、「売れないかも」で止まらず公開まで走れた

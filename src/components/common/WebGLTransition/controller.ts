@@ -1,7 +1,7 @@
 /**
  * WebGL 遷移の制御エントリポイント。
  *
- * `playWebGLTransition('/projects')` を呼ぶと CustomEvent を window に送出する。
+ * `playWebGLTransition('/works')` を呼ぶと CustomEvent を window に送出する。
  * オーバーレイコンポーネント側がこれを購読し、GSAP タイムラインを再生する。
  *
  * 視覚表現はあとで差し替える前提のため、controller は「いつ」「どこへ」だけ持つ。

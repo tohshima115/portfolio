@@ -1,9 +1,9 @@
 ---
 const navItems = [
     { href: "/", label: "Home" },
-    { href: "/about", label: "About" },
-    { href: "/projects", label: "Projects" },
+    { href: "/works", label: "Works" },
     { href: "/blog", label: "Blog" },
+    { href: "/about", label: "About" },
 ];
 
 const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
@@ -20,7 +20,7 @@ const isActive = (href: string) => {
     <div class="px-4 sm:px-6 lg:px-10 pt-3 sm:pt-4">
         <!-- Main bar -->
         <div
-            class="site-header__glass pointer-events-auto mx-auto max-w-[1600px] flex items-center justify-between gap-4 px-4 sm:px-6 h-14 rounded-full border border-white/30 bg-white/30 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)]"
+            class="site-header__glass pointer-events-auto mx-auto max-w-[1600px] flex items-center justify-between gap-4 pl-4 sm:pl-6 pr-[10px] h-14 rounded-full border border-white/40 bg-white/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)]"
         >
             <!-- Logo -->
             <a
@@ -48,9 +48,12 @@ const isActive = (href: string) => {
                     navItems.map((item) => (
                         <a
                             href={item.href}
-                            data-active={isActive(item.href)}
-                            class="site-header__link relative font-mono text-2xs tracking-[0.2em] uppercase px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors data-[active=true]:text-foreground"
+                            class="site-header__link relative flex items-center gap-1.5 font-sans font-semibold text-sm tracking-[0.12em] uppercase px-3 py-2 rounded-full text-foreground/70 hover:text-foreground transition-colors"
                         >
+                            <span
+                                class="site-header__dot w-1.5 h-1.5 rounded-full bg-accent shrink-0"
+                                aria-hidden="true"
+                            />
                             {item.label}
                         </a>
                     ))
@@ -62,7 +65,7 @@ const isActive = (href: string) => {
                 <a
                     href="/contact"
                     data-active={isActive("/contact")}
-                    class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-mono text-2xs tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="site-header__cta hidden md:inline-flex items-center gap-2 px-4 h-9 rounded-full bg-foreground text-background font-sans font-semibold text-sm tracking-[0.12em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                     Contact
                     <svg
@@ -98,7 +101,7 @@ const isActive = (href: string) => {
         <!-- Mobile dropdown -->
         <div
             id="site-mobile-menu"
-            class="site-header__glass site-mobile-menu pointer-events-auto mx-auto max-w-[1600px] mt-2 rounded-2xl border border-white/30 bg-white/30 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+            class="site-header__glass site-mobile-menu pointer-events-auto mx-auto max-w-[1600px] mt-2 rounded-2xl border border-white/40 bg-white/70 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,0,0,0.06)] overflow-hidden"
             aria-hidden="true"
         >
             <nav class="flex flex-col p-3 gap-1" aria-label="Mobile Primary">
@@ -107,7 +110,7 @@ const isActive = (href: string) => {
                         <a
                             href={item.href}
                             data-active={isActive(item.href)}
-                            class="site-header__mobile-link font-mono text-xs tracking-[0.2em] uppercase px-4 py-3 rounded-xl text-foreground/70 hover:text-foreground hover:bg-white/30 transition-colors data-[active=true]:text-foreground data-[active=true]:bg-white/20"
+                            class="site-header__mobile-link font-sans font-semibold text-sm tracking-[0.12em] uppercase px-4 py-3 rounded-xl text-foreground/70 hover:text-foreground hover:bg-white/30 transition-colors data-[active=true]:text-foreground data-[active=true]:bg-white/20"
                         >
                             {item.label}
                         </a>
@@ -115,7 +118,7 @@ const isActive = (href: string) => {
                 }
                 <a
                     href="/contact"
-                    class="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-foreground text-background font-mono text-xs tracking-[0.25em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
+                    class="mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-foreground text-background font-sans font-semibold text-sm tracking-[0.12em] uppercase hover:bg-accent hover:text-accent-foreground transition-colors"
                 >
                     Contact
                     <svg
@@ -202,17 +205,49 @@ const isActive = (href: string) => {
 </script>
 
 <style>
-    /* Active indicator dot for desktop nav */
-    .site-header__link[data-active="true"]::after {
+    /*
+      Lenis はスクロール開始/停止のたびに <html> のクラスを全部外して
+      付け直す (lenis-scrolling / lenis-smooth 等)。これが <html> 全体の
+      スタイル再計算を引き起こし、backdrop-filter を使っている fixed
+      ヘッダーが再コンポジットされて一瞬二重に見える (Chromium/Firefox 側の
+      既知のレンダリングバグ)。ヘッダーを独立した合成レイヤーに固定して
+      祖先の再計算に巻き込まれないようにする。
+    */
+    .site-header__glass {
+        transform: translateZ(0);
+        will-change: transform;
+        isolation: isolate;
+    }
+
+    /* Desktop nav hover: pill background rises up behind the link */
+    .site-header__link {
+        isolation: isolate;
+    }
+    .site-header__link::before {
         content: "";
         position: absolute;
-        left: 50%;
-        bottom: 4px;
-        width: 4px;
-        height: 4px;
-        background: var(--color-accent);
+        inset: 0;
+        z-index: -1;
         border-radius: 9999px;
-        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.6);
+        opacity: 0;
+        transform: scale(0.92);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .site-header__link:hover::before {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Hover indicator dot to the left of the label */
+    .site-header__dot {
+        opacity: 0;
+        transform: scale(0);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .site-header__link:hover .site-header__dot {
+        opacity: 1;
+        transform: scale(1);
     }
 
     /* Mobile menu collapse/expand */

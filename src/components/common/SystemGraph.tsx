@@ -23,13 +23,31 @@ interface SystemGraphProps {
     links: GraphLink[];
     activeNodeId?: string;
     className?: string;
+    /**
+     * ノードクリック時のハンドラ。渡された場合は node.url への遷移をせず、
+     * こちらを呼ぶ (グラフをアプリ内ビューとして使うパネル用)。
+     */
+    onNodeClick?: (node: GraphNode) => void;
+    /**
+     * 枠線・背景・グリッドといった「窓」の装飾。パネルの中に埋め込むときは
+     * 二重枠になるので false にする。
+     */
+    chrome?: boolean;
+    /**
+     * 力の強さの上書き。既定値は縦長のサイドカラム向けに詰まった配置なので、
+     * 横に広いキャンバスに置くときはここで広げる。
+     */
+    forces?: { charge?: number; linkDistance?: number; collide?: number };
 }
 
 export const SystemGraph: React.FC<SystemGraphProps> = ({
     nodes: initialNodes,
     links: initialLinks,
     activeNodeId: externalActiveNodeId,
-    className = ""
+    className = "",
+    onNodeClick,
+    chrome = true,
+    forces,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -129,8 +147,9 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
 
         // Adjust force strengths based on node count for better layout
         const nodeCount = nodes.length;
-        const chargeStrength = nodeCount <= 5 ? -200 : -150;
-        const linkDistance = nodeCount <= 5 ? 100 : 80;
+        const chargeStrength = forces?.charge ?? (nodeCount <= 5 ? -200 : -150);
+        const linkDistance = forces?.linkDistance ?? (nodeCount <= 5 ? 100 : 80);
+        const collideRadius = forces?.collide ?? 25;
 
         const simulation = d3.forceSimulation(nodes)
             .force("charge", d3.forceManyBody().strength(chargeStrength))
@@ -138,7 +157,7 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
             .force("center", d3.forceCenter(dimensions.width / 2, dimensions.height / 2))
             .force("x", d3.forceX(dimensions.width / 2).strength(0.05))
             .force("y", d3.forceY(dimensions.height / 2).strength(0.05))
-            .force("collide", d3.forceCollide().radius(25).iterations(2))
+            .force("collide", d3.forceCollide().radius(collideRadius).iterations(2))
             .on("tick", () => {
                 setAnimatedNodes([...nodes]);
                 setAnimatedLinks([...links]);
@@ -149,7 +168,7 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
         return () => {
             simulation.stop();
         };
-    }, [filteredNodes, filteredLinks, dimensions.width, dimensions.height]);
+    }, [filteredNodes, filteredLinks, dimensions.width, dimensions.height, forces?.charge, forces?.linkDistance, forces?.collide]);
 
     // Graph UI configuration
     const getNodeStyle = (node: GraphNode) => {
@@ -181,16 +200,18 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`relative w-full h-full overflow-hidden bg-background/20 backdrop-blur-sm border border-border shadow-inner ${className}`}
+            className={`relative w-full h-full overflow-hidden ${chrome ? 'bg-background/20 backdrop-blur-sm border border-border shadow-inner' : ''} ${className}`}
         >
             {/* SVG Background for techy feel */}
-            <div
-                className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{
-                    backgroundImage: "linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)",
-                    backgroundSize: "20px 20px"
-                }}
-            />
+            {chrome && (
+                <div
+                    className="absolute inset-0 opacity-10 pointer-events-none"
+                    style={{
+                        backgroundImage: "linear-gradient(var(--color-border) 1px, transparent 1px), linear-gradient(90deg, var(--color-border) 1px, transparent 1px)",
+                        backgroundSize: "20px 20px"
+                    }}
+                />
+            )}
 
             {/* SVG implementation performs better for line drawing */}
             <svg className="absolute inset-0 pointer-events-none w-full h-full" width={dimensions.width} height={dimensions.height}>
@@ -232,12 +253,16 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
                     const hitSize = Math.max(style.size * 2.5, 24);
 
                     const handleClick = () => {
+                        if (onNodeClick) {
+                            onNodeClick(node);
+                            return;
+                        }
                         if (node.url) {
                             window.location.href = node.url;
                         }
                     };
 
-                    const isClickable = !!node.url;
+                    const isClickable = !!onNodeClick || !!node.url;
 
                     return (
                         <div key={node.id}>

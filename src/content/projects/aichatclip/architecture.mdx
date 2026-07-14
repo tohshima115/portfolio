@@ -1,0 +1,66 @@
+---
+title: 技術構成と設計判断
+chapter:
+  kind: architecture
+  order: 3
+  question: なぜ全部 Cloudflare に乗せたのか
+  answer: 変動費ほぼ0円・運用負荷最小で、一人でも長く回し続けられる形にするため。
+---
+
+## 全体構成
+
+Cloudflare の上に、Web / API / 拡張機能 / Obsidian Plugin が同居する monorepo として組んでいます。一人で長く運用したいので、運用負荷を最小にすることを優先しました。
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Browser Extension (WXT + React, MV3/MV2)                   │
+│   ↓ Clip 操作                                                │
+├─────────────────────────────────────────────────────────────┤
+│  Hono on Cloudflare Workers                                 │
+│   ├─ Better Auth (Google OAuth)                             │
+│   ├─ Workers AI                                             │
+│   │   ├─ Qwen3-30B → タイトル・タグ生成                       │
+│   │   └─ Qwen Embedding → 保存先フォルダパスの自動判定         │
+│   ├─ D1 (Drizzle ORM) → クリップ保存                         │
+│   └─ Durable Object → WebSocket Push (Hibernation API)      │
+├─────────────────────────────────────────────────────────────┤
+│  Obsidian Plugin (TypeScript + esbuild)                     │
+│   ↑ WebSocket pull + push                                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| コンポーネント | 技術 | 役割 |
+|---|---|---|
+| Web | React Router v7 (SSR on CF Workers) + Tailwind v4 + Motion | LP / 設定画面 / 課金ページ |
+| API | Hono on Cloudflare Workers | REST / WebSocket / 認証 |
+| DB | Cloudflare D1 (SQLite) + Drizzle ORM | クリップ / ユーザー / 課金状態 |
+| AI | Workers AI (Qwen3-30B + Qwen Embedding) | タイトル要約 / 自動タグ / 保存先パスの自動判定 |
+| Realtime | Durable Objects + WebSocket (Hibernation API) | Obsidian への Push 同期 |
+| 認証 | Better Auth (Google OAuth) | 全クライアント横断の SSO |
+| Extension | WXT + React (Chrome MV3 / Firefox MV2) | クリップ取得 / UI |
+| Obsidian | TypeScript + esbuild | プラグイン / ローカル書き込み |
+| Monorepo | Turborepo + pnpm workspaces | 5 パッケージを一元管理 |
+
+## 設計判断
+
+### Durable Objects + WebSocket
+
+複数の Obsidian インスタンスが同時接続する前提だと「優先度の高いデバイスにだけ通知する」といった要求が出て、サーバー側に状態を持つ必要がありました。Durable Objects は単一書き込み点を保証し、Hibernation API で常時接続コストを潰せるため、月額ほぼ 0 円という運用要件と噛み合います。接続維持は ping、切断時は指数バックオフで再接続、というシンプルな構成にしています。
+
+### Better Auth
+
+一人運用でパスワード周りを自前実装したくなく、認証のバグを将来引きずりたくない。Auth.js / Clerk / Supabase Auth を比較し、Cloudflare Workers + D1 に素直に乗って追加料金の出ない Better Auth を選びました。**Google 認証のみに振り切った** ことで、認証周りに時間を取られていません。
+
+### Workers AI (Qwen3-30B)
+
+タイトル要約とタグ生成に OpenAI / Anthropic を使うと、コストがユーザー数に線形で伸びる。Workers AI は従量課金が安く、エッジ完結でレイテンシも低いため Qwen3-30B を採用しました。精度・速度とも実用十分です。副次的に、初期はフロンティアモデルより中堅モデルで詰めた方がプロンプト設計力がつく、という感触も得ています。
+
+### Qwen Embedding (保存先パスの自動判定)
+
+クリップを Obsidian のどのフォルダに置くかの判定を、当初は LLM に任せていましたが、同じ入力でも返答がブレて運用に耐えない。フォルダ振り分けは「毎回同じ答え」が要る処理なので、埋め込みモデルに切り替えました。埋め込みは同一入力に同一ベクトルを返す = 実質決定論的に扱えるのが利点で、**AI を組み込むならまず埋め込みで解けないか考える**、というのがこのプロジェクト最大の学びです。
+
+### WXT / Turborepo
+
+Chrome MV3 / Firefox MV2 を 1 コードベースで両対応するため、生の WebExtensions API ではなく、型安全でストア提出ビルドまで自動化される WXT を採用。web / api / extension / obsidian / shared / db は Turborepo + pnpm workspaces で型を共有しています(`shared` は型とスキーマのみに留め、過剰な共通化は避けました)。
+
+> Web / API は商用運用中のため非公開、拡張機能と Obsidian プラグインは公開しています。

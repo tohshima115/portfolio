@@ -1,5 +1,8 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
+import { CONTACT, JOB_STATUS, xUrl } from "@/consts";
+
+const x = xUrl();
 ---
 
 <BaseLayout
@@ -163,13 +166,71 @@ import BaseLayout from "@/layouts/BaseLayout.astro";
                 </p>
             </section>
 
+            <!-- Elsewhere -->
+            <section class="mb-12">
+                <p
+                    class="font-mono text-2xs text-accent tracking-widest uppercase mb-4"
+                >
+                    + ELSEWHERE
+                </p>
+                <div
+                    class="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs tracking-[0.2em] text-muted-foreground"
+                >
+                    <a
+                        href={CONTACT.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="hover:text-foreground transition-colors">GITHUB ↗</a
+                    >
+                    {
+                        x && (
+                            <>
+                                <span class="text-muted-foreground/30">/</span>
+                                <a
+                                    href={x}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="hover:text-foreground transition-colors"
+                                >
+                                    X ↗
+                                </a>
+                            </>
+                        )
+                    }
+                    <span class="text-muted-foreground/30">/</span>
+                    <a
+                        href={`mailto:${CONTACT.email}`}
+                        class="hover:text-foreground transition-colors">EMAIL</a
+                    >
+                </div>
+            </section>
+
+            {
+                /* 就活期間中だけ出るステータス。JOB_STATUS を null にすれば消える。 */
+                JOB_STATUS && (
+                    <section class="mb-12">
+                        <p class="font-mono text-2xs text-accent tracking-widest uppercase mb-3">
+                            + STATUS
+                        </p>
+                        <ul class="font-mono text-xs text-muted-foreground leading-relaxed space-y-1">
+                            {JOB_STATUS.map((line) => (
+                                <li class="flex items-baseline gap-3">
+                                    <span class="text-border">—</span>
+                                    <span>{line}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )
+            }
+
             <!-- Direct mail fallback -->
             <p class="text-xs text-muted-foreground font-mono tracking-wider">
                 フォームが動かないときは
                 <a
-                    href="mailto:tohshima115@gmail.com"
+                    href={`mailto:${CONTACT.email}`}
                     class="text-foreground underline hover:text-accent transition-colors"
-                    >tohshima115@gmail.com</a
+                    >{CONTACT.email}</a
                 > まで。
             </p>
 

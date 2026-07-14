@@ -1,0 +1,61 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getHubs, projectSlugOf } from "@/utils/works";
+import { ROLES } from "@/consts";
+import { getProjectLogo } from "@/utils/projectLogos";
+import {
+    WorksExplorer,
+    type WorkItem,
+} from "@/components/pages/works/WorksExplorer";
+
+// ハブ (index.mdx) のみを一覧に出す。章は各プロジェクトページからたどる
+const hubs = await getHubs();
+
+const roleLabel = (value: string) =>
+    ROLES.find((r) => r.value === value)?.label ?? value;
+
+const works: WorkItem[] = hubs.map((hub) => {
+    const slug = projectSlugOf(hub);
+    return {
+        slug,
+        title: hub.data.title,
+        duration: hub.data.meta?.duration ?? "",
+        what: hub.data.summary?.what ?? "",
+        roles: (hub.data.attributes?.roles ?? []).map(roleLabel),
+        stack: hub.data.attributes?.stack ?? [],
+        logo: getProjectLogo(slug)?.mark,
+        thumbnail: hub.data.meta?.thumbnail?.src,
+        thumbnailVideo: hub.data.meta?.thumbnailVideo,
+    };
+});
+
+// 作品ノードと技術ノードの二部グラフ。遷移はステージ側のハンドラが受けるので
+// url は持たせない (グラフはページ内ビューとして完結させる)
+const nodes: any[] = [];
+const links: any[] = [];
+const seenTags = new Set<string>();
+
+for (const work of works) {
+    const projectId = `projects-${work.slug}`;
+    nodes.push({ id: projectId, name: work.title, type: "projects" });
+
+    for (const tech of work.stack) {
+        const tagId = `tag-${tech}`;
+        if (!seenTags.has(tagId)) {
+            seenTags.add(tagId);
+            nodes.push({ id: tagId, name: tech, type: "tag" });
+        }
+        links.push({ source: projectId, target: tagId });
+    }
+}
+---
+
+<BaseLayout title="Works | Portfolio">
+    <div class="min-h-screen bg-background text-foreground">
+        <!-- 見出しもステージも sticky な 100svh の中にある (WorksExplorer 側)。
+             幅は「メディア枠 (16:9) + 見出し + 説明文」が画面高に収まる範囲で決める -->
+        <main class="mx-auto w-full max-w-[min(72rem,96vh)] px-6 pb-24 md:px-8">
+            <WorksExplorer client:load works={works} nodes={nodes} links={links} />
+        </main>
+    </div>
+</BaseLayout>

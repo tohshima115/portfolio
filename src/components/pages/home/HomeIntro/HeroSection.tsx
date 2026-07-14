@@ -1,146 +1,64 @@
-import { useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
-import { HoverBackground } from '../PrtsInterface/components/HoverBackground';
-import { HeroLayer } from '../HomeScene/layers/HeroLayer';
-import { dollyScale, dollyBlurPxFg, dollyOpacity } from './dollyCurves';
+import { motion } from 'framer-motion';
+import { HeroGradientBackground } from './HeroGradientBackground';
 
-interface Props {
-    skipIntro: boolean;
-    active: boolean;
-    /** ContourBackground の uChaos に流す MotionValue/数値 */
-    chaos?: MotionValue<number> | number;
-    /**
-     * 0..1 の Hero→Statement dolly 進捗。
-     * outer motion.div に scale / filter / opacity を当てる。HeroLayer 内の
-     * ContourBackground もこの transform を一緒に受ける。
-     */
-    dolly?: MotionValue<number>;
-}
+// ファーストビュー: 3D / マウス連動 / スクロール連動の演出は撤去し、
+// 「グラデーション背景 + 中央テキスト + スクロール誘導」だけのシンプルな
+// 1 画面構成にする。モバイルを基準にレイアウトし、md 以上で拡大する。
+export const HeroSection = () => {
+    return (
+        <section className="relative w-full h-[100dvh] flex items-center justify-center overflow-hidden text-white">
+            <HeroGradientBackground />
 
-// Hero 専用のフルスクリーンセクション。
-// 構造を 2 段に分割:
-//   outer dolly motion.div : scale / filter / opacity (2D only, preserve-3d なし)
-//   inner 3D motion.div    : rotateX / rotateZ + preserve-3d
-// filter / opacity / will-change は stacking context を作って preserve-3d を
-// フラット化するため、それらと 3D rotate を同じレイヤに同居させると子の
-// translateZ (MainTitle 80px / NavigationLayer 160px) による高さが潰れる。
-// 2 段に分けることで dolly の引き&ブラーを保ちつつ Z 軸の浮き上がりを残す。
+            <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
+                <h1 className="font-black tracking-tight leading-none text-5xl sm:text-6xl md:text-8xl">
+                    TOYOSHIMA
+                </h1>
+                <p className="font-mono text-base sm:text-lg tracking-[0.3em] uppercase text-white/70">
+                    Designer / Engineer
+                </p>
+            </div>
 
-export const HeroSection: React.FC<Props> = ({ skipIntro, active, chaos, dolly }) => {
-    const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+            <ScrollCue />
+        </section>
+    );
+};
 
-    const mouseX = useMotionValue(0.5);
-    const mouseY = useMotionValue(0.5);
-    const springConfig = { damping: 20, stiffness: 100, mass: 1 };
-    const rotateX = useSpring(useTransform(mouseY, [0, 1], [20, 40]), springConfig);
-    const rotateZ = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
-    const contentX = useSpring(useTransform(mouseX, [0, 1], [-5, 5]), springConfig);
-    const contentY = useSpring(useTransform(mouseY, [0, 1], [-5, 5]), springConfig);
-
-    // dolly: 親が undefined を渡してきても hooks を呼ぶ必要があるので fallback を常に作る。
-    const dollyFallback = useMotionValue(0);
-    const dollySrc = dolly ?? dollyFallback;
-    const heroScale = useTransform(dollySrc, dollyScale);
-    const heroFilter = useTransform(dollySrc, (p: number) => {
-        const px = dollyBlurPxFg(p);
-        // blur(0px) でもレイヤを作るブラウザ対策。閾値前は filter を 'none' に。
-        return px > 0.05 ? `blur(${px.toFixed(2)}px)` : 'none';
-    });
-    const heroOpacity = useTransform(dollySrc, dollyOpacity);
-
-    const viewportRef = useRef<HTMLDivElement>(null);
-    const rectRef = useRef<DOMRect | null>(null);
-    useEffect(() => {
-        const target = viewportRef.current;
-        if (!target) return;
-        const update = () => {
-            rectRef.current = target.getBoundingClientRect();
-        };
-        update();
-        const ro = new ResizeObserver(update);
-        ro.observe(target);
-        window.addEventListener('scroll', update, { passive: true });
-        window.addEventListener('resize', update);
-        return () => {
-            ro.disconnect();
-            window.removeEventListener('scroll', update);
-            window.removeEventListener('resize', update);
-        };
-    }, []);
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (!active) return;
-        const rect = rectRef.current;
-        if (!rect) return;
-        mouseX.set((e.clientX - rect.left) / rect.width);
-        mouseY.set((e.clientY - rect.top) / rect.height);
-    };
-    const handleMouseLeave = () => {
-        mouseX.set(0.5);
-        mouseY.set(0.5);
-    };
-
-    // モバイル: タッチドラッグで傾きを操作（マウスと同じ rotateX/Z に流す）
-    const handleTouchMove = (e: React.TouchEvent) => {
-        if (!active) return;
-        const rect = rectRef.current;
-        if (!rect) return;
-        const touch = e.touches[0];
-        mouseX.set((touch.clientX - rect.left) / rect.width);
-        mouseY.set((touch.clientY - rect.top) / rect.height);
-    };
-    const handleTouchEnd = () => {
-        mouseX.set(0.5);
-        mouseY.set(0.5);
-    };
+// 画面下部固定のスクロール誘導。グラデーションが明るくなる帯の上なので、
+// 白系ではなくダーク (foreground寄り) にしてコントラストを確保する。
+// 光の筋が上から下へさーっと流れ、少し間を置いて繰り返す。
+const ScrollCue = () => {
+    const trackHeight = 56; // px
+    const streakHeight = 20; // px
+    const duration = 1.1;
+    const repeatDelay = 1.3;
 
     return (
-        <div
-            ref={viewportRef}
-            className="absolute inset-0 w-full h-full bg-background overflow-hidden flex items-center justify-center shadow-inner"
-            style={{ perspective: '1000px' }}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-        >
-            {/* 静的背景レイヤー (radial gradient + noise): カメラ追従の枠外。
-                outer motion.div の外側に置くことで rotateX/rotateZ/scale/filter/opacity
-                の影響を受けず、画面いっぱいに固定で広がる。 */}
-            <HoverBackground hoveredItem={hoveredItem} />
-
-            {/* 外側: dolly (scale/filter/opacity) 専用。preserve-3d は持たず 2D 合成のみ。 */}
-            <motion.div
-                style={{
-                    scale: heroScale,
-                    filter: heroFilter,
-                    opacity: heroOpacity,
-                    willChange: 'filter, opacity, transform',
-                }}
-                className="relative w-full h-full flex items-center justify-center origin-center"
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-foreground/70">
+            <span className="font-mono text-3xs sm:text-2xs tracking-[0.3em] uppercase">
+                Scroll
+            </span>
+            <div
+                aria-hidden
+                className="relative w-px overflow-hidden bg-foreground/15"
+                style={{ height: trackHeight }}
             >
-                {/* 内側: マウス連動の 3D rotate と preserve-3d。
-                    ここから下に filter/opacity を一切置かないことで子の translateZ を生かす。 */}
-                <motion.div
-                    style={{
-                        rotateX,
-                        rotateZ,
-                        transformStyle: 'preserve-3d',
-                        willChange: 'transform',
+                <motion.span
+                    className="absolute inset-x-0 top-0 bg-gradient-to-b from-transparent via-foreground to-transparent"
+                    style={{ height: streakHeight }}
+                    initial={{ y: -streakHeight, opacity: 0 }}
+                    animate={{
+                        y: [-streakHeight, trackHeight],
+                        opacity: [0, 1, 1, 0],
                     }}
-                    className="absolute inset-0 flex items-center justify-center origin-center"
-                >
-                    <HeroLayer
-                        skipIntro={skipIntro}
-                        contentX={contentX}
-                        contentY={contentY}
-                        onHoverItem={setHoveredItem}
-                        mouseX={mouseX}
-                        mouseY={mouseY}
-                        chaos={chaos}
-                    />
-                </motion.div>
-            </motion.div>
+                    transition={{
+                        duration,
+                        repeat: Infinity,
+                        repeatDelay,
+                        ease: 'easeIn',
+                        times: [0, 0.15, 0.7, 1],
+                    }}
+                />
+            </div>
         </div>
     );
 };

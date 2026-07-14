@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# cloudflare vite plugin local state (dev/preview)
+.wrangler/
 
 # dependencies
 node_modules/
@@ -27,3 +29,7 @@ pnpm-debug.log*
 z-ai/*
 # claude code worktrees
 .claude/worktrees/
+
+# 未変換のRAW動画素材。Cloudflare Workers Assetsの25MiB上限を超えるため
+# publicに置かず、書き出し済みのWebM等だけをコミットする
+public/Swept/*.mp4

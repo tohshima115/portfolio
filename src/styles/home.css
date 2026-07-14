@@ -1,6 +1,6 @@
 /* =============================================================================
    Home Page Specific CSS
-   - global.css から TOP ページ (HomeIntro / HomeStack / PrtsInterface) 専用の
+   - global.css から TOP ページ (HomeIntro / HomeStack) 専用の
      keyframes と reveal 初期状態を分離。Home 系レイアウト (src/pages/index.astro)
      からのみ import する。
    ============================================================================= */
@@ -26,7 +26,7 @@
   to { width: 100%; }
 }
 /* skipIntro 時 (リロード / 同セッション内トップ遷移) でも overlay は表示する。
-   HomeStack の folder grid や HudOverlay が hydrate + GSAP pin 確定までの
+   HomeStack の folder grid が hydrate + GSAP pin 確定までの
    ラグで一瞬覗いてしまうのを覆い隠す目的。表示時間は HomeIntro 側で
    短く (250ms + fade 200ms) してあるので「軽く表示してすぐ消える」程度に収まる。 */
 
@@ -80,13 +80,3 @@
   }
 }
 
-/* -----------------------------------------------------------------------------
-   Intro skip overrides
-   2 回目以降の訪問では <html> に .prts-skip-intro が付与される (index.astro 参照)。
-   SSR HTML の inline style に焼き付いた CSS animation を !important で上書きし、
-   ブラウザが描画する瞬間から最終状態を表示する。
-   ----------------------------------------------------------------------------- */
-html.prts-skip-intro [data-prts-logo] {
-  animation: none !important;
-  clip-path: inset(-1%) !important;
-}

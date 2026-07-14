@@ -5,7 +5,7 @@ import { blogMarkdown, buildMarkdownResponse } from '@/utils/markdown-export';
 export const getStaticPaths: GetStaticPaths = async () => {
     const posts = await getCollection('blog');
     return posts.map((entry) => ({
-        params: { slug: entry.slug },
+        params: { slug: entry.id },
         props: { entry },
     }));
 };

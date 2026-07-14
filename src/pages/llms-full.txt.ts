@@ -7,13 +7,18 @@ import {
     pageMarkdown,
     projectMarkdown,
 } from '@/utils/markdown-export';
+import { getChapters, getHubs, projectSlugOf } from '@/utils/works';
 
 const SEPARATOR = '\n\n---\n\n';
 
 export const GET: APIRoute = async () => {
-    const projects = (await getCollection('projects')).sort(
-        (a, b) => new Date(b.data.meta.date).valueOf() - new Date(a.data.meta.date).valueOf(),
-    );
+    const hubs = await getHubs();
+    // ハブ直後にその章が並ぶ順で連結する
+    const projects = (
+        await Promise.all(
+            hubs.map(async (hub) => [hub, ...(await getChapters(projectSlugOf(hub)))]),
+        )
+    ).flat();
     const posts = (await getCollection('blog')).sort(
         (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
     );
@@ -27,12 +32,12 @@ export const GET: APIRoute = async () => {
         [
             '# Shogo Toyoshima Portfolio — Full Content',
             '',
-            `> ${absoluteUrl('/')} の全ページの生Markdownを1ファイルに連結したものです。Projects → Blog → Pages の順で並んでいます。`,
+            `> ${absoluteUrl('/')} の全ページの生Markdownを1ファイルに連結したものです。Works → Blog → Pages の順で並んでいます。`,
         ].join('\n'),
     );
 
     for (const entry of pages) {
-        const path = entry.slug === 'home' ? '/' : `/${entry.slug}`;
+        const path = entry.id === 'home' ? '/' : `/${entry.id}`;
         sections.push(pageMarkdown(entry, path));
     }
 

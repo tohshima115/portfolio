@@ -9,34 +9,27 @@ import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
 import { SmoothScroll } from "../components/common/SmoothScroll";
+import { ogImagePath } from "../utils/og-path";
+import { CONTACT, xUrl } from "../consts";
 
-const projects = await getCollection("projects");
-const blogPosts = await getCollection("blog");
+const description =
+	"Product Engineer / Designer ポートフォリオサイト。Cloudflareスタックで個人プロダクトを出荷。";
+const ogImage = new URL(ogImagePath(Astro.url.pathname), Astro.url);
 
-// Merge and sort updates
-const allUpdates = [
-	...projects.map((p) => ({
-		title: p.data.title,
-		date: p.data.meta.updatedDate
-			? new Date(p.data.meta.updatedDate)
-			: new Date(p.data.meta.date),
-		url: `/projects/${p.slug}`,
-		type: "projects" as const,
-	})),
-	...blogPosts.map((b) => ({
+const blogPostsCollection = await getCollection("blog");
+
+// トップページ BlogSection 用: 最新3件を pubDate 降順で。
+const latestBlogPosts = blogPostsCollection
+	.slice()
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.slice(0, 3)
+	.map((b) => ({
+		slug: b.id,
 		title: b.data.title,
-		date: b.data.updatedDate
-			? new Date(b.data.updatedDate)
-			: new Date(b.data.pubDate),
-		url: `/blog/${b.slug}`,
-		type: "blog" as const,
-	})),
-].sort((a, b) => b.date.valueOf() - a.date.valueOf());
-
-const latestUpdates = allUpdates.slice(0, 5).map((u) => ({
-	...u,
-	date: u.date.toISOString(), // passed via props, keep as string
-}));
+		description: b.data.description,
+		pubDate: b.data.pubDate.toISOString(),
+		thumbnail: b.data.thumbnail,
+	}));
 
 const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
 const personSchema = {
@@ -62,7 +55,7 @@ const personSchema = {
 		"UI Design",
 		"Visual Identity",
 	],
-	sameAs: ["https://github.com/tohshima115", "https://x.com/"],
+	sameAs: [CONTACT.github, xUrl()].filter(Boolean),
 };
 ---
 
@@ -74,10 +67,20 @@ const personSchema = {
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Shogo Toyoshima Portfolio</title>
-		<meta
-			name="description"
-			content="Product Engineer / Designer ポートフォリオサイト。Cloudflareスタックで個人プロダクトを出荷。"
-		/>
+		<meta name="description" content={description} />
+
+		<!-- Open Graph -->
+		<meta property="og:site_name" content="Shogo Toyoshima Portfolio" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content={Astro.url.href} />
+		<meta property="og:title" content="Shogo Toyoshima Portfolio" />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="twitter:card" content="summary_large_image" />
+		<meta property="twitter:image" content={ogImage} />
+
 		<link
 			rel="alternate"
 			type="text/markdown"
@@ -96,7 +99,7 @@ const personSchema = {
 		/>
 		<!--
 		  React マウント前に sessionStorage を読み、
-		  2 回目以降の訪問では PrtsInterface のイントロアニメを
+		  2 回目以降の訪問ではロゴスプラッシュ (LogoIntroOverlay) を
 		  完全スキップするための同期フラグ。
 		  framer-motion の initial / transition.delay は最初の render で確定するため、
 		  必ずレンダリング前に決定する必要がある。
@@ -115,12 +118,7 @@ const personSchema = {
 					skip = false;
 				}
 				window.__prtsSkipIntro = skip;
-				// CSS animation (clip-path 等の React 制御外のもの) を即時抑止するため、
-				// HTML パース前に <html> へクラスを付与する。
-				if (skip) {
-					document.documentElement.classList.add("prts-skip-intro");
-				}
-				// HomeIntro の 1200px spacer と HomeStack の GSAP pinSpacer は hydrate 後に
+				// HomeStack の GSAP pinSpacer は hydrate 後に
 				// 注入されるため、ブラウザ標準の scroll 復元 (mid-page reload で過去の scrollY を
 				// 復元する) と layout 確定タイミングが噛み合わず、pin の start/end 計算が
 				// ズレて「同じセクションが二か所に出る」破綻が起きる。アニメ主体の TOP では
@@ -170,13 +168,13 @@ const personSchema = {
 		<SmoothScroll client:only="react" />
 		<!--
 		  HomeIntro は client:only="react" のため SSR HTML に含まれず、
-		  HomeStack (= client:load で SSR される WorksSection) のフォルダーや
-		  HudOverlay (z-[80] fixed) が hydrate 完了までの間、画面前面に出てしまう
-		  ことがある。それらを SSR 段階で覆う初期オーバーレイ + BOOT_SEQUENCE
-		  ローディング UI。Tailwind の JIT 抽出に依存すると初回 paint に間に合わない
-		  ケースがあるので inline style + var(--color-background) で確実に塗る。
+		  HomeStack (= client:load で SSR される WorksSection) のフォルダーが
+		  hydrate 完了までの間、画面前面に出てしまうことがある。それらを SSR
+		  段階で覆う初期オーバーレイ + BOOT_SEQUENCE ローディング UI。Tailwind の
+		  JIT 抽出に依存すると初回 paint に間に合わないケースがあるので inline
+		  style + var(--color-background) で確実に塗る。
 		  SiteHeader (z-[100]) のすぐ下にあたる z-index:99 で、HomeStack 内の
-		  あらゆる fixed/絶対配置要素 (HudOverlay z-80 含む) より前に出す。
+		  あらゆる fixed/絶対配置要素より前に出す。
 		  HomeIntro mount → 最低 600ms 待機 → opacity フェード (400ms) → display:none。
 		-->
 		<div
@@ -198,8 +196,8 @@ const personSchema = {
 				></div>
 			</div>
 		</div>
-		<HomeIntro client:only="react" updates={latestUpdates} />
-		<HomeStack client:load updates={latestUpdates} />
+		<HomeIntro client:only="react" />
+		<HomeStack client:load blogPosts={latestBlogPosts} />
 		<MarkdownActions client:load transition:persist="md-actions" />
 		<WebGLTransition
 			client:only="react"

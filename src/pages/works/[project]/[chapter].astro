@@ -1,0 +1,125 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import ChapterCard from "@/components/pages/works/ChapterCard.astro";
+import Lightbox from "@/components/pages/works/Lightbox.astro";
+import { WORK_PROSE_CLASS } from "@/components/pages/works/prose";
+import { getProjectLogo } from "@/utils/projectLogos";
+import {
+    chapterSlugOf,
+    getChapters,
+    getHubs,
+    kindMeta,
+    projectSlugOf,
+} from "@/utils/works";
+import { render } from "astro:content";
+
+export async function getStaticPaths() {
+    const hubs = await getHubs();
+    const paths = [];
+    for (const hub of hubs) {
+        const projectSlug = projectSlugOf(hub);
+        const chapters = await getChapters(projectSlug);
+        for (const entry of chapters) {
+            paths.push({
+                params: { project: projectSlug, chapter: chapterSlugOf(entry) },
+                props: { entry, hub, chapters },
+            });
+        }
+    }
+    return paths;
+}
+
+const { entry, hub, chapters } = Astro.props;
+const projectSlug = projectSlugOf(entry);
+const { Content } = await render(entry);
+
+const ch = entry.data.chapter!;
+const kind = kindMeta(ch.kind);
+const logo = getProjectLogo(projectSlug);
+const others = chapters.filter((c) => c.id !== entry.id);
+
+const description = `${ch.question} — ${ch.answer}`;
+---
+
+<BaseLayout title={`${entry.data.title} | ${hub.data.title}`} description={description}>
+    <div class="relative w-full max-w-5xl mx-auto px-6 md:px-10 pt-28 md:pt-36 pb-24 md:pb-32">
+        <!-- ══ パンくず: ハブへ戻る ══ -->
+        <a
+            href={`/works/${projectSlug}`}
+            class="group inline-flex items-center gap-3 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground hover:text-foreground transition-colors"
+        >
+            <span aria-hidden="true" class="transition-transform duration-300 group-hover:-translate-x-1">←</span>
+            {logo?.mark && (
+                <img src={logo.mark} alt="" class="w-5 h-5 rounded-md" aria-hidden="true" />
+            )}
+            <span>{hub.data.title}</span>
+        </a>
+
+        <!-- ══ 章ヘッダー ══ -->
+        <header class="mt-10 md:mt-14">
+            <div class="flex items-center gap-2.5">
+                <span class="ui-tag-tech">{kind.en}</span>
+                <span class="font-mono text-3xs uppercase tracking-[0.25em] text-muted-foreground">
+                    {kind.label}
+                </span>
+            </div>
+
+            <h1 class="mt-5 font-sans font-black tracking-tight leading-tight text-foreground text-3xl sm:text-4xl md:text-5xl">
+                {entry.data.title}
+            </h1>
+
+            <!-- 章のテーゼ: 問いと結論。このページ全体が、この結論の説明責任を果たす -->
+            <div class="mt-8 md:mt-10 border-l-2 border-accent pl-5 md:pl-6 flex flex-col gap-3">
+                <p class="font-mono text-xs md:text-sm tracking-[0.15em] text-muted-foreground leading-relaxed">
+                    <span class="text-accent font-bold">Q.</span>
+                    <span class="ml-1.5">{ch.question}</span>
+                </p>
+                <p class="font-sans font-bold text-foreground text-xl md:text-2xl leading-snug tracking-tight max-w-2xl">
+                    {ch.answer}
+                </p>
+            </div>
+        </header>
+
+        {ch.hero && (
+            <div class="mt-12 md:mt-16 rounded-2xl md:rounded-3xl overflow-hidden border border-foreground/15 bg-foreground/[0.03]">
+                <img
+                    src={ch.hero.src}
+                    alt={entry.data.title}
+                    class="w-full h-auto"
+                    loading="eager"
+                />
+            </div>
+        )}
+
+        <!-- ══ 本文 ══ -->
+        <div class={`${WORK_PROSE_CLASS} max-w-3xl mt-12 md:mt-16`} data-zoom-scope>
+            <Content />
+        </div>
+        <Lightbox />
+
+        <!-- ══ 同プロジェクトの他の意思決定 ══ -->
+        {others.length > 0 && (
+            <section class="mt-20 md:mt-28">
+                <p class="ui-micro-label mb-6">
+                    <span class="text-accent">+</span>
+                    <span class="ml-3">More_Decisions</span>
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {others.map((c) => <ChapterCard chapter={c} />)}
+                </div>
+            </section>
+        )}
+
+        <!-- ══ ハブへ戻る ══ -->
+        <nav class="mt-16 md:mt-20 flex items-center gap-4" aria-label="Back to project">
+            <div class="h-px flex-1 bg-border"></div>
+            <a
+                href={`/works/${projectSlug}`}
+                class="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 hover:border-accent hover:text-accent transition-colors"
+            >
+                <span>← {hub.data.title}</span>
+            </a>
+            <div class="h-px flex-1 bg-border"></div>
+        </nav>
+    </div>
+</BaseLayout>

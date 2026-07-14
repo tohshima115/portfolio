@@ -1,0 +1,25 @@
+---
+// public/blog/<name>.{avif,webp,png} を直接配信する<picture>。
+// astro:assetsのImage/Pictureはastro.config.mjsのCloudflareアダプター配下だと
+// Sharpのワーカーバンドル解決に失敗するため使えない。事前に
+// scripts/generate-thumbnail-formats.py でAVIF/WebPを静的生成し、
+// AVIF優先→WebPフォールバック→PNGフォールバックの<picture>で配信する。
+interface Props {
+    name: string;
+    class?: string;
+}
+
+const { name, class: className } = Astro.props;
+---
+
+<picture>
+    <source srcset={`/blog/${name}.avif`} type="image/avif" />
+    <source srcset={`/blog/${name}.webp`} type="image/webp" />
+    <img
+        src={`/blog/${name}.png`}
+        alt=""
+        class={className}
+        loading="lazy"
+        decoding="async"
+    />
+</picture>

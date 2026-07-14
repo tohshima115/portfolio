@@ -1,0 +1,98 @@
+# ブログ記事のサムネイルを作る
+
+`src/content/blog/<slug>.md` として既に存在する記事に対して、サムネイル画像を1枚作り、frontmatterに紐付ける。
+
+本文執筆（`/write-blog`）とはあえて別スキルにしている。コンテキストを分けた方が生成物のクオリティが上がるため。
+
+## モデル
+
+**GPT 2**（`mode: gpt-2`）を使う。
+
+Nano Banana 2 Pro → Antigravity(Gemini)による目視選定、という流れを試したが、Antigravity側でMagnific MCPがうまく叩けず頓挫した。またAntigravity/Geminiによる自動品質チェックもあまり機能しなかった。そのため「生成後にAIが選ぶ」より「そもそも生成クオリティを上げる」方向に切り替え、GPT 2に変更。画像生成・選定はこのスキル内でClaude自身が目視で行う（これはNano Banana時代から実績のあるやり方）。
+
+GPT 2は他モデルよりコストが高いため、**1回の生成枚数は2枚まで**に抑える（Nano Banana時代の4枚から削減）。
+
+## スタイル定義（固定）
+
+- **フラットアイソメトリック**：陰影・グラデーション・ベベル・環境光・写実的レンダリングは一切使わない。奥行きは面ごとの単色の塗り分けだけで表現する（3Dレンダー風にしない）
+- 太めのクリーンなベクター輪郭線、シンプルで記号的な形状のみ（細部・質感を描き込まない）。形状が複雑だと崩れやすいので、モチーフは「単純な一本のフック」のようにできるだけ単純な形に言い換える
+- 30度軸測、平行線のみ、消失点なしのアイソメグリッドに固定する
+- **背景は無地の白（#ffffff）のみ。** グリッド線・床面（土台のグリッドプレーン）・グローなど、モチーフ以外の装飾は一切入れない。白い空間にモチーフだけが浮いている状態にする
+- **使う色は基本1〜2色に絞る。** パレットの上限はフォレストグリーン `#2c7a3c` / ミントグリーン `#7fc95d` / マスタードイエロー `#e8c468` の3色だが、これは「毎回3色とも使え」という意味ではない。むしろ基本はグリーン系1トーン（+陰影用にもう1トーン）だけで塗り、マスタードイエローは本当に必要な一点だけに使うか、使わなくてもよい。色数が少ないほどシンプルで良い
+- **モチーフの中に別の絵（風景・アイコン群など）を描き込まない。** モチーフそのものを単一の立体物として単色〜2色で塗り分けるだけにする。「絵の中に絵」を入れると色数・情報量が増えてシンプルさが失われるので避ける
+- **画像内に文字・タイトルは一切入れない。** テキストを画像に重ねる運用はしていないので、見出し用の余白を確保する必要もない。画面いっぱいに構図を組んでよいが、画面端で図形が中途半端に切れないよう「カメラを引いて全体が収まるように」とプロンプトに明記する
+- **ノイズ・粒状感を明示的に禁止する一文を必ず入れる。** 「Absolutely smooth, uniform, noise-free flat color fields everywhere — no film grain, no static, no speckle, no dither pattern, no paper or canvas texture, no grunge, no visual noise of any kind.」のような文をプロンプトに含める（詳細は後述「ノイズ対策」）
+- 16:9、解像度2k、quality: high
+
+## 人物を入れる（任意、推奨）
+
+抽象的なモチーフだけでも成立するが、アイソメトリックイラストでよくある「腕組みして考えている人」のような簡素な人物を1体添えると画になりやすい。
+
+**人物はプロンプトの文章だけで指示しても質が安定しない（崩れた・のっぺりした人物になりがち）。** 検証の結果、Freepikストックの「よくあるアイソメ人物イラスト」を参照画像として `images_generate` の `references`（`type: "style"`）に渡すと、見慣れたアイソメ人物らしい質になることを確認済み。**人物を入れる場合は必ずこの方式を使う。**
+
+- リファレンスの選び方・使い方は `.claude/commands/blog-thumbnail-references.md` を参照。コンセプトに合うポーズを選び、`stock_download` → `creations_upload_image` → `images_generate` の `references` に `{ type: "style", identifier: ... }` として渡す
+- リファレンスは複数同時に渡せる（`references` は最大12件）。ポーズだけでなく物体側のリファレンスも組み合わせて構わない
+- プロンプトには「following the reference pose/silhouette」のようにポーズを踏襲する旨を書きつつ、色は必ずこのサイトのグリーン系パレットに変換するよう明記する（リファレンス画像の色をそのまま出さない）
+- 人物も他のモチーフと同じ塗り分けルールに従う：顔のパーツは描かない、単色〜2色のみ
+- 人物とモチーフの2要素構成になるので、全体の構図はシンプルに保つ（人物1体+モチーフ1つが基本）
+
+### モデル比較メモ（このシンプルなフラットアイソメ路線での結果）
+
+GPT 2 / Nano Banana 2 Pro (`imagen-nano-banana-2`) / Recraft V4.1 (`recraft-v4-1`) を同一プロンプトで比較した結果、**GPT 2が最も安定**していた：
+
+- Nano Banana 2 Pro：構図が画面端で切れやすい、面の塗り分けが崩れやすい
+- Recraft V4.1：フラットな板ではなく立方体（3D物体）化しやすい、面ごとの明度差が大きくなり単色ルールが崩れやすい
+- GPT 2：上記の問題が出にくく、指示への追従が一番良い。ただし後述の**粒状ノイズ**が乗る癖がある
+
+### ノイズ対策：プロンプト＋`images_upscale`（ultra-denoiser）を毎回セットで使う
+
+GPT 2の出力には、AI透かし由来と思われる細かい粒状ノイズが乗ることがある。プロンプト側の対策とあわせて、**生成後に必ず`images_upscale`のノイズ除去をかける**運用にしている。
+
+**1. プロンプト側の対策**：GPT系の画像モデルは「有機的・不規則な形状／粒子・霧・荒い質感」を含む指示でノイズが出やすく、「幾何学的で均一なフラット面」を明確に指示するとノイズが出にくい。プロンプトのスタイル定義に以下の一文を必ず含める：
+
+> Absolutely smooth, uniform, noise-free flat color fields everywhere — no film grain, no static, no speckle, no dither pattern, no paper or canvas texture, no grunge, no visual noise of any kind. Every surface must look like a clean flat vector shape, not photographic or textured.
+
+**2. 後処理側の対策（必須）**：これでもGPT 2は粒状ノイズが残ることが多いため、選んだ1枚に対して必ず `mcp__magnific__images_upscale` を `mode: "ultra-denoiser"`, `scale: "2x"` で実行する。色量子化（`scripts/clean-thumbnail.py`）より明確に良い結果で、継ぎ目線や細部を潰さずにノイズだけを除去できることを確認済み。`clean-thumbnail.py` はほぼ出番がなくなったが、万一denoiserでも取り切れない場合のフォールバックとして残してある。
+
+denoiser後は元の2倍サイズになるので、`scripts/finalize-thumbnail.py <slug> <denoise後の画像パス>` で元の解像度(2688x1520)に戻しつつ `src/assets/blog/<slug>.png` に保存し、AVIF/WebP/PNGの生成まで一括で行う（`generate-thumbnail-formats.py`は使わなくてよい。こちら1本で完結する）。
+
+**費用について**：`images_upscale`はMagnificの有料クレジットを消費する（premium機能）。1枚あたりの消費は軽微だが、無条件に毎回実行する前提で運用している。
+
+## コンセプト決め（何を描くか）
+
+スタイルよりもここが本質。記事の内容を直訳的に描く（サーバーラック、PCの画面など）のはNG。エディトリアルイラストの定石である**「見立て」（visual metaphor）**で考える：
+
+1. 記事の核となる皮肉・気づき・構造を一文にする
+2. それを抽象的なモチーフ（輪、球、フック、階段など）とスケールの誇張・反復に置き換える
+3. 「あ、これはあのことか」と一瞬で伝わる、単一の明快な絵にする（要素を詰め込みすぎない）
+
+例：「小さいベンダーロックインを避けたら、もっと大きなベンダーロックインに入った」→「小さな鎖の輪から飛び出したら、もっと大きな同じ鎖の輪に着地した」
+
+## 生成〜選定〜紐付けの手順
+
+1. 上記の「スタイル定義」をそのままプロンプトの後半に固定文として入れる
+2. コンセプト決めで作った一文を主語として先頭に置く
+3. 人物を入れる場合は `blog-thumbnail-references.md` からポーズを選び、リファレンス画像をアップロードして `identifier` を得ておく
+4. `images_generate` で `mode: gpt-2`, `aspectRatio: 16:9`, `resolution: 2k`, `quality: high`, **`count: 2`**（人物のリファレンスがあれば `references` も指定）として生成する
+5. `creations_wait` で完了させ、`url` を取得してダウンロードする
+6. **2枚を実際に目視して比較し、1枚選ぶ**。判断基準：
+   - 破綻していないか（形が崩れている、指示した3色パレットから逸脱している、意味不明なノイズが乗っている、図形が画面端で中途半端に切れている、余計な文字が入っている）
+   - コンセプト（見立て）が一目で伝わるか
+   - 全体の構図・バランスが破綻していないか
+   - どちらも決め手に欠ける場合は、プロンプトを調整して撮り直す（形状をより単純化する、構図の指示を具体化する等）
+7. 選んだ1枚（の `creationIdentifier`）に対して、**必ず** `images_upscale`（`mode: "ultra-denoiser"`, `scale: "2x"`）を実行する（上記「ノイズ対策」参照）。もう1枚は破棄してよい
+8. `creations_wait` で完了させ、denoise後の画像をダウンロードする
+9. `python scripts/finalize-thumbnail.py <slug> <denoise後の画像パス>` を実行する。元の解像度に戻して `src/assets/blog/<slug>.png` に保存し、`public/blog/<slug>.{avif,webp,png}` の生成まで一括で行う（サムネイルは`<picture>`でAVIF優先→WebPフォールバック→PNGフォールバックで配信する構成になっている。詳細は「サムネイルの配信方式」参照）
+10. 対象記事の frontmatter に `thumbnail: <slug>` を追加する（パスではなくbasenameのみ）
+11. コミットする（メッセージ例：`feat(blog): 〇〇記事のサムネイルを追加`）
+
+## サムネイルの配信方式（AVIF優先 / WebPフォールバック）
+
+astro:assetsの `<Image>`/`<Picture>` はSharpに依存するが、Sharpは`@astrojs/cloudflare`のワーカーバンドルと解決が噛み合わず、ビルドの「generating optimized images」ステップが `MissingSharp` で毎回失敗する（この構成に限った問題で、Sharp自体のインストールを直しても解消しなかった）。
+
+そのため、選んだPNGから `scripts/generate-thumbnail-formats.py`（内部はPillow。ffmpegは環境に無かったため代替）でAVIF/WebP/PNGを事前生成し、`public/blog/` に静的ファイルとして置く。frontmatterの `thumbnail` はそのbasenameだけを持ち、実際の配信は：
+
+- Astro側：`src/components/common/ThumbnailPicture.astro`（`<picture>`でAVIF→WebP→PNGの順にフォールバック）
+- トップページ（React/HomeStack）側：`MediaFrame.tsx` の `MediaVisual`（同じ3点セットを`<picture>`で配信）
+
+のどちらかを経由する。新しい記事を追加したときは、この2箇所が自動的に同じ静的ファイルを参照するので、`generate-thumbnail-formats.py` を実行してfrontmatterを紐付けるだけでよい。

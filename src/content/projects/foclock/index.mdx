@@ -1,0 +1,52 @@
+---
+title: Foclock
+draft: true
+meta:
+  date: 2026-05-12
+  duration: 2026.05〜現在 (Building)
+attributes:
+  roles:
+    - ui-design
+    - frontend-dev
+    - backend-dev
+  stack:
+    - React
+    - React Router v7
+    - Hono
+    - Cloudflare Workers
+    - Cloudflare D1
+    - Better Auth
+    - Stripe
+    - Drizzle ORM
+    - WXT
+    - Tailwind CSS
+    - Turborepo
+summary:
+  tagline: Focus + Lock + Clock
+  what: SNS や動画サイトなど「時間泥棒」になりがちなサイトをブロックする拡張機能。拡張機能 + Web + 管理画面 + API を Cloudflare 上に一人で組んでいます。
+  why: 時間を吸われがちなサイトを、ブラウザ側で断ち切れる形にするため。コア機能はすべて無料にしています。
+  now: 開発中・ストア未公開。$3 のライフタイム買い切り (サブスクなし) モデルで公開準備中です。
+---
+
+## 何を作っているか
+
+Focus + Lock + Clock。SNS や動画サイトなど「時間泥棒」になりがちなサイトをブロックする拡張機能です。AIChatClip と同じく Cloudflare 上に一人で構築していて、拡張機能本体 (WXT + React) に加えて、マーケティングサイト・管理画面・API を Cloudflare Workers に同居させています。
+
+```
+apps/
+  extension/   WXT + React (Chrome/Edge/Firefox)
+  web/         React Router v7 on Workers Static Assets (foclock.app)
+  admin/       React Router v7 on Workers Static Assets (admin.foclock.app)
+  api/         Hono on Cloudflare Workers (api.foclock.app)
+packages/
+  shared/      共通の型定義・定数
+  ui/          共通UIコンポーネント
+```
+
+認証は Better Auth (Google OAuth) で AIChatClip と同じ選定、課金は Stripe のライフタイム買い切り一本 (サブスクなし)。DB は Cloudflare D1 + Drizzle ORM です。
+
+## 設計上の判断: 同期にサーバーを噛ませない
+
+Pro 機能のクロスデバイス同期は、独自サーバーを経由せず `browser.storage.sync` (Chrome/Edge は Google、Firefox は Mozilla アカウントの同期領域) にそのまま乗せています。Foclock の API はこの同期に一切関与しません。**同期のためのサーバーとその運用を丸ごと持たずに済む** という判断です。
+
+> 現状は技術構成の現在地メモです。背景や意思決定の詳細は公開が近づいたら書き足します。

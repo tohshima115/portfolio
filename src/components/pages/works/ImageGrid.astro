@@ -1,0 +1,10 @@
+---
+/**
+ * 本文中で2枚の画像を並べるためのグリッド。PC は横並び、モバイルは縦積み。
+ * 子要素には Markdown の画像記法 (![alt](src)) も Figure コンポーネントも渡せる。
+ */
+---
+
+<div class="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-8 [&_figure]:my-0 [&_img]:w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:border [&_img]:border-foreground/10">
+    <slot />
+</div>

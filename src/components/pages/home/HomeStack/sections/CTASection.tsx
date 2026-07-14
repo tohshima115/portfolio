@@ -1,10 +1,9 @@
 import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { CornerLabel } from '../primitives/CornerLabel';
-import { GridLayer } from '../visuals/GridLayer';
 import { ScanLines } from '../visuals/ScanLines';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { CONTACT, xUrl } from '@/consts';
 
 const RINGS = [1200, 900, 600, 360];
 
@@ -12,6 +11,7 @@ export const CTASection: React.FC = () => {
     const ref = useRef<HTMLElement>(null);
     const reduced = useReducedMotion();
     const inView = useInView(ref, { once: true, amount: 0.4 });
+    const x = xUrl();
 
     return (
         <section
@@ -20,7 +20,6 @@ export const CTASection: React.FC = () => {
             className="relative w-full bg-background overflow-hidden"
         >
             <div className="relative w-full min-h-screen flex items-center justify-center py-32">
-                <GridLayer size={32} opacity={0.04} />
                 <SectionFrame inset={32} />
 
                 {/* 同心円 SVG */}
@@ -78,51 +77,22 @@ export const CTASection: React.FC = () => {
 
                 <ScanLines opacity={0.03} />
 
-                <div className="absolute top-6 left-6 md:top-8 md:left-12">
-                    <CornerLabel label="CONTACT / 04" id="04" />
-                </div>
-
                 <div className="relative z-10 max-w-3xl mx-auto px-6 md:px-12 text-center">
 
-                    <h2 className="font-sans font-bold text-foreground text-[clamp(1.75rem,4vw,3rem)] leading-[1.2] tracking-tight">
-                        <motion.span
-                            initial={reduced ? false : { opacity: 0, y: 16 }}
-                            animate={
-                                inView || reduced
-                                    ? { opacity: 1, y: 0 }
-                                    : { opacity: 0, y: 16 }
-                            }
-                            transition={{ duration: 0.7, delay: 0.15 }}
-                            className="block"
-                        >
-                            2026 年夏に今の仕事を辞めます。
-                        </motion.span>
-                        <motion.span
-                            initial={reduced ? false : { opacity: 0, y: 16 }}
-                            animate={
-                                inView || reduced
-                                    ? { opacity: 1, y: 0 }
-                                    : { opacity: 0, y: 16 }
-                            }
-                            transition={{ duration: 0.7, delay: 0.3 }}
-                            className="block mt-3 text-foreground/70"
-                        >
-                            その後のことは、探しながら決めています。
-                        </motion.span>
-                    </h2>
-
-                    <motion.p
+                    <motion.h2
                         initial={reduced ? false : { opacity: 0, y: 16 }}
                         animate={
                             inView || reduced
                                 ? { opacity: 1, y: 0 }
                                 : { opacity: 0, y: 16 }
                         }
-                        transition={{ duration: 0.7, delay: 0.5 }}
-                        className="mt-10 max-w-md mx-auto text-foreground/60 leading-relaxed text-sm md:text-base"
+                        transition={{ duration: 0.7, delay: 0.15 }}
+                        className="font-sans font-bold text-foreground text-[clamp(1.5rem,3.6vw,2.5rem)] leading-[1.4] tracking-tight max-w-lg mx-auto"
                     >
-                        連絡してみたいと思ったら、してみてください。
-                    </motion.p>
+                        お仕事の話でも、ちょっと雑談したいでも、遊びのお誘いでも。
+                        <br />
+                        何かあれば、気軽にコンタクトまで。
+                    </motion.h2>
 
                     <motion.div
                         initial={reduced ? false : { opacity: 0, y: 16 }}
@@ -139,7 +109,7 @@ export const CTASection: React.FC = () => {
                             className="inline-flex items-center gap-3 px-7 py-4 bg-foreground text-background hover:bg-accent hover:text-accent-foreground transition-colors"
                         >
                             <span>+</span>
-                            <span>Open Channel</span>
+                            <span>Contact</span>
                             <span aria-hidden>→</span>
                         </a>
                         <a
@@ -158,25 +128,29 @@ export const CTASection: React.FC = () => {
                         className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 font-mono text-xs tracking-[0.2em] text-muted-foreground"
                     >
                         <a
-                            href="https://github.com/tohshima115"
+                            href={CONTACT.github}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="hover:text-foreground transition-colors"
                         >
                             GITHUB ↗
                         </a>
+                        {x && (
+                            <>
+                                <span className="text-muted-foreground/30">/</span>
+                                <a
+                                    href={x}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:text-foreground transition-colors"
+                                >
+                                    X ↗
+                                </a>
+                            </>
+                        )}
                         <span className="text-muted-foreground/30">/</span>
                         <a
-                            href="https://x.com/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-foreground transition-colors"
-                        >
-                            X ↗
-                        </a>
-                        <span className="text-muted-foreground/30">/</span>
-                        <a
-                            href="mailto:tohshima115@gmail.com"
+                            href={`mailto:${CONTACT.email}`}
                             className="hover:text-foreground transition-colors"
                         >
                             EMAIL
