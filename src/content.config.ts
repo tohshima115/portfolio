@@ -57,6 +57,8 @@ const projects = defineCollection({
             question: z.string(),
             answer: z.string(),
             hero: image().optional(),
+            // ハブの成果物マップ(ChapterCard)に出す小さめの引き画像
+            thumbnail: image().optional(),
             // 執筆中の章。ルーティング/一覧から除外される
             draft: z.boolean().default(false),
         }).optional(),
