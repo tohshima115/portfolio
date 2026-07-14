@@ -5,6 +5,10 @@
     "main": "@astrojs/cloudflare/entrypoints/server",
     "compatibility_date": "2026-02-07",
     "compatibility_flags": ["nodejs_compat"],
+    // @astrojs/cloudflare がビルド時に生成する dist/server/wrangler.json には
+    // routes フィールドが引き継がれないため、カスタムドメイン(toyoshima.dev /
+    // www.toyoshima.dev)はダッシュボード or Cloudflare API で直接 Worker に
+    // 紐付け済み(Workers & Pages > portfolio > Domains & Routes)。
     "assets": {
         "directory": "./dist",
         "binding": "ASSETS"
