@@ -1,0 +1,24 @@
+---
+/**
+ * 本文中から他の章へ飛ぶインラインリンク。
+ * to は "<projectSlug>/<chapterSlug>" 形式 (例: "swept/logo")。
+ */
+import { getCollection } from "astro:content";
+import { chapterSlugOf, projectSlugOf } from "@/utils/works";
+
+interface Props {
+    to: string;
+}
+
+const { to } = Astro.props;
+const entries = await getCollection("projects");
+const entry = entries.find((e) => e.id === to);
+
+if (!entry) {
+    throw new Error(`ChapterLink: chapter "${to}" not found`);
+}
+
+const href = `/works/${projectSlugOf(entry)}/${chapterSlugOf(entry)}`;
+---
+
+<a href={href}>{entry.data.title}</a>
