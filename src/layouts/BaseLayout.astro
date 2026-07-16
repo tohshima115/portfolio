@@ -3,6 +3,7 @@ import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
+import SiteFooter from "../components/common/SiteFooter.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
 import { ogImagePath } from "../utils/og-path";
 import { CONTACT, xUrl } from "../consts";
@@ -107,6 +108,7 @@ const personSchema = {
     >
         <SiteHeader />
         <slot />
+        <SiteFooter />
         <MarkdownActions client:load transition:persist="md-actions" />
         <WebGLTransition
             client:only="react"

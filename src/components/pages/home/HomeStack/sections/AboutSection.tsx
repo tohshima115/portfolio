@@ -65,9 +65,11 @@ export const AboutSection: React.FC = () => {
                             <div className="mt-10">
                                 <a
                                     href="/about"
-                                    className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
+                                    className="group inline-flex items-center gap-3 rounded-full border border-foreground/25 px-6 py-3 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:bg-foreground hover:text-background hover:border-foreground transition-colors"
                                 >
-                                    <span className="text-accent">+</span>
+                                    <span className="text-accent group-hover:text-background transition-colors">
+                                        +
+                                    </span>
                                     <span>Read Full About</span>
                                     <span aria-hidden>→</span>
                                 </a>

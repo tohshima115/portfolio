@@ -7,6 +7,7 @@ import { HomeIntro } from "../components/pages/home/HomeIntro";
 import { HomeStack } from "../components/pages/home/HomeStack";
 import WebGLTransition from "../components/common/WebGLTransition";
 import SiteHeader from "../components/common/SiteHeader.astro";
+import SiteFooter from "../components/common/SiteFooter.astro";
 import { MarkdownActions } from "../components/common/MarkdownActions";
 import { SmoothScroll } from "../components/common/SmoothScroll";
 import { ogImagePath } from "../utils/og-path";
@@ -198,6 +199,7 @@ const personSchema = {
 		</div>
 		<HomeIntro client:only="react" />
 		<HomeStack client:load blogPosts={latestBlogPosts} />
+		<SiteFooter />
 		<MarkdownActions client:load transition:persist="md-actions" />
 		<WebGLTransition
 			client:only="react"
