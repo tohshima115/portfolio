@@ -5,6 +5,7 @@ import { WorksSection } from './sections/WorksSection';
 import { BlogSection, type BlogPostItem } from './sections/BlogSection';
 import { AboutSection } from './sections/AboutSection';
 import { CTASection } from './sections/CTASection';
+import { HomeFooter } from './sections/HomeFooter';
 
 // HomeStack: Hero 直下のネイティブ縦スクロール本体。
 // StackHero → Works → Blog → About → CTA の構成を縦に並べる。
@@ -94,6 +95,7 @@ export const HomeStack: React.FC<Props> = ({ blogPosts = [] }) => {
             <BlogSection posts={blogPosts} />
             <AboutSection />
             <CTASection />
+            <HomeFooter />
         </main>
     );
 };
