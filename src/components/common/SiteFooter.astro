@@ -1,0 +1,192 @@
+---
+import { CONTACT, xUrl } from "@/consts";
+
+// 全ページ共通のフッター。
+// Hero (トップのファーストビュー) の背景は「下中央起点のドーム型グラデーションで、
+// 上に行くほど暗くなる (上=黒 / 下=背景色)」。フッターはそれを上下そのまま反転させ、
+// 起点を上中央にした「上=背景色 / 下に行くほど暗くなる」グラデーションにする。
+// 上端は直上セクション (背景色) と継ぎ目なくつながり、下端は全幅で黒へ沈む。
+// 暗い下半分に白文字でナビ / SNS / コピーライトを載せる。
+
+// Hero の stop (bg 0 / g2 34 / g3 47 / g4 68 / g5 95 / g6 100) をそのまま使い、
+// 起点だけ下中央 (50% 100%) → 上中央 (50% 0%) に移した＝Hero の上下反転。
+const FOOTER_GRADIENT =
+    "radial-gradient(ellipse 180% 90% at 50% 0%, " +
+    "var(--color-background) 0%, " +
+    "var(--color-hero-gradient-2) 34%, " +
+    "var(--color-hero-gradient-3) 47%, " +
+    "var(--color-hero-gradient-4) 68%, " +
+    "var(--color-hero-gradient-5) 95%, " +
+    "var(--color-hero-gradient-6) 100%)";
+
+const NAV = [
+    { href: "/", label: "Home" },
+    { href: "/works", label: "Works" },
+    { href: "/blog", label: "Blog" },
+    { href: "/about", label: "About" },
+    { href: "/contact", label: "Contact" },
+];
+
+const x = xUrl();
+const year = new Date().getFullYear();
+---
+
+<footer class="relative w-full overflow-hidden bg-background text-white">
+    {/* 反転グラデーション */}
+    <div
+        aria-hidden="true"
+        class="absolute inset-0"
+        style={{ background: FOOTER_GRADIENT }}
+    >
+    </div>
+    {/* グレインノイズ (バンディング潰し)。canvas 生成した noise を下のスクリプトで敷く */}
+    <div
+        data-footer-grain
+        aria-hidden="true"
+        class="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.1]"
+        style="background-repeat: repeat; background-size: 256px 256px;"
+    >
+    </div>
+    {/* 上端を直上セクションの背景色に確実に収束させて継ぎ目を消す */}
+    <div
+        aria-hidden="true"
+        class="absolute inset-x-0 top-0 h-[22vh]"
+        style="background: linear-gradient(to bottom, var(--color-background) 0%, transparent 90%);"
+    >
+    </div>
+
+    <div class="relative z-10 px-6 md:px-12 pt-[17vh] md:pt-[22vh] pb-10">
+        <div class="max-w-5xl mx-auto">
+            <div
+                class="flex flex-col gap-12 md:flex-row md:items-end md:justify-between"
+            >
+                {/* Wordmark + one-liner */}
+                <div>
+                    <p
+                        class="font-black tracking-tight leading-none text-4xl md:text-6xl"
+                    >
+                        TOYOSHIMA
+                    </p>
+                    <p
+                        class="mt-3 font-mono text-2xs md:text-xs tracking-[0.3em] uppercase text-white/60"
+                    >
+                        Designer / Engineer
+                    </p>
+                </div>
+
+                {/* Nav + Social */}
+                <div class="flex flex-col gap-10 sm:flex-row sm:gap-16">
+                    <nav aria-label="Footer">
+                        <p
+                            class="font-mono text-2xs tracking-[0.3em] uppercase text-white/40 mb-4"
+                        >
+                            Sitemap
+                        </p>
+                        <ul class="space-y-2.5">
+                            {
+                                NAV.map((item) => (
+                                    <li>
+                                        <a
+                                            href={item.href}
+                                            class="font-sans text-sm tracking-[0.08em] text-white/80 hover:text-white transition-colors"
+                                        >
+                                            {item.label}
+                                        </a>
+                                    </li>
+                                ))
+                            }
+                        </ul>
+                    </nav>
+
+                    <div>
+                        <p
+                            class="font-mono text-2xs tracking-[0.3em] uppercase text-white/40 mb-4"
+                        >
+                            Elsewhere
+                        </p>
+                        <ul class="space-y-2.5 font-mono text-xs tracking-[0.15em]">
+                            <li>
+                                <a
+                                    href={CONTACT.github}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-white/80 hover:text-white transition-colors"
+                                    >GITHUB ↗</a
+                                >
+                            </li>
+                            {
+                                x && (
+                                    <li>
+                                        <a
+                                            href={x}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="text-white/80 hover:text-white transition-colors"
+                                        >
+                                            X ↗
+                                        </a>
+                                    </li>
+                                )
+                            }
+                            <li>
+                                <a
+                                    href={`mailto:${CONTACT.email}`}
+                                    class="text-white/80 hover:text-white transition-colors"
+                                    >EMAIL</a
+                                >
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* Bottom bar */}
+            <div
+                class="mt-16 pt-6 border-t border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            >
+                <p
+                    class="font-mono text-2xs tracking-[0.2em] uppercase text-white/40"
+                >
+                    © {year} Shogo Toyoshima
+                </p>
+                <p
+                    class="font-mono text-2xs tracking-[0.2em] uppercase text-white/30"
+                >
+                    Built with Astro · Cloudflare
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // canvas でランダムなグレースケールノイズを生成し、フッターの grain 層に敷く。
+    // Hero の GrainLayer と同じ手法。View Transitions で DOM が入れ替わるたびに
+    // 走らせたいので astro:page-load で毎回実行する (初回ロードでも発火する)。
+    function paintFooterGrain() {
+        const el = document.querySelector<HTMLElement>("[data-footer-grain]");
+        if (!el || el.dataset.painted === "1") return;
+
+        const size = 256;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const data = ctx.createImageData(size, size);
+        for (let i = 0; i < data.data.length; i += 4) {
+            const v = (Math.random() * 255) | 0;
+            data.data[i] = v;
+            data.data[i + 1] = v;
+            data.data[i + 2] = v;
+            data.data[i + 3] = 255;
+        }
+        ctx.putImageData(data, 0, 0);
+        el.style.backgroundImage = `url(${canvas.toDataURL()})`;
+        el.dataset.painted = "1";
+    }
+
+    paintFooterGrain();
+    document.addEventListener("astro:page-load", paintFooterGrain);
+</script>
