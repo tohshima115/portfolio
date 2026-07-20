@@ -23,8 +23,13 @@ export const LogoIntroOverlay = () => {
             {mounted && (
                 <motion.div
                     aria-hidden
-                    className="fixed inset-0 z-[70] flex items-center justify-center bg-white"
-                    style={{ pointerEvents: fadingOut ? 'none' : 'auto' }}
+                    className="fixed inset-0 z-[70] flex items-center justify-center"
+                    style={{
+                        pointerEvents: fadingOut ? 'none' : 'auto',
+                        // #hero-boot-overlay と同じ地色にして、boot overlay が
+                        // フェードアウトするときに背景が切り替わって見えないようにする。
+                        backgroundColor: 'var(--color-background)',
+                    }}
                     initial={{ opacity: 1 }}
                     animate={{ opacity: fadingOut ? 0 : 1 }}
                     transition={{ duration: FADE_MS / 1000, ease: 'easeOut' }}
