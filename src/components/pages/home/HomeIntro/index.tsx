@@ -14,49 +14,42 @@ const readSkipIntroFlag = (): boolean => {
     );
 };
 
-// #hero-boot-overlay (index.astro が SSR HTML に置く BOOT_SEQUENCE) を消すまでの待ち時間。
-// HomeIntro は client:only なので、hydrate 完了までの一瞬 HomeStack が覗くのを覆う目的。
-const BOOT_MIN_VISIBLE_MS = 300;
-const BOOT_FADE_DURATION_MS = 250;
-const BOOT_MIN_VISIBLE_SKIP_MS = 150;
-const BOOT_FADE_DURATION_SKIP_MS = 120;
+// #hero-boot-overlay (index.astro が SSR HTML に置く無地の覆い) を消すまでの待ち時間。
+// スプラッシュを出さないケース (2 回目以降 / reduced motion) でのみ使う。
+const BOOT_MIN_VISIBLE_MS = 150;
+const BOOT_FADE_DURATION_MS = 120;
 
 export const HomeIntro = () => {
-    const [skipIntro] = useState<boolean>(readSkipIntroFlag);
-    const [reducedMotion, setReducedMotion] = useState(false);
-    const [bootDone, setBootDone] = useState<boolean>(() => {
-        if (typeof window === 'undefined') return false;
-        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
-        return false;
-    });
+    // スプラッシュを出すかどうかは mount 時点で確定させる。
+    // ここを「boot overlay が消えてから」にすると、一度サイトが見えた後に
+    // 白い面が被さってロゴが始まる = 演出がサイト表示より後に見える、という
+    // 順序の破綻が起きる (実際に起きていた)。
+    const [showLogoIntro] = useState<boolean>(
+        () => !readSkipIntroFlag() &&
+            (typeof window === 'undefined' ||
+                !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches),
+    );
 
     useEffect(() => {
         const overlay = document.getElementById('hero-boot-overlay');
-        if (bootDone) {
-            if (overlay) overlay.style.display = 'none';
+        if (!overlay) return;
+
+        // スプラッシュを出す場合、この時点で LogoIntroOverlay が同じ地色で
+        // 全面を覆っている。boot overlay はもう用済みなのでフェードさせず
+        // 即座に消す (フェードするとその間サイトが透けてしまう)。
+        if (showLogoIntro) {
+            overlay.style.display = 'none';
             return;
         }
-        const minVisible = skipIntro ? BOOT_MIN_VISIBLE_SKIP_MS : BOOT_MIN_VISIBLE_MS;
-        const fadeDuration = skipIntro ? BOOT_FADE_DURATION_SKIP_MS : BOOT_FADE_DURATION_MS;
-        const fadeTimer = window.setTimeout(() => {
-            if (overlay) overlay.style.opacity = '0';
-            const doneTimer = window.setTimeout(() => {
-                if (overlay) overlay.style.display = 'none';
-                setBootDone(true);
-            }, fadeDuration);
-            return () => window.clearTimeout(doneTimer);
-        }, minVisible);
-        return () => window.clearTimeout(fadeTimer);
-    }, [bootDone, skipIntro]);
 
-    useEffect(() => {
-        if (typeof window === 'undefined' || !window.matchMedia) return;
-        const rm = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const u = () => setReducedMotion(rm.matches);
-        u();
-        rm.addEventListener('change', u);
-        return () => rm.removeEventListener('change', u);
-    }, []);
+        const fadeTimer = window.setTimeout(() => {
+            overlay.style.opacity = '0';
+            window.setTimeout(() => {
+                overlay.style.display = 'none';
+            }, BOOT_FADE_DURATION_MS);
+        }, BOOT_MIN_VISIBLE_MS);
+        return () => window.clearTimeout(fadeTimer);
+    }, [showLogoIntro]);
 
     // 同一オリジンリンクは WebGL トランジションへ
     const handleLinkClick = (e: React.MouseEvent) => {
@@ -81,9 +74,7 @@ export const HomeIntro = () => {
         }
     };
 
-    const showLogoIntro = bootDone && !skipIntro && !reducedMotion;
-
-    // HeroSection は bootDone を待たず常時マウントする。
+    // HeroSection はスプラッシュの裏で常時マウントする。
     // HomeStack (WorksSection) の GSAP ScrollTrigger は mount 直後にレイアウトを
     // 計測するため、Hero の高さがここで確定していないと pin の start/end が
     // ズレて WorksSection が意図せず画面最上部に固定表示されてしまう。
