@@ -45,6 +45,17 @@
   }
 }
 
+/* HomeIntro: Hero 背景の星が扇状グラデーションの中心 (下端中央) を軸に
+   ゆっくり回転する。HeroStarField.tsx から参照。 */
+@keyframes hero-star-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* -----------------------------------------------------------------------------
    HomeStack: scroll-driven reveal の初期状態
    GSAP ScrollTrigger で opacity / transform をアニメするまで隠しておく。

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { HeroGradientBackground } from './HeroGradientBackground';
+import { HeroStarField } from './HeroStarField';
 import { LOGO_MARK_TOTAL_MS } from './LogoMark';
 import { LOGO_INTRO_HOLD_MS } from './LogoIntroOverlay';
 
@@ -29,6 +30,7 @@ export const HeroSection = ({ showLogoIntro = false }: Props) => {
     return (
         <section className="relative w-full h-[100dvh] flex items-center justify-center overflow-hidden text-white">
             <HeroGradientBackground />
+            <HeroStarField />
 
             <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
                 <motion.h1
