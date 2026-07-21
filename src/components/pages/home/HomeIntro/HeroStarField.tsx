@@ -18,9 +18,11 @@ interface Star {
 const PIVOT_X = 50;
 const PIVOT_Y = 132;
 
-const STAR_COUNT = 100;
+const STAR_COUNT = 160;
 const RADIUS_MIN = 45; // %
 const RADIUS_MAX = 150; // %
+const SIZE_MIN = 1; // px
+const SIZE_MAX = 4.5; // px
 
 // SSR/CSR で配置がズレないよう、Math.random ではなく固定シードの疑似乱数で
 // モジュール読み込み時に 1 度だけ生成する (mulberry32)。
@@ -39,10 +41,13 @@ const generateStars = (): Star[] => {
     return Array.from({ length: STAR_COUNT }, () => {
         const angle = rand() * Math.PI * 2;
         const radius = RADIUS_MIN + rand() * (RADIUS_MAX - RADIUS_MIN);
+        // 大半は小粒に寄せつつ、たまに一回り大きい粒も混ぜたいので
+        // 3 乗で小さい側に偏らせた乱数を使う (稀に SIZE_MAX 近くまで届く)。
+        const sizeBias = Math.pow(rand(), 3);
         return {
             top: PIVOT_Y - radius * Math.sin(angle),
             left: PIVOT_X + radius * Math.cos(angle),
-            size: 1 + rand() * 1.4,
+            size: SIZE_MIN + sizeBias * (SIZE_MAX - SIZE_MIN),
             opacity: 0.3 + rand() * 0.5,
         };
     });
