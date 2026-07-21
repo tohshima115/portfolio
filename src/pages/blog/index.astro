@@ -1,49 +1,44 @@
 ---
 import BaseLayout from "@/layouts/BaseLayout.astro";
 import { getCollection } from "astro:content";
-import { SystemGraph } from "@/components/common/SystemGraph";
-import ThumbnailPicture from "@/components/common/ThumbnailPicture.astro";
+import BlogHeader from "@/components/pages/blog/BlogHeader.astro";
+import BlogTagFilter from "@/components/pages/blog/BlogTagFilter.astro";
+import BlogPostList from "@/components/pages/blog/BlogPostList.astro";
+import BlogRelationGraph from "@/components/pages/blog/BlogRelationGraph.astro";
+import type { GraphLink, GraphNode } from "@/components/common/SystemGraph";
 
 const posts = (await getCollection("blog")).sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
 );
 
-// Generate Graph Data combining Blogs and Tags
-const graphNodes: any[] = [];
-const graphLinks: any[] = [];
-const tagsSet = new Set<string>();
+// 記事ノードとタグノードの二部グラフ
+const graphNodes: GraphNode[] = [];
+const graphLinks: GraphLink[] = [];
+const seenTags = new Set<string>();
 
-posts.forEach(post => {
+posts.forEach((post) => {
     const postId = `blog-${post.id}`;
     graphNodes.push({
         id: postId,
         name: post.data.title,
-        type: 'blog',
-        url: `/blog/${post.id}`
+        type: "blog",
+        url: `/blog/${post.id}`,
     });
 
-    const stackTags = post.data.tags || [];
-    stackTags.forEach((tech: string) => {
-        const tagId = `tag-${tech}`;
-        if (!tagsSet.has(tagId)) {
-            tagsSet.add(tagId);
+    (post.data.tags ?? []).forEach((tag: string) => {
+        const tagId = `tag-${tag}`;
+        if (!seenTags.has(tagId)) {
+            seenTags.add(tagId);
             graphNodes.push({
                 id: tagId,
-                name: tech,
-                type: 'tag',
-                url: `/blog?tag=${encodeURIComponent(tech)}`
+                name: tag,
+                type: "tag",
+                url: `/blog?tag=${encodeURIComponent(tag)}`,
             });
         }
-        graphLinks.push({
-            source: postId,
-            target: tagId
-        });
+        graphLinks.push({ source: postId, target: tagId });
     });
 });
-
-// サムネイル未設定の記事にも Works の WorkVisual と同じ手触りのプレースホルダーを出す。
-// アクセント/ロゴ色を交互にした控えめなグラデーション + 頭文字
-const fallbackTint = (index: number) => (index % 2 === 0 ? 'var(--color-accent)' : 'var(--color-logo)');
 ---
 
 <BaseLayout
@@ -52,192 +47,15 @@ const fallbackTint = (index: number) => (index % 2 === 0 ? 'var(--color-accent)'
 >
     <div class="min-h-screen bg-background text-foreground">
         <main class="mx-auto w-full max-w-5xl px-6 pb-24 md:px-8">
-
-            <!-- Header: Works と同じ breadcrumb + 中央揃え見出しの型に揃える -->
-            <header class="pt-16 pb-10 text-center md:pt-20 md:pb-14">
-                <nav
-                    aria-label="Breadcrumb"
-                    class="mb-3 flex items-center justify-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
-                >
-                    <a href="/" class="transition-colors hover:text-accent">Home</a>
-                    <span class="text-border">/</span>
-                    <span class="text-foreground">Blog</span>
-                </nav>
-                <h1 class="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
-                    Blog
-                </h1>
-            </header>
-
-            <!-- Active Filter Banner -->
-            <div id="filter-banner" class="hidden mb-8 flex items-center gap-2">
-                <span class="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">Filter</span>
-                <span id="filter-tag-name" class="inline-flex items-center rounded-full border border-accent/40 bg-accent/10 px-3 py-1 font-mono text-2xs uppercase tracking-wider text-foreground"></span>
-                <button id="filter-clear" type="button" class="ml-1 inline-flex items-center gap-1 font-mono text-2xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-accent cursor-pointer">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    Clear
-                </button>
-            </div>
+            <BlogHeader />
+            <BlogTagFilter />
 
             <div class="flex flex-col gap-10 lg:flex-row lg:gap-14">
-
-                <!-- Left: Post Grid -->
                 <div class="min-w-0 flex-1">
-                    <div id="blog-grid">
-                        {posts.length > 0 ? (
-                            <div class="flex flex-col gap-12">
-                                {posts.map((post, index) => {
-                                    const pubDateObj = new Date(post.data.pubDate);
-                                    const formattedDate = pubDateObj.toLocaleDateString("ja-JP", {
-                                        year: "numeric",
-                                        month: "2-digit",
-                                        day: "2-digit",
-                                    });
-                                    const isoDate = pubDateObj.toISOString();
-                                    const tags = post.data.tags || [];
-
-                                    return (
-                                        <a
-                                            href={`/blog/${post.id}`}
-                                            class="group block blog-card animate-card-in"
-                                            style={`animation-delay: ${Math.min(index * 0.05, 0.4)}s`}
-                                            data-tags={JSON.stringify(tags.map((t: string) => t.toLowerCase()))}
-                                        >
-                                            <!-- Media Frame: Works のヒーロー枠と同じ角丸・枠線・比率 -->
-                                            <div class="relative aspect-video overflow-hidden rounded-2xl border border-foreground/15 bg-foreground/[0.02] transition-colors duration-300 group-hover:border-accent/50">
-                                                {post.data.thumbnail ? (
-                                                    <ThumbnailPicture
-                                                        name={post.data.thumbnail}
-                                                        class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                                                    />
-                                                ) : (
-                                                    <div
-                                                        class="absolute inset-0 grid place-items-center"
-                                                        style={`background: radial-gradient(110% 110% at 50% 10%, color-mix(in oklab, ${fallbackTint(index)} 18%, var(--color-background)) 0%, var(--color-background) 55%, color-mix(in oklab, var(--color-foreground) 5%, var(--color-background)) 100%);`}
-                                                    >
-                                                        <span class="font-sans text-5xl font-black tracking-tight text-foreground/20">
-                                                            {post.data.title.charAt(0)}
-                                                        </span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <!-- Text: Works の 見出し→メタ→本文 の順に揃える -->
-                                            <div class="mt-4 flex flex-col items-start gap-1.5">
-                                                <h2 class="font-sans font-black text-foreground leading-tight tracking-tight text-lg transition-colors duration-300 group-hover:text-accent md:text-xl">
-                                                    {post.data.title}
-                                                </h2>
-                                                <p class="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">
-                                                    <time datetime={isoDate}>{formattedDate}</time>
-                                                    {tags.length > 0 && (
-                                                        <>
-                                                            <span class="mx-2 text-border">/</span>
-                                                            {tags.join(' · ')}
-                                                        </>
-                                                    )}
-                                                </p>
-                                                <p class="font-sans text-sm text-foreground/70 leading-relaxed line-clamp-2">
-                                                    {post.data.description}
-                                                </p>
-                                            </div>
-                                        </a>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div class="py-20 text-center border border-dashed border-foreground/15 rounded-2xl">
-                                <p class="font-mono text-sm text-muted-foreground uppercase tracking-wider">
-                                    No posts yet.
-                                </p>
-                            </div>
-                        )}
-                        <!-- No results message -->
-                        <div id="no-results" class="hidden py-16 text-center font-mono text-sm text-muted-foreground uppercase tracking-wider">
-                            No posts found for this tag.
-                        </div>
-                    </div>
+                    <BlogPostList posts={posts} />
                 </div>
-
-                <!-- Right: Relation Graph -->
-                <aside class="h-[360px] w-full flex-shrink-0 self-start overflow-hidden rounded-2xl border border-foreground/15 bg-foreground/[0.02] lg:sticky lg:top-8 lg:h-[420px] lg:w-[380px] xl:w-[420px]">
-                    {posts.length > 0 && (
-                        <SystemGraph
-                            client:only="react"
-                            nodes={graphNodes}
-                            links={graphLinks}
-                            chrome={false}
-                        />
-                    )}
-                </aside>
+                <BlogRelationGraph nodes={graphNodes} links={graphLinks} />
             </div>
         </main>
     </div>
 </BaseLayout>
-
-<style>
-    .animate-card-in {
-        animation: cardIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-    }
-    @keyframes cardIn {
-        0% { opacity: 0; transform: translateY(10px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    @media (prefers-reduced-motion: reduce) {
-        .animate-card-in { animation: none; }
-    }
-
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-</style>
-
-<script>
-    function applyFilter(tagName: string | null) {
-        const banner = document.getElementById('filter-banner');
-        const tagLabel = document.getElementById('filter-tag-name');
-        const noResults = document.getElementById('no-results');
-        const cards = document.querySelectorAll('.blog-card') as NodeListOf<HTMLElement>;
-
-        if (!tagName) {
-            banner?.classList.add('hidden');
-            cards.forEach(card => {
-                card.style.display = '';
-            });
-            noResults?.classList.add('hidden');
-            return;
-        }
-
-        banner?.classList.remove('hidden');
-        if (tagLabel) tagLabel.textContent = tagName;
-
-        let visibleCount = 0;
-        const lowerTag = tagName.toLowerCase();
-        cards.forEach(card => {
-            const tags: string[] = JSON.parse(card.dataset.tags || '[]');
-            if (tags.includes(lowerTag)) {
-                card.style.display = '';
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        if (visibleCount === 0) {
-            noResults?.classList.remove('hidden');
-        } else {
-            noResults?.classList.add('hidden');
-        }
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const initialTag = params.get('tag');
-    if (initialTag) {
-        applyFilter(initialTag);
-    }
-
-    document.getElementById('filter-clear')?.addEventListener('click', () => {
-        window.location.href = '/blog';
-    });
-</script>
