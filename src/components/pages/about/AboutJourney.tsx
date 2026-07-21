@@ -73,7 +73,7 @@ const CareerPath: React.FC = () => {
 
     return (
         <section className="mb-20">
-            <SectionHead eyebrow="+ CAREER_PATH" title="これまでの流れ" />
+            <SectionHead title="これまでの流れ" />
 
             <ol className="relative mt-8 max-w-3xl">
                 {/* 背骨。読み込み時に上から伸びる。ドット (w-[18px], left-0 起点) の
@@ -165,7 +165,7 @@ const CareerPath: React.FC = () => {
 
 const ExploreMore: React.FC = () => (
     <section className="mb-16">
-        <SectionHead eyebrow="+ ELSEWHERE" title="もっと知りたい人へ" />
+        <SectionHead title="もっと知りたい人へ" />
 
         <div className="mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
             <a
@@ -199,13 +199,10 @@ const ExploreMore: React.FC = () => (
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SectionHead: React.FC<{ eyebrow: string; title: string }> = ({ eyebrow, title }) => (
-    <div>
-        <p className="mb-3 font-mono text-2xs uppercase tracking-[0.3em] text-accent">{eyebrow}</p>
-        <h2 className="border-l-4 border-accent pl-4 text-2xl font-bold tracking-tight md:text-3xl">
-            {title}
-        </h2>
-    </div>
+const SectionHead: React.FC<{ title: string }> = ({ title }) => (
+    <h2 className="border-l-4 border-accent pl-4 text-2xl font-bold tracking-tight md:text-3xl">
+        {title}
+    </h2>
 );
 
 export default AboutJourney;
