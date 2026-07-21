@@ -2,7 +2,7 @@
 title: "OOUIの本を読んでいたのに、使いにくいUIに気づけなかった話"
 description: "バイト先の基幹システム刷新で目撃した、「慣れ」がいかに認知を歪めるか。"
 pubDate: 2026-05-21
-tags: ["design", "career"]
+tags: ["design", "career", "ooui"]
 thumbnail: ooui-blind-spot
 ---
 

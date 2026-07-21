@@ -2,7 +2,7 @@
 title: "Claude Codeにクソみたいなhookを書かせて、個人開発のバカデカいコミット問題をなんとかしている話"
 description: "個人開発で巨大コミットが量産されがちな問題を、Claude Codeのstop hookで力技解決している話。"
 pubDate: 2026-05-08
-tags: ["vibe-coding", "dev", "ai"]
+tags: ["vibe-coding", "dev", "ai", "claude-code", "git"]
 thumbnail: claude-code-hook-commit
 ---
 

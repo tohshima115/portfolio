@@ -2,7 +2,7 @@
 title: "jQueryが現役のWeb制作チームにAstroを導入したら、割とハマった話"
 description: "フレームワーク未使用・jQuery現役のチームに自分がAstroを提案して通った話。なぜAstroだったのか、なぜNext.jsじゃなかったのか。"
 pubDate: 2026-05-02
-tags: ["dev", "career"]
+tags: ["dev", "career", "astro"]
 thumbnail: astro-for-legacy-team
 ---
 

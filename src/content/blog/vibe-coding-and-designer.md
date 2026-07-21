@@ -2,7 +2,7 @@
 title: "「いい感じにして」で全然いい感じじゃないものが来てから気づいたこと"
 description: "トップページをAIにお任せしたら、思ってたのと全然違うものが上がってきた。そこから自分とAIの関係と、デザイナーってなんだっけという話になった。"
 pubDate: 2026-04-14
-tags: ["design", "vibe-coding", "ai"]
+tags: ["design", "vibe-coding", "ai", "design-process"]
 thumbnail: vibe-coding-and-designer
 ---
 

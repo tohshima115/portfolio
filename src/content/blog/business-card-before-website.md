@@ -2,7 +2,7 @@
 title: "ポートフォリオサイトが進捗80%で止まってたのに、名刺は1日で終わった話"
 description: "サイト制作がずっと停滞していたので気分転換に名刺デザインを作ってみたら1日で完成。順番を間違えたなと後から気づいた話です。"
 pubDate: 2026-07-05
-tags: ["design", "career"]
+tags: ["design", "career", "branding"]
 thumbnail: business-card-before-website
 ---
 

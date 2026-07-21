@@ -2,7 +2,7 @@
 title: "カジュアル面談を重ねるほど、受託開発が個人開発に見えてきた話"
 description: "転職活動でカジュアル面談を受けるうちに、受託開発の現場がどんどん個人開発に近づいているように見えてきました。数社から見えた範囲での所感です。"
 pubDate: 2026-07-16
-tags: ["career", "dev"]
+tags: ["career", "dev", "job-hunting", "industry-trends"]
 thumbnail: fewer-people-per-project
 ---
 

@@ -2,7 +2,7 @@
 title: "IT用語を聞かれると早口オタクになってしまう癖、いい加減直したい"
 description: "「Dockerなんで入れるんですか？」と聞かれてPythonのバージョン管理の話まで始めてしまった自戒の話。"
 pubDate: 2026-05-15
-tags: ["career"]
+tags: ["career", "communication"]
 thumbnail: it-hayakuchi-otaku
 ---
 

@@ -2,7 +2,7 @@
 title: "熱38℃でAtCoderデビューしてから、3ヶ月経ちました"
 description: "夏風邪で高熱を出しながら初参加したAtCoder、あれから毎週土曜続いてます。5回目でついにD問題が解けた話。"
 pubDate: 2026-07-05
-tags: ["dev", "career"]
+tags: ["dev", "career", "atcoder"]
 thumbnail: atcoder-continued-fever-debut
 ---
 

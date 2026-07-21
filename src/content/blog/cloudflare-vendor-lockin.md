@@ -2,7 +2,7 @@
 title: "ベンダーロックインを避けるためにCloudflareを選んだら、Cloudflareにベンダーロックインされていた"
 description: "コードは別にどこでも動く。でもCloudflare以外を選ぶ気がしない。これベンダーロックインじゃないのか、という話。"
 pubDate: 2026-04-24
-tags: ["dev", "cloudflare"]
+tags: ["dev", "cloudflare", "architecture"]
 thumbnail: cloudflare-vendor-lockin
 ---
 

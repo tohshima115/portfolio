@@ -2,7 +2,7 @@
 title: "全然使われなかった社内ツールを作って、人の仕事を奪う怖さを知った話"
 description: "先輩の売上管理表を作り直したら誰にも使われず、単純作業を自動化したツールはめちゃくちゃ感謝された。同じ「便利にする」でも受け入れられ方が全然違った話。"
 pubDate: 2026-07-09
-tags: ["career", "dev"]
+tags: ["career", "dev", "internal-tools"]
 thumbnail: internal-tools-that-get-used
 ---
 

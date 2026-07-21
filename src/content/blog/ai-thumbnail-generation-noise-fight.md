@@ -2,7 +2,7 @@
 title: "ブログのサムネイルをAIで自動生成できるようにしたら、ノイズとの戦いになった話"
 description: "サムネイル画像をClaude Codeのスキルとして自動化してみたら、モデル選びより「生成AI特有のノイズ」の方がずっと厄介だった。二段階でAIに通すことで一応の決着がついた話。"
 pubDate: 2026-07-09
-tags: ["vibe-coding", "ai", "dev"]
+tags: ["vibe-coding", "ai", "dev", "image-generation"]
 thumbnail: ai-thumbnail-generation-noise-fight
 ---
 

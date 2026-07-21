@@ -2,7 +2,7 @@
 title: "「所詮チャットGPTとおしゃべりしてるだけやん」に何も言い返せなかった"
 description: "vibe codingネイティブとしてコーディングとほぼ無縁に過ごしてきた自分が、競技プログラミングを始めた理由。コンプレックスと、Rustと、AtCoder。"
 pubDate: 2026-05-31
-tags: ["vibe-coding", "dev"]
+tags: ["vibe-coding", "dev", "atcoder", "rust"]
 thumbnail: competitive-programming-vibe-coding-native
 ---
 

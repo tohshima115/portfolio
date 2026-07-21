@@ -2,7 +2,7 @@
 title: "AIで音楽が作れる時代でも、結局僕は作らなかった話"
 description: "転職活動のカジュアル面談で何度も聞かれる『AI時代のキャリア』の話。答えを重ねているうちに、AIがあってもなくても興味のないことはやらない、という当たり前だけど大事な事実に行き着きました。"
 pubDate: 2026-07-09
-tags: ["career", "ai"]
+tags: ["career", "ai", "job-hunting"]
 thumbnail: ai-doesnt-make-me-want-things
 ---
 
