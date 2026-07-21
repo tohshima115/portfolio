@@ -8,6 +8,11 @@ import { SystemGraph, type GraphLink, type GraphNode } from "@/components/common
  * 小さいカードのままだと窮屈なグラフを PC 幅ぶんまで拡大表示する。
  * 縮小時と拡大時、同じ layoutId を持つのは片方だけ (排他描画) にする。
  * 両方に同じ id を付けると、要素を取り合って両方消えてしまう。
+ *
+ * このコンポーネント自体は絶対配置 (inset-0) で、サイズ・sticky位置は
+ * 呼び出し側 (BlogRelationGraph.astro) の枠divが担う。拡大時は
+ * position: fixed で枠の外に飛び出すだけなので、枠のサイズは変わらず
+ * 隣の記事一覧が詰め直されることもない。
  */
 
 const SPRING = { type: "spring" as const, stiffness: 300, damping: 34, mass: 0.9 };
@@ -50,7 +55,7 @@ export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links }) => {
                     layoutId="blog-relation-graph"
                     transition={SPRING}
                     style={{ borderRadius: 16 }}
-                    className="relative h-[360px] w-full flex-shrink-0 self-start overflow-hidden border border-foreground/15 bg-foreground/[0.02] lg:sticky lg:top-24 lg:h-[420px] lg:w-[380px] xl:w-[420px]"
+                    className="absolute inset-0 overflow-hidden border border-foreground/15 bg-foreground/[0.02]"
                 >
                     <SystemGraph nodes={nodes} links={links} chrome={false} />
 
@@ -59,7 +64,7 @@ export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links }) => {
                         type="button"
                         onClick={() => setExpanded(true)}
                         aria-label="関係グラフを拡大表示"
-                        className="absolute right-2.5 top-2.5 hidden h-9 w-9 items-center justify-center rounded-xl border border-foreground/12 bg-background/75 text-foreground/70 backdrop-blur-md transition-colors hover:bg-background hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground lg:flex"
+                        className="absolute right-2.5 top-2.5 hidden h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-foreground/12 bg-background/75 text-foreground/70 backdrop-blur-md transition-colors hover:bg-background hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground lg:flex"
                     >
                         <Maximize2 size={15} strokeWidth={1.75} aria-hidden />
                     </button>
@@ -86,22 +91,17 @@ export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links }) => {
                         layoutId="blog-relation-graph"
                         transition={SPRING}
                         style={{ borderRadius: 20 }}
-                        className="pointer-events-auto flex h-[min(78vh,640px)] w-[min(92vw,960px)] flex-col overflow-hidden border border-foreground/12 bg-background shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)]"
+                        className="pointer-events-auto relative flex h-[min(78vh,640px)] w-[min(92vw,960px)] flex-col overflow-hidden border border-foreground/12 bg-background shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)]"
                     >
-                        <div className="flex items-center justify-between border-b border-foreground/10 px-4 py-2.5">
-                            <span className="ui-micro-label">Relation Graph</span>
-                            <button
-                                type="button"
-                                onClick={() => setExpanded(false)}
-                                aria-label="閉じる"
-                                className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-                            >
-                                <X size={16} strokeWidth={1.75} aria-hidden />
-                            </button>
-                        </div>
-                        <div className="relative min-h-0 flex-1">
-                            <SystemGraph nodes={nodes} links={links} chrome={false} />
-                        </div>
+                        <SystemGraph nodes={nodes} links={links} chrome={false} />
+                        <button
+                            type="button"
+                            onClick={() => setExpanded(false)}
+                            aria-label="閉じる"
+                            className="absolute right-3 top-3 grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-foreground/12 bg-background/80 text-muted-foreground backdrop-blur-md transition-colors hover:bg-background hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                        >
+                            <X size={16} strokeWidth={1.75} aria-hidden />
+                        </button>
                     </motion.div>
                 </div>
             )}
