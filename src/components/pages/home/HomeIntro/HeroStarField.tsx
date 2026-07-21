@@ -16,13 +16,13 @@ interface Star {
 // 回転軸 (Hero 全体を 100% とした座標系)。100% が Hero 下端なので、
 // 132% はそこからさらに下の画面外。
 const PIVOT_X = 50;
-const PIVOT_Y = 132;
+const PIVOT_Y = 160;
 
-const STAR_COUNT = 160;
+const STAR_COUNT = 400;
 const RADIUS_MIN = 45; // %
 const RADIUS_MAX = 150; // %
 const SIZE_MIN = 1; // px
-const SIZE_MAX = 4.5; // px
+const SIZE_MAX = 6; // px
 
 // SSR/CSR で配置がズレないよう、Math.random ではなく固定シードの疑似乱数で
 // モジュール読み込み時に 1 度だけ生成する (mulberry32)。
@@ -59,7 +59,7 @@ export const HeroStarField = () => {
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
             <div
-                className="absolute inset-0 motion-safe:animate-[hero-star-spin_600s_linear_infinite]"
+                className="absolute inset-0 motion-safe:animate-[hero-star-spin_900s_linear_infinite]"
                 style={{ transformOrigin: `${PIVOT_X}% ${PIVOT_Y}%` }}
             >
                 {STARS.map((s, i) => (
