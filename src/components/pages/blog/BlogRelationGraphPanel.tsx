@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Maximize2, X } from "lucide-react";
 import { SystemGraph, type GraphLink, type GraphNode } from "@/components/common/SystemGraph";
@@ -20,10 +20,13 @@ const SPRING = { type: "spring" as const, stiffness: 300, damping: 34, mass: 0.9
 interface Props {
     nodes: GraphNode[];
     links: GraphLink[];
+    /** 記事詳細ページ用。このノードを常時ハイライトする */
+    activeNodeId?: string;
 }
 
-export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links }) => {
+export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links, activeNodeId }) => {
     const [expanded, setExpanded] = useState(false);
+    const layoutId = `blog-relation-graph-${useId()}`;
 
     useEffect(() => {
         if (!expanded) return;
@@ -52,12 +55,12 @@ export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links }) => {
         <>
             {!expanded && (
                 <motion.div
-                    layoutId="blog-relation-graph"
+                    layoutId={layoutId}
                     transition={SPRING}
                     style={{ borderRadius: 16 }}
                     className="absolute inset-0 overflow-hidden border border-foreground/15 bg-foreground/[0.02]"
                 >
-                    <SystemGraph nodes={nodes} links={links} chrome={false} />
+                    <SystemGraph nodes={nodes} links={links} chrome={false} activeNodeId={activeNodeId} />
 
                     {/* PC のみ: 縮小サイズはこれ以上大きくしない代わりに、押すと拡大表示できる */}
                     <button
@@ -88,12 +91,12 @@ export const BlogRelationGraphPanel: React.FC<Props> = ({ nodes, links }) => {
             {expanded && (
                 <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-6">
                     <motion.div
-                        layoutId="blog-relation-graph"
+                        layoutId={layoutId}
                         transition={SPRING}
                         style={{ borderRadius: 20 }}
                         className="pointer-events-auto relative flex h-[min(78vh,640px)] w-[min(92vw,960px)] flex-col overflow-hidden border border-foreground/12 bg-background shadow-[0_24px_70px_-30px_rgba(0,0,0,0.35)]"
                     >
-                        <SystemGraph nodes={nodes} links={links} chrome={false} />
+                        <SystemGraph nodes={nodes} links={links} chrome={false} activeNodeId={activeNodeId} />
                         <button
                             type="button"
                             onClick={() => setExpanded(false)}
