@@ -141,6 +141,9 @@ export const WorksSection: React.FC = () => {
                 textStages.forEach((el, k) => {
                     el.style.pointerEvents = k === idx ? 'auto' : 'none';
                 });
+                mediaStages.forEach((el, k) => {
+                    el.style.pointerEvents = k === idx ? 'auto' : 'none';
+                });
                 setActiveDot(PROJECTS[idx].id);
                 playOnlyActiveVideo(idx);
             };
@@ -168,9 +171,12 @@ export const WorksSection: React.FC = () => {
                     >
                         <div className="relative w-full flex flex-col items-center gap-[3svh] md:gap-10 px-6">
                             <div className="text-center">
-                                <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                                <a
+                                    href="/works"
+                                    className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none cursor-pointer hover:text-accent transition-colors"
+                                >
                                     Works
-                                </span>
+                                </a>
                             </div>
 
                             <div className="relative w-full max-w-5xl">
@@ -180,11 +186,12 @@ export const WorksSection: React.FC = () => {
                                     className="relative w-full aspect-video rounded-2xl md:rounded-3xl overflow-hidden border border-foreground/15 bg-foreground/[0.03]"
                                 >
                                     {PROJECTS.map((p) => (
-                                        <div
+                                        <a
                                             key={p.id}
+                                            href={`/works/${p.slug}`}
                                             data-media-stage
                                             data-media-id={p.id}
-                                            className="absolute inset-0"
+                                            className="absolute inset-0 cursor-pointer"
                                         >
                                             <MediaVisual
                                                 media={
@@ -193,7 +200,7 @@ export const WorksSection: React.FC = () => {
                                                         : { type: 'placeholder' }
                                                 }
                                             />
-                                        </div>
+                                        </a>
                                     ))}
 
                                     {/* 現在地インジケーター: 何枚中の何枚目かをスライド風に示す */}
@@ -224,15 +231,20 @@ export const WorksSection: React.FC = () => {
                                             data-media-id={p.id}
                                             className="absolute inset-x-0 top-0 flex flex-col items-start gap-2 md:gap-3"
                                         >
-                                            <h3 className="font-sans font-black text-foreground text-[clamp(1.5rem,4vw,2.75rem)] leading-tight tracking-tight">
-                                                {p.name}
-                                            </h3>
-                                            <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-2 md:line-clamp-3">
-                                                {p.description}
-                                            </p>
                                             <a
                                                 href={`/works/${p.slug}`}
-                                                className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 hover:border-accent hover:text-accent transition-colors"
+                                                className="group flex flex-col items-start gap-2 md:gap-3 cursor-pointer"
+                                            >
+                                                <h3 className="font-sans font-black text-foreground text-[clamp(1.5rem,4vw,2.75rem)] leading-tight tracking-tight group-hover:underline underline-offset-4 decoration-2">
+                                                    {p.name}
+                                                </h3>
+                                                <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-2 md:line-clamp-3">
+                                                    {p.description}
+                                                </p>
+                                            </a>
+                                            <a
+                                                href={`/works/${p.slug}`}
+                                                className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 rounded-full hover:border-accent hover:text-accent transition-colors"
                                             >
                                                 <span>詳しくはこちら</span>
                                                 <span aria-hidden>→</span>
@@ -255,19 +267,24 @@ export const WorksSection: React.FC = () => {
 const ReducedFallback: React.FC = () => (
     <div className="relative px-6 md:px-12 py-16">
         <div className="max-w-4xl mx-auto space-y-12">
-            <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
+            <a
+                href="/works"
+                className="inline-flex items-center font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2 cursor-pointer hover:text-accent transition-colors"
+            >
                 <span className="text-accent">+</span>
                 <span className="ml-3">Works</span>
-            </p>
+            </a>
             {PROJECTS.map((p) => (
                 <article key={p.id} className="border-l-2 border-accent/40 pl-6">
-                    <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
-                        {p.name}
-                    </h3>
-                    <p className="text-foreground/80 leading-relaxed mb-4">{p.description}</p>
+                    <a href={`/works/${p.slug}`} className="group block cursor-pointer">
+                        <h3 className="font-sans font-bold text-foreground text-3xl mb-3 group-hover:underline underline-offset-4 decoration-2">
+                            {p.name}
+                        </h3>
+                        <p className="text-foreground/80 leading-relaxed mb-4">{p.description}</p>
+                    </a>
                     <a
                         href={`/works/${p.slug}`}
-                        className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
+                        className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground rounded-full hover:text-accent transition-colors"
                     >
                         <span>詳しくはこちら</span>
                         <span aria-hidden>→</span>

@@ -138,6 +138,9 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                 textStages.forEach((el, k) => {
                     el.style.pointerEvents = k === idx ? 'auto' : 'none';
                 });
+                mediaStages.forEach((el, k) => {
+                    el.style.pointerEvents = k === idx ? 'auto' : 'none';
+                });
                 setActiveDot(posts[idx].slug);
             };
             tl.eventCallback('onUpdate', applyActiveIndex);
@@ -166,9 +169,12 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                     >
                         <div className="relative w-full flex flex-col items-center gap-[3svh] md:gap-10 px-6">
                             <div className="text-center">
-                                <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                                <a
+                                    href="/blog"
+                                    className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none cursor-pointer hover:text-accent transition-colors"
+                                >
                                     Blog
-                                </span>
+                                </a>
                             </div>
 
                             <div className="relative w-full max-w-5xl">
@@ -178,11 +184,12 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                                     className="relative w-full aspect-video rounded-2xl md:rounded-3xl overflow-hidden border border-foreground/15 bg-foreground/[0.03]"
                                 >
                                     {posts.map((post) => (
-                                        <div
+                                        <a
                                             key={post.slug}
+                                            href={`/blog/${post.slug}`}
                                             data-media-stage
                                             data-media-id={post.slug}
-                                            className="absolute inset-0"
+                                            className="absolute inset-0 cursor-pointer"
                                         >
                                             <MediaVisual
                                                 media={
@@ -191,7 +198,7 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                                                         : { type: 'placeholder' }
                                                 }
                                             />
-                                        </div>
+                                        </a>
                                     ))}
 
                                     {/* 現在地インジケーター: 何件中の何件目かをスライド風に示す */}
@@ -226,15 +233,20 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
                                                 <span className="text-accent">+</span>
                                                 <span className="ml-3">{`Post ${String(i + 1).padStart(2, '0')} / ${formatDate(post.pubDate)}`}</span>
                                             </p>
-                                            <h3 className="font-sans font-black text-foreground text-[clamp(1.5rem,4vw,2.75rem)] leading-tight tracking-tight">
-                                                {post.title}
-                                            </h3>
-                                            <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-2 md:line-clamp-3">
-                                                {post.description}
-                                            </p>
                                             <a
                                                 href={`/blog/${post.slug}`}
-                                                className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 hover:border-accent hover:text-accent transition-colors"
+                                                className="group flex flex-col items-start gap-2 md:gap-3 cursor-pointer"
+                                            >
+                                                <h3 className="font-sans font-black text-foreground text-[clamp(1.5rem,4vw,2.75rem)] leading-tight tracking-tight group-hover:underline underline-offset-4 decoration-2">
+                                                    {post.title}
+                                                </h3>
+                                                <p className="font-sans text-xs md:text-sm text-foreground/70 leading-relaxed max-w-xl line-clamp-2 md:line-clamp-3">
+                                                    {post.description}
+                                                </p>
+                                            </a>
+                                            <a
+                                                href={`/blog/${post.slug}`}
+                                                className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 rounded-full hover:border-accent hover:text-accent transition-colors"
                                             >
                                                 <span>続きを読む</span>
                                                 <span aria-hidden>→</span>
@@ -257,22 +269,27 @@ export const BlogSection: React.FC<Props> = ({ posts }) => {
 const ReducedFallback: React.FC<{ posts: BlogPostItem[] }> = ({ posts }) => (
     <div className="relative px-6 md:px-12 py-16">
         <div className="max-w-4xl mx-auto space-y-12">
-            <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
+            <a
+                href="/blog"
+                className="inline-flex items-center font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2 cursor-pointer hover:text-accent transition-colors"
+            >
                 <span className="text-accent">+</span>
                 <span className="ml-3">Blog</span>
-            </p>
+            </a>
             {posts.map((post) => (
                 <article key={post.slug} className="border-l-2 border-accent/40 pl-6">
                     <p className="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2">
                         {formatDate(post.pubDate)}
                     </p>
-                    <h3 className="font-sans font-bold text-foreground text-3xl mb-3">
-                        {post.title}
-                    </h3>
-                    <p className="text-foreground/80 leading-relaxed mb-4">{post.description}</p>
+                    <a href={`/blog/${post.slug}`} className="group block cursor-pointer">
+                        <h3 className="font-sans font-bold text-foreground text-3xl mb-3 group-hover:underline underline-offset-4 decoration-2">
+                            {post.title}
+                        </h3>
+                        <p className="text-foreground/80 leading-relaxed mb-4">{post.description}</p>
+                    </a>
                     <a
                         href={`/blog/${post.slug}`}
-                        className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground hover:text-accent transition-colors"
+                        className="inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground rounded-full hover:text-accent transition-colors"
                     >
                         <span>続きを読む</span>
                         <span aria-hidden>→</span>

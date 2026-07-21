@@ -42,9 +42,12 @@ export const AboutSection: React.FC = () => {
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
                     <div className="text-center mb-12 md:mb-16">
-                        <span className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none">
+                        <a
+                            href="/about"
+                            className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none cursor-pointer hover:text-accent transition-colors"
+                        >
                             About
-                        </span>
+                        </a>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 md:gap-16">
