@@ -27,7 +27,10 @@ export const SectionTitleLink: React.FC<SectionTitleLinkProps> = ({
         >
             {children}
         </span>
-        <span className="inline-block overflow-hidden max-w-0 group-hover:max-w-[1.4em] transition-[max-width] duration-300 ease-out">
+        <span
+            className="inline-block overflow-hidden max-w-0 transition-[max-width] duration-300 ease-out group-hover:max-w-[var(--icon-max-w)]"
+            style={{ '--icon-max-w': `${iconSize + 12}px` } as React.CSSProperties}
+        >
             <ArrowUpRight
                 aria-hidden
                 size={iconSize}
