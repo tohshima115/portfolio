@@ -1,6 +1,6 @@
 ---
 title: "どうせ誰もちゃんと読まないだろうな、と思いながらllms.txtを置いた話"
-description: "忙しい採用担当者はきっとサイトを熟読しない。だったらAIに読ませればいい、と思ってllms.txtとMarkdown版を用意した話です。"
+description: "忙しい採用担当者はきっとサイトを熟読しません。だったらAIに読ませればいい、と思ってllms.txtとMarkdown版を用意した話です。"
 pubDate: 2026-07-09
 tags: ["portfolio", "ai", "dev", "llms-txt"]
 thumbnail: llms-txt-for-busy-recruiters
