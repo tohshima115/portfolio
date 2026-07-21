@@ -87,7 +87,7 @@ const _pages = defineCollection({
         description: z.string().optional(),
         order: z.number().optional(),
         // about.mdx 専用の構造化データ (他の _pages では undefined)
-        headline: z.tuple([z.string(), z.string()]).optional(),
+        headline: z.string().optional(),
         roleLabel: z.string().optional(),
         consistencyTable: z
             .array(

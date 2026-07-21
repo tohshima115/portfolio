@@ -1,8 +1,8 @@
 ---
 title: "「とりあえず出す」ができるようになったのは前職のおかげだなと思った話"
-description: "納得いくまで出せないタイプだった自分が、Web制作会社で「まず出す」を叩き込まれた。このサイトも全然納得いってない部分があるけど、出してます、という話。"
+description: "納得いくまで出せないタイプだった自分が、Web制作会社で「まず出す」を叩き込まれました。このサイトも全然納得いってない部分があるけど、出してます、という話。"
 pubDate: 2026-05-18
-tags: ["career", "portfolio", "vibe-coding"]
+tags: ["career", "portfolio", "vibe-coding", "shipping"]
 thumbnail: just-ship-it
 ---
 

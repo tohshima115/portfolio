@@ -19,12 +19,6 @@
   }
 }
 
-/* Hero 初回訪問時の BOOT_SEQUENCE ローディング: progress bar を 0→100% で埋めるだけ。
-   JS なしで SSR 段階から走り始めるので、bundle 読み込み中もユーザーに進行を見せられる。 */
-@keyframes hero-boot-fill {
-  from { width: 0; }
-  to { width: 100%; }
-}
 /* skipIntro 時 (リロード / 同セッション内トップ遷移) でも overlay は表示する。
    HomeStack の folder grid が hydrate + GSAP pin 確定までの
    ラグで一瞬覗いてしまうのを覆い隠す目的。表示時間は HomeIntro 側で
@@ -48,6 +42,17 @@
   }
   50% {
     opacity: 0.12;
+  }
+}
+
+/* HomeIntro: Hero 背景の星が扇状グラデーションの中心 (下端中央) を軸に
+   ゆっくり回転する。HeroStarField.tsx から参照。 */
+@keyframes hero-star-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

@@ -6,6 +6,13 @@ import { motion } from 'framer-motion';
 
 export type NodeType = 'projects' | 'blog' | 'tag';
 
+// グラフ上のラベルは折り返せない (whitespace-nowrap) ので、長いタイトル
+// (特にブログ記事名) がそのまま乗ると隣のノードと重なって読めなくなる。
+// 表示だけ短く切り、全文は title 属性でホバー時に見せる。
+const MAX_LABEL_LENGTH = 16;
+const truncateLabel = (name: string) =>
+    name.length > MAX_LABEL_LENGTH ? `${name.slice(0, MAX_LABEL_LENGTH - 1)}…` : name;
+
 export interface GraphNode extends d3.SimulationNodeDatum {
     id: string;
     name: string;
@@ -303,8 +310,9 @@ export const SystemGraph: React.FC<SystemGraphProps> = ({
                                         transformOrigin: 'top center',
                                         zIndex: isActive ? 20 : 0,
                                     }}
+                                    title={node.name}
                                 >
-                                    {node.name}
+                                    {truncateLabel(node.name)}
                                 </div>
                             )}
                         </div>

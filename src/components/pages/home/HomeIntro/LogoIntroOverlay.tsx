@@ -6,8 +6,12 @@ import { LogoMark, LOGO_MARK_TOTAL_MS } from './LogoMark';
 // 白背景 + ロゴマークの展開アニメーションのみを再生し、完走後は
 // レイヤーごとフェードアウトして DOM から消える (Hero に常駐しない)。
 
-const HOLD_MS = 250;
-const FADE_MS = 550;
+const HOLD_MS = 180;
+const FADE_MS = 400;
+
+// ロゴマークの完走後、フェードアウトを始めるまでの待ち時間込みの遅延。
+// HeroSection がこのタイミングに合わせて文字アニメーションを開始する。
+export const LOGO_INTRO_HOLD_MS = HOLD_MS;
 
 export const LogoIntroOverlay = () => {
     const [mounted, setMounted] = useState(true);
@@ -23,8 +27,16 @@ export const LogoIntroOverlay = () => {
             {mounted && (
                 <motion.div
                     aria-hidden
-                    className="fixed inset-0 z-[70] flex items-center justify-center bg-white"
-                    style={{ pointerEvents: fadingOut ? 'none' : 'auto' }}
+                    // z-index は #hero-boot-overlay と同じ 99 (SiteHeader の
+                    // z-100 直下)。boot overlay を即座に消しても HomeStack の
+                    // fixed 要素がこの面より前に出ないようにするため。
+                    className="fixed inset-0 z-[99] flex items-center justify-center"
+                    style={{
+                        pointerEvents: fadingOut ? 'none' : 'auto',
+                        // #hero-boot-overlay と同じ地色にして、boot overlay が
+                        // フェードアウトするときに背景が切り替わって見えないようにする。
+                        backgroundColor: 'var(--color-background)',
+                    }}
                     initial={{ opacity: 1 }}
                     animate={{ opacity: fadingOut ? 0 : 1 }}
                     transition={{ duration: FADE_MS / 1000, ease: 'easeOut' }}

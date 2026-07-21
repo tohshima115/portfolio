@@ -247,9 +247,11 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                 style={{ height: `${works.length * SCROLL_PER_WORK_VH}vh` }}
             >
                 {/* 見出しは sticky の外に置かない。外に置くと、その高さぶんスクロール
-                    するまでステージが画面に収まらない。ホームの WorksSection と同じく
-                    見出しごと 100svh の中に入れて、到達した瞬間から絵が完成している状態にする */}
-                <div className="sticky top-0 flex h-[100svh] flex-col justify-center gap-[2.5svh] pt-16 md:pt-20">
+                    するまでステージが画面に収まらない (pin が効き始める前は死角になる)。
+                    ただし見出しごと画面中央寄せすると Blog/About と縦位置が揃わないので、
+                    見出しは pt-24/28 で固定位置に置き (Blog/About と同じ値)、
+                    残りの縦スペースだけをステージの中央寄せに使う (flex-1 + justify-center) */}
+                <div className="sticky top-0 flex h-[100svh] flex-col gap-[2.5svh] pt-24 md:pt-28">
                     <header className="text-center">
                         <nav
                             aria-label="Breadcrumb"
@@ -266,26 +268,32 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                         </h1>
                     </header>
 
-                    <div>
+                    <div className="flex flex-1 flex-col justify-center">
                         {/* ステージ = メディア枠と同じ高さの箱。パネルはこの箱を基準に開く */}
                         <div className="relative w-full">
                             <div className="relative w-full aspect-video overflow-hidden rounded-2xl md:rounded-3xl border border-foreground/15 bg-foreground/[0.02]">
-                                {works.map((work, index) => (
-                                    <motion.div
-                                        key={work.slug}
-                                        className="absolute inset-0"
-                                        initial={false}
-                                        animate={{ opacity: index === activeIndex ? 1 : 0 }}
-                                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                                        aria-hidden={index !== activeIndex}
-                                    >
-                                        <WorkVisual
-                                            work={work}
-                                            index={index}
-                                            isActive={index === activeIndex}
-                                        />
-                                    </motion.div>
-                                ))}
+                                {works.map((work, index) => {
+                                    const isActive = index === activeIndex;
+                                    return (
+                                        <motion.a
+                                            key={work.slug}
+                                            href={`/works/${work.slug}`}
+                                            className="absolute inset-0"
+                                            initial={false}
+                                            animate={{ opacity: isActive ? 1 : 0 }}
+                                            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                                            style={{ pointerEvents: isActive ? 'auto' : 'none' }}
+                                            aria-hidden={!isActive}
+                                            tabIndex={isActive ? 0 : -1}
+                                        >
+                                            <WorkVisual
+                                                work={work}
+                                                index={index}
+                                                isActive={isActive}
+                                            />
+                                        </motion.a>
+                                    );
+                                })}
 
                                 {/* 現在地インジケーター兼セレクター */}
                                 <div className="absolute left-2.5 top-1/2 z-20 -translate-y-1/2 md:left-4">
@@ -381,7 +389,7 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                                         <a
                                             href={`/works/${work.slug}`}
                                             tabIndex={isActive ? 0 : -1}
-                                            className="mt-1 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.3em] text-foreground border border-foreground/20 px-4 py-2 transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                                            className="mt-1 inline-flex items-center gap-2 rounded-full border border-foreground/20 px-4 py-2 font-sans text-sm text-foreground transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                                         >
                                             <span>詳しくはこちら</span>
                                             <span aria-hidden>→</span>

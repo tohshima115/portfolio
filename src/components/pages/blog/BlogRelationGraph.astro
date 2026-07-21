@@ -1,0 +1,29 @@
+---
+import { BlogRelationGraphPanel } from "./BlogRelationGraphPanel";
+import type { GraphLink, GraphNode } from "@/components/common/SystemGraph";
+
+interface Props {
+    nodes: GraphNode[];
+    links: GraphLink[];
+    /** 記事詳細ページ用。このノードを常時ハイライトする */
+    activeNodeId?: string;
+    /** 呼び出し側のレイアウト (一覧の flex 行 / 詳細の 12 col grid) に合わせて上書きする */
+    class?: string;
+}
+
+const {
+    nodes,
+    links,
+    activeNodeId,
+    class: className = "h-[360px] w-full flex-shrink-0 self-start lg:sticky lg:top-24 lg:h-[420px] lg:w-[380px] xl:w-[420px]",
+} = Astro.props;
+---
+
+<!-- sticky top-24: 固定ヘッダー (フローティングピル、高さ約72px) の下に隙間を残して止める。
+     他ページの sticky (system.astro) と同じ top-24 に揃えている。
+     サイズ・sticky位置はこのdiv (Astro側、React stateと無関係) が担う。
+     拡大時にReact側 (BlogRelationGraphPanel) が position: fixed に切り替わっても
+     このdivのサイズは変わらないので、隣のコンテンツの幅が動くことはない -->
+<div class:list={["relative", className]}>
+    <BlogRelationGraphPanel client:only="react" nodes={nodes} links={links} activeNodeId={activeNodeId} />
+</div>

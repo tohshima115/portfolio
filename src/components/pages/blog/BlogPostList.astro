@@ -1,0 +1,30 @@
+---
+import type { CollectionEntry } from "astro:content";
+import BlogPostCard from "./BlogPostCard.astro";
+
+interface Props {
+    posts: CollectionEntry<"blog">[];
+}
+
+const { posts } = Astro.props;
+---
+
+<div id="blog-grid">
+    {posts.length > 0 ? (
+        <div class="flex flex-col gap-12">
+            {posts.map((post, index) => (
+                <BlogPostCard post={post} index={index} />
+            ))}
+        </div>
+    ) : (
+        <div class="py-20 text-center border border-dashed border-foreground/15 rounded-2xl">
+            <p class="font-mono text-sm text-muted-foreground uppercase tracking-wider">
+                No posts yet.
+            </p>
+        </div>
+    )}
+    <!-- タグフィルタで1件も残らなかった時に表示 (BlogTagFilter が制御) -->
+    <div id="no-results" class="hidden py-16 text-center font-mono text-sm text-muted-foreground uppercase tracking-wider">
+        No posts found for this tag.
+    </div>
+</div>

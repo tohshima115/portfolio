@@ -8,19 +8,23 @@ import { motion, type Variants } from 'framer-motion';
 
 const EASE_DROP = [0.83, 0, 0.17, 1] as const;
 
+// 順序は feat/refine-top-design 当時の MAIN_TITLE_TIMING_MS を踏襲。
+// blink → expand (中央から外周へ展開) → fill → drop。この順序が演出の肝で、
+// 縮めて fill/drop を先に済ませると「ただ形が出るだけ」の簡素な印象になる。
+// 尺は当時の値を約 0.65 倍。順序と間の比率は保ったままテンポだけ上げている。
 const TIMING_MS = {
-    blinkStart: 100,
-    blinkDuration: 300,
-    fillStart: 500,
-    fillDuration: 350,
-    fillStagger: 120,
-    dropStart: 750,
-    dropDuration: 600,
-    expandStart: 950,
-    expandDuration: 550,
+    blinkStart: 60,
+    blinkDuration: 200,
+    expandStart: 640,
+    expandDuration: 640,
+    fillStart: 1540,
+    fillDuration: 200,
+    fillStagger: 70,
+    dropStart: 1800,
+    dropDuration: 520,
 };
 
-export const LOGO_MARK_TOTAL_MS = TIMING_MS.expandStart + TIMING_MS.expandDuration;
+export const LOGO_MARK_TOTAL_MS = TIMING_MS.dropStart + TIMING_MS.dropDuration;
 
 const msToS = (ms: number) => ms / 1000;
 

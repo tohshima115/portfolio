@@ -2,7 +2,7 @@
 title: "ブログからAI臭さをなくすために、AIと協力して頑張った話"
 description: "AIで書いたブログ記事のAIっぽさをなくすために、プロンプトを直しながら試行錯誤した記録です。どんな指摘をして、どう直していったかをまとめています。"
 pubDate: 2026-07-16
-tags: ["ai", "portfolio"]
+tags: ["ai", "portfolio", "writing"]
 thumbnail: fixing-ai-smell-with-ai
 ---
 

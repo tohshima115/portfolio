@@ -53,6 +53,9 @@ for (const work of works) {
 <BaseLayout title="Works | Portfolio">
     <div class="min-h-screen bg-background text-foreground">
         <!-- 見出しもステージも sticky な 100svh の中にある (WorksExplorer 側)。
+             見出しなしで別出しにすると、ページ先頭に来るはずのこのブロックの手前に
+             文書フロー上のコンテンツが挟まり、pin が効き始めるまで一度スクロールしないと
+             ステージ全体が見えない (見出し分の高さだけ画面から溢れる) 死角ができてしまう。
              幅は「メディア枠 (16:9) + 見出し + 説明文」が画面高に収まる範囲で決める -->
         <main class="mx-auto w-full max-w-[min(72rem,96vh)] px-6 pb-24 md:px-8">
             <WorksExplorer client:load works={works} nodes={nodes} links={links} />
