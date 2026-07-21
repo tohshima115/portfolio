@@ -160,8 +160,25 @@ const olderPost =
                     {olderPost && (
                         <a
                             href={`/blog/${olderPost.id}`}
-                            class="group flex flex-col gap-3 rounded-2xl border border-foreground/12 p-5 transition-colors hover:border-accent/50"
+                            class="group flex flex-col gap-3 rounded-2xl border border-foreground/12 p-4 transition-colors hover:border-accent/50"
                         >
+                            <div class="relative aspect-video w-full overflow-hidden rounded-xl border border-foreground/12 bg-foreground/[0.02]">
+                                {olderPost.data.thumbnail ? (
+                                    <ThumbnailPicture
+                                        name={olderPost.data.thumbnail}
+                                        class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                                    />
+                                ) : (
+                                    <div
+                                        class="absolute inset-0 grid place-items-center"
+                                        style="background: radial-gradient(110% 110% at 50% 10%, color-mix(in oklab, var(--color-accent) 18%, var(--color-background)) 0%, var(--color-background) 55%, color-mix(in oklab, var(--color-foreground) 5%, var(--color-background)) 100%);"
+                                    >
+                                        <span class="font-sans text-3xl font-black tracking-tight text-foreground/20">
+                                            {olderPost.data.title.charAt(0)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                             <span class="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground">
                                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -176,8 +193,25 @@ const olderPost =
                     {newerPost && (
                         <a
                             href={`/blog/${newerPost.id}`}
-                            class="group flex flex-col items-end gap-3 rounded-2xl border border-foreground/12 p-5 text-right transition-colors hover:border-accent/50 sm:col-start-2"
+                            class="group flex flex-col gap-3 rounded-2xl border border-foreground/12 p-4 transition-colors hover:border-accent/50 sm:col-start-2"
                         >
+                            <div class="relative aspect-video w-full overflow-hidden rounded-xl border border-foreground/12 bg-foreground/[0.02]">
+                                {newerPost.data.thumbnail ? (
+                                    <ThumbnailPicture
+                                        name={newerPost.data.thumbnail}
+                                        class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                                    />
+                                ) : (
+                                    <div
+                                        class="absolute inset-0 grid place-items-center"
+                                        style="background: radial-gradient(110% 110% at 50% 10%, color-mix(in oklab, var(--color-logo) 18%, var(--color-background)) 0%, var(--color-background) 55%, color-mix(in oklab, var(--color-foreground) 5%, var(--color-background)) 100%);"
+                                    >
+                                        <span class="font-sans text-3xl font-black tracking-tight text-foreground/20">
+                                            {newerPost.data.title.charAt(0)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                             <span class="inline-flex items-center gap-1.5 font-sans text-xs text-muted-foreground">
                                 次の記事
                                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -195,7 +229,7 @@ const olderPost =
             <div class="mt-10 flex justify-center md:mt-12">
                 <a
                     href="/blog"
-                    class="inline-flex items-center gap-2 border border-foreground/20 px-4 py-2 font-sans text-sm text-foreground transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                    class="inline-flex items-center gap-2 rounded-full border border-foreground/20 px-5 py-2.5 font-sans text-sm text-foreground transition-colors hover:border-accent hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
                 >
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
