@@ -53,11 +53,18 @@ export const AboutSection: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 md:gap-16">
-                        {/* 顔写真枠: 実写を差し込むまでの placeholder */}
-                        <div className="w-40 h-40 md:w-52 md:h-52 rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] flex items-center justify-center shrink-0">
-                            <span className="font-mono text-3xs uppercase tracking-[0.3em] text-muted-foreground/40">
-                                Photo
-                            </span>
+                        <div className="w-40 md:w-52 aspect-[3/4] rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] shrink-0">
+                            <picture>
+                                <source srcSet="/about/profile.avif" type="image/avif" />
+                                <source srcSet="/about/profile.webp" type="image/webp" />
+                                <img
+                                    src="/about/profile.png"
+                                    alt="tohshima"
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            </picture>
                         </div>
 
                         <div className="w-full max-w-sm md:max-w-md">
