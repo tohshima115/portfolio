@@ -3,6 +3,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import { useScrollScene } from '../hooks/useScrollScene';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { MediaVisual } from '../primitives/MediaFrame';
+import { SectionTitleLink } from '../primitives/SectionTitleLink';
 import { PROJECTS } from './works/data';
 
 // WorksSection = 独立した pin セクション。
@@ -171,12 +172,13 @@ export const WorksSection: React.FC = () => {
                     >
                         <div className="relative w-full flex flex-col items-center gap-[3svh] md:gap-10 px-6">
                             <div className="text-center">
-                                <a
+                                <SectionTitleLink
                                     href="/works"
-                                    className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none cursor-pointer hover:text-accent transition-colors"
+                                    textClassName="font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none"
+                                    iconSize={36}
                                 >
                                     Works
-                                </a>
+                                </SectionTitleLink>
                             </div>
 
                             <div className="relative w-full max-w-5xl">
@@ -267,13 +269,15 @@ export const WorksSection: React.FC = () => {
 const ReducedFallback: React.FC = () => (
     <div className="relative px-6 md:px-12 py-16">
         <div className="max-w-4xl mx-auto space-y-12">
-            <a
+            <SectionTitleLink
                 href="/works"
-                className="inline-flex items-center font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground mb-2 cursor-pointer hover:text-accent transition-colors"
+                textClassName="font-mono text-2xs uppercase tracking-[0.5em] text-muted-foreground"
+                className="mb-2"
+                iconSize={14}
             >
                 <span className="text-accent">+</span>
                 <span className="ml-3">Works</span>
-            </a>
+            </SectionTitleLink>
             {PROJECTS.map((p) => (
                 <article key={p.id} className="border-l-2 border-accent/40 pl-6">
                     <a href={`/works/${p.slug}`} className="group block cursor-pointer">

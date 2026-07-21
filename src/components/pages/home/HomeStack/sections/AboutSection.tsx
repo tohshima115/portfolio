@@ -2,6 +2,7 @@ import { motion, useInView } from 'framer-motion';
 import { useRef } from 'react';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { SectionTitleLink } from '../primitives/SectionTitleLink';
 
 // docs/career/profile.md + about-copywriting.md §12.1 facts より:
 // - Background timeline (東京理科大学卒 → 起業準備 → Web制作会社) を簡潔に。
@@ -42,12 +43,13 @@ export const AboutSection: React.FC = () => {
 
                 <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-12">
                     <div className="text-center mb-12 md:mb-16">
-                        <a
+                        <SectionTitleLink
                             href="/about"
-                            className="block font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none cursor-pointer hover:text-accent transition-colors"
+                            textClassName="font-sans font-black uppercase tracking-tight text-foreground/90 text-[clamp(1.75rem,9svh,3.5rem)] md:text-[clamp(2.5rem,7vw,5.5rem)] leading-none"
+                            iconSize={36}
                         >
                             About
-                        </a>
+                        </SectionTitleLink>
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center md:items-start justify-center gap-8 md:gap-16">
