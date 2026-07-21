@@ -18,7 +18,7 @@ interface Star {
 const PIVOT_X = 50;
 const PIVOT_Y = 132;
 
-const STAR_COUNT = 56;
+const STAR_COUNT = 100;
 const RADIUS_MIN = 45; // %
 const RADIUS_MAX = 150; // %
 
@@ -54,7 +54,7 @@ export const HeroStarField = () => {
     return (
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
             <div
-                className="absolute inset-0 motion-safe:animate-[hero-star-spin_240s_linear_infinite]"
+                className="absolute inset-0 motion-safe:animate-[hero-star-spin_600s_linear_infinite]"
                 style={{ transformOrigin: `${PIVOT_X}% ${PIVOT_Y}%` }}
             >
                 {STARS.map((s, i) => (
