@@ -246,12 +246,29 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                 className="relative"
                 style={{ height: `${works.length * SCROLL_PER_WORK_VH}vh` }}
             >
-                {/* 見出し (Home/Works + Works) はこの中に含めない (works/index.astro 側の
-                    通常ドキュメントフローに置いている)。ここに含めると、見出しごと
-                    画面中央寄せの対象になってしまい、Blog/About と縦位置が揃わなくなる。
-                    sticky で画面に固定するのは、このステージ (メディア枠 + 説明文) だけ */}
-                <div className="sticky top-0 flex h-[100svh] flex-col justify-center gap-[2.5svh] pt-20 md:pt-24">
-                    <div>
+                {/* 見出しは sticky の外に置かない。外に置くと、その高さぶんスクロール
+                    するまでステージが画面に収まらない (pin が効き始める前は死角になる)。
+                    ただし見出しごと画面中央寄せすると Blog/About と縦位置が揃わないので、
+                    見出しは pt-24/28 で固定位置に置き (Blog/About と同じ値)、
+                    残りの縦スペースだけをステージの中央寄せに使う (flex-1 + justify-center) */}
+                <div className="sticky top-0 flex h-[100svh] flex-col gap-[2.5svh] pt-24 md:pt-28">
+                    <header className="text-center">
+                        <nav
+                            aria-label="Breadcrumb"
+                            className="mb-3 flex items-center justify-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
+                        >
+                            <a href="/" className="transition-colors hover:text-accent">
+                                Home
+                            </a>
+                            <span className="text-border">/</span>
+                            <span className="text-foreground">Works</span>
+                        </nav>
+                        <h1 className="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
+                            Works
+                        </h1>
+                    </header>
+
+                    <div className="flex flex-1 flex-col justify-center">
                         {/* ステージ = メディア枠と同じ高さの箱。パネルはこの箱を基準に開く */}
                         <div className="relative w-full">
                             <div className="relative w-full aspect-video overflow-hidden rounded-2xl md:rounded-3xl border border-foreground/15 bg-foreground/[0.02]">
