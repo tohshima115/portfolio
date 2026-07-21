@@ -52,9 +52,26 @@ for (const work of works) {
 
 <BaseLayout title="Works | Portfolio">
     <div class="min-h-screen bg-background text-foreground">
-        <!-- 見出しもステージも sticky な 100svh の中にある (WorksExplorer 側)。
-             幅は「メディア枠 (16:9) + 見出し + 説明文」が画面高に収まる範囲で決める -->
         <main class="mx-auto w-full max-w-[min(72rem,96vh)] px-6 pb-24 md:px-8">
+            <!-- Header: Blog/About と同じ breadcrumb + 中央揃え見出しの型に揃える。
+                 通常のドキュメントフローに置き、WorksExplorer側のsticky pinには含めない
+                 (含めると見出しごと画面中央寄せの対象になり、他ページと縦位置がずれる) -->
+            <header class="pt-24 pb-14 text-center md:pt-28 md:pb-16">
+                <nav
+                    aria-label="Breadcrumb"
+                    class="mb-3 flex items-center justify-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
+                >
+                    <a href="/" class="transition-colors hover:text-accent">Home</a>
+                    <span class="text-border">/</span>
+                    <span class="text-foreground">Works</span>
+                </nav>
+                <h1 class="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
+                    Works
+                </h1>
+            </header>
+
+            <!-- ステージ (メディア枠 + 説明文) だけが sticky な 100svh の中にある (WorksExplorer 側)。
+                 幅は「メディア枠 (16:9) + 説明文」が画面高に収まる範囲で決める -->
             <WorksExplorer client:load works={works} nodes={nodes} links={links} />
         </main>
     </div>

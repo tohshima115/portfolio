@@ -246,26 +246,11 @@ export const WorksExplorer: React.FC<Props> = ({ works, nodes, links }) => {
                 className="relative"
                 style={{ height: `${works.length * SCROLL_PER_WORK_VH}vh` }}
             >
-                {/* 見出しは sticky の外に置かない。外に置くと、その高さぶんスクロール
-                    するまでステージが画面に収まらない。ホームの WorksSection と同じく
-                    見出しごと 100svh の中に入れて、到達した瞬間から絵が完成している状態にする */}
-                <div className="sticky top-0 flex h-[100svh] flex-col justify-center gap-[2.5svh] pt-24 md:pt-28">
-                    <header className="text-center">
-                        <nav
-                            aria-label="Breadcrumb"
-                            className="mb-3 flex items-center justify-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
-                        >
-                            <a href="/" className="transition-colors hover:text-accent">
-                                Home
-                            </a>
-                            <span className="text-border">/</span>
-                            <span className="text-foreground">Works</span>
-                        </nav>
-                        <h1 className="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
-                            Works
-                        </h1>
-                    </header>
-
+                {/* 見出し (Home/Works + Works) はこの中に含めない (works/index.astro 側の
+                    通常ドキュメントフローに置いている)。ここに含めると、見出しごと
+                    画面中央寄せの対象になってしまい、Blog/About と縦位置が揃わなくなる。
+                    sticky で画面に固定するのは、このステージ (メディア枠 + 説明文) だけ */}
+                <div className="sticky top-0 flex h-[100svh] flex-col justify-center gap-[2.5svh] pt-20 md:pt-24">
                     <div>
                         {/* ステージ = メディア枠と同じ高さの箱。パネルはこの箱を基準に開く */}
                         <div className="relative w-full">
