@@ -1,5 +1,6 @@
 ---
-import { SystemGraph, type GraphLink, type GraphNode } from "@/components/common/SystemGraph";
+import { BlogRelationGraphPanel } from "./BlogRelationGraphPanel";
+import type { GraphLink, GraphNode } from "@/components/common/SystemGraph";
 
 interface Props {
     nodes: GraphNode[];
@@ -9,10 +10,4 @@ interface Props {
 const { nodes, links } = Astro.props;
 ---
 
-<!-- sticky top-24: 固定ヘッダー (フローティングピル、高さ約72px) の下に隙間を残して止める。
-     他ページの sticky (blog/[...slug].astro, system.astro) と同じ top-24 に揃えている -->
-<aside class="h-[360px] w-full flex-shrink-0 self-start overflow-hidden rounded-2xl border border-foreground/15 bg-foreground/[0.02] lg:sticky lg:top-24 lg:h-[420px] lg:w-[380px] xl:w-[420px]">
-    {nodes.length > 0 && (
-        <SystemGraph client:only="react" nodes={nodes} links={links} chrome={false} />
-    )}
-</aside>
+<BlogRelationGraphPanel client:only="react" nodes={nodes} links={links} />
