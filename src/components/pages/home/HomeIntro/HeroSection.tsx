@@ -1,20 +1,80 @@
 import { motion } from 'framer-motion';
 import { HeroGradientBackground } from './HeroGradientBackground';
+import { HeroGlitchFrames } from './HeroGlitchFrames';
+import { LOGO_MARK_TOTAL_MS } from './LogoMark';
+import { LOGO_INTRO_HOLD_MS } from './LogoIntroOverlay';
+
+// ロゴスプラッシュがあるときは、ロゴアニメーションが完走してフェードアウトを
+// 始めるタイミング (= LogoIntroOverlay がフェードを開始する瞬間) に文字の
+// 登場を合わせる。スプラッシュがない (2 回目以降 / reduced motion) 場合は
+// このディレイを挟まず即座に始める。
+const LOGO_INTRO_TEXT_DELAY_MS = LOGO_MARK_TOTAL_MS + LOGO_INTRO_HOLD_MS;
+const NAME_DURATION_S = 1.6;
+const NAME_EASE = [0.16, 1, 0.3, 1] as const;
+const SUBTITLE_GAP_S = 0.2;
+const SLASH_DURATION_S = 0.25;
+const WORD_DURATION_S = 0.7;
+const WORD_DELAY_AFTER_SLASH_S = 0.15;
+
+interface Props {
+    showLogoIntro?: boolean;
+}
 
 // ファーストビュー: 3D / マウス連動 / スクロール連動の演出は撤去し、
 // 「グラデーション背景 + 中央テキスト + スクロール誘導」だけのシンプルな
 // 1 画面構成にする。モバイルを基準にレイアウトし、md 以上で拡大する。
-export const HeroSection = () => {
+export const HeroSection = ({ showLogoIntro = false }: Props) => {
+    const nameDelayS = (showLogoIntro ? LOGO_INTRO_TEXT_DELAY_MS : 0) / 1000;
+    const subtitleDelayS = nameDelayS + NAME_DURATION_S + SUBTITLE_GAP_S;
+
     return (
         <section className="relative w-full h-[100dvh] flex items-center justify-center overflow-hidden text-white">
             <HeroGradientBackground />
+            <HeroGlitchFrames />
 
             <div className="relative z-10 flex flex-col items-center gap-4 px-6 text-center">
-                <h1 className="font-black tracking-tight leading-none text-5xl sm:text-6xl md:text-8xl">
+                <motion.h1
+                    className="font-black tracking-tight leading-none text-5xl sm:text-6xl md:text-8xl"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: NAME_DURATION_S, ease: NAME_EASE, delay: nameDelayS }}
+                >
                     TOYOSHIMA
-                </h1>
-                <p className="font-mono text-base sm:text-lg tracking-[0.3em] uppercase text-white/70">
-                    Designer / Engineer
+                </motion.h1>
+                <p
+                    className="flex items-center gap-2 font-mono text-base sm:text-lg tracking-[0.3em] uppercase text-white/70"
+                    aria-label="Designer / Engineer"
+                >
+                    <motion.span
+                        initial={{ clipPath: 'inset(0 0 0 100%)' }}
+                        animate={{ clipPath: 'inset(0 0 0 0%)' }}
+                        transition={{
+                            duration: WORD_DURATION_S,
+                            ease: NAME_EASE,
+                            delay: subtitleDelayS + WORD_DELAY_AFTER_SLASH_S,
+                        }}
+                    >
+                        Designer
+                    </motion.span>
+                    <motion.span
+                        aria-hidden
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: SLASH_DURATION_S, ease: NAME_EASE, delay: subtitleDelayS }}
+                    >
+                        /
+                    </motion.span>
+                    <motion.span
+                        initial={{ clipPath: 'inset(0 100% 0 0)' }}
+                        animate={{ clipPath: 'inset(0 0% 0 0)' }}
+                        transition={{
+                            duration: WORD_DURATION_S,
+                            ease: NAME_EASE,
+                            delay: subtitleDelayS + WORD_DELAY_AFTER_SLASH_S,
+                        }}
+                    >
+                        Engineer
+                    </motion.span>
                 </p>
             </div>
 

@@ -9,6 +9,10 @@ import { LogoMark, LOGO_MARK_TOTAL_MS } from './LogoMark';
 const HOLD_MS = 180;
 const FADE_MS = 400;
 
+// ロゴマークの完走後、フェードアウトを始めるまでの待ち時間込みの遅延。
+// HeroSection がこのタイミングに合わせて文字アニメーションを開始する。
+export const LOGO_INTRO_HOLD_MS = HOLD_MS;
+
 export const LogoIntroOverlay = () => {
     const [mounted, setMounted] = useState(true);
     const [fadingOut, setFadingOut] = useState(false);

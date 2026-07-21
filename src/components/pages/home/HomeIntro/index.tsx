@@ -81,7 +81,7 @@ export const HomeIntro = () => {
     return (
         <section onClickCapture={handleLinkClick} data-home-intro>
             {showLogoIntro && <LogoIntroOverlay />}
-            <HeroSection />
+            <HeroSection showLogoIntro={showLogoIntro} />
         </section>
     );
 };
