@@ -3,11 +3,10 @@ import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'framer-
 import { ChevronDown } from 'lucide-react';
 
 /**
- * About の「経歴」と「素顔」。
+ * About の「経歴」と、Works / Blog への導線。
  *
- * 旧実装はどちらもモーダルの奥に隠れていて、流し読みの採用担当に届かなかった。
- * ここでは経歴をページの背骨に据え、Works 一覧の「押すと育つパネル」と同じ
- * 操作語彙 (その場で展開) に置き換える。折りたたみ時も 時期 / 所属 / 職能 が
+ * 経歴はページの背骨に据え、Works 一覧の「押すと育つパネル」と同じ
+ * 操作語彙 (その場で展開) に置き換えている。折りたたみ時も 時期 / 所属 / 職能 が
  * 常に見えるので一覧として読め、クリックで詳細がその場に開く。
  *
  * 左の「職能」列が Designer → Product Engineer の変化そのものを担う (Swept が転換点)。
@@ -58,19 +57,11 @@ const TIMELINE: Entry[] = [
     },
 ];
 
-const BIO: string[] = [
-    '行き当たりばったりな人間です。思いつきでバッと動いて、毎回どこか変な場所にいます。大学を卒業してから好き勝手やるようにしていったら、気づいたら社会のレールからだいぶ外れていました。ただ、衝動のままに動いているときが一番前に進める気がしているので、これからもたぶんそうしていくと思います。',
-    'キャリアはデザイナーで始まりました。Figma / Illustrator で UI やビジュアルを作るところから入って、「自分の設計を自分でかたちにしたい」と思って実装まで手を伸ばしました。ちょうど Cursor が出てきた時期で、タイミングが良かったです。',
-    'Cloudflare に出会ってからはほぼ手癖で選んでいます。D1 を最初に触ったとき「むず」と思いましたが、慣れたら「めっちゃ便利」に変わりました。お金をかけずに何でも実験できる感じが好きで、Discord コミュニティでリリースを追いながら少しずつ知識を広げています。',
-    'こだわりは「ちょうどいい、ジャストフィット」を探すこと。最高スペックを買うのではなく、自分の要求水準にぴったりのものを選ぶ感覚です。キーボードも入力配列もツールも、全部この感覚で選んでいます。買ったけど使っていないものがほぼないのはそのおかげだと思っています。',
-    '作業は一人でやる方が好きです。通話しながら作業しようとすると通話に集中してしまって何も進まないので、通話するときは最初から「今日は雑談の時間」と決めています。',
-];
-
 export const AboutJourney: React.FC = () => {
     return (
         <MotionConfig reducedMotion="user">
             <CareerPath />
-            <CloseUp />
+            <ExploreMore />
         </MotionConfig>
     );
 };
@@ -135,14 +126,14 @@ const CareerPath: React.FC = () => {
                                 <span className="min-w-0 flex-1">
                                     <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
                                         <span
-                                            className={`font-mono text-2xs uppercase tracking-[0.2em] ${
+                                            className={`font-sans text-xs uppercase tracking-wide ${
                                                 entry.now ? 'text-accent' : 'text-muted-foreground'
                                             }`}
                                         >
                                             {entry.period}
                                         </span>
                                         {entry.pivot && (
-                                            <span className="font-mono text-3xs uppercase tracking-[0.25em] text-accent">
+                                            <span className="font-sans text-xs uppercase tracking-wide text-accent">
                                                 ◆ 転換点
                                             </span>
                                         )}
@@ -152,7 +143,7 @@ const CareerPath: React.FC = () => {
                                             {entry.org}
                                         </span>
                                         <span
-                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-mono text-3xs uppercase tracking-[0.15em] ${
+                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-sans text-xs uppercase tracking-wide ${
                                                 entry.now
                                                     ? 'border-accent/40 bg-accent/[0.06] text-foreground'
                                                     : 'border-foreground/12 text-muted-foreground'
@@ -199,69 +190,42 @@ const CareerPath: React.FC = () => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 素顔 (旧 BIO モーダル) — 同じ展開語彙でインラインに
+// もっと知りたい人へ (旧 素顔) — Works / Blog への導線に置き換え
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CloseUp: React.FC = () => {
-    const [open, setOpen] = useState(false);
-    const reduce = useReducedMotion();
+const ExploreMore: React.FC = () => (
+    <section className="mb-16">
+        <SectionHead eyebrow="+ ELSEWHERE" title="もっと知りたい人へ" />
 
-    return (
-        <section className="mb-16">
-            <SectionHead eyebrow="+ CLOSE_UP" title="素顔" />
-
-            <button
-                type="button"
-                onClick={() => setOpen((v) => !v)}
-                aria-expanded={open}
-                aria-controls="closeup-body"
-                className="group mt-6 flex w-full max-w-3xl items-center justify-between gap-4 rounded-2xl border border-foreground/12 bg-background/60 px-5 py-4 text-left backdrop-blur-sm transition-colors hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+        <div className="mt-6 grid max-w-3xl gap-4 sm:grid-cols-2">
+            <a
+                href="/works"
+                className="group flex flex-col gap-2 rounded-2xl border border-foreground/12 p-5 transition-colors hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
-                <span>
-                    <span className="block font-sans text-base font-bold tracking-tight text-foreground">
-                        どんな人間か、もう少し詳しく
-                    </span>
-                    <span className="mt-0.5 block font-mono text-2xs uppercase tracking-wider text-muted-foreground">
-                        大事にしてる感覚 / 作業スタイル
-                    </span>
+                <span className="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">Works</span>
+                <span className="font-sans text-base font-bold tracking-tight text-foreground transition-colors group-hover:text-accent">
+                    これまで作ったもの
                 </span>
-                <ChevronDown
-                    size={20}
-                    strokeWidth={1.75}
-                    aria-hidden
-                    className={`shrink-0 text-muted-foreground transition-all duration-300 group-hover:text-foreground ${
-                        open ? 'rotate-180' : ''
-                    }`}
-                />
-            </button>
+                <span className="text-sm leading-relaxed text-muted-foreground">
+                    企画から実装まで、一人で作ってきたプロダクトたちです。
+                </span>
+            </a>
 
-            <AnimatePresence initial={false}>
-                {open && (
-                    <motion.div
-                        id="closeup-body"
-                        key="body"
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: reduce ? 0 : 0.36, ease: EASE }}
-                        className="overflow-hidden"
-                    >
-                        <div className="space-y-5 px-1 pt-6 text-base leading-relaxed text-foreground/90 md:max-w-3xl">
-                            {BIO.map((para, i) => (
-                                <p
-                                    key={i}
-                                    className={i === 3 ? 'border-t border-border pt-5' : undefined}
-                                >
-                                    {para}
-                                </p>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </section>
-    );
-};
+            <a
+                href="/blog"
+                className="group flex flex-col gap-2 rounded-2xl border border-foreground/12 p-5 transition-colors hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+            >
+                <span className="font-mono text-2xs uppercase tracking-[0.2em] text-muted-foreground">Blog</span>
+                <span className="font-sans text-base font-bold tracking-tight text-foreground transition-colors group-hover:text-accent">
+                    もっと深掘りたい人はこちら
+                </span>
+                <span className="text-sm leading-relaxed text-muted-foreground">
+                    思ったことをそのまま書いてる、ポエムに近いブログです。
+                </span>
+            </a>
+        </div>
+    </section>
+);
 
 // ─────────────────────────────────────────────────────────────────────────────
 

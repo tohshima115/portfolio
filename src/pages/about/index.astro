@@ -9,81 +9,57 @@ if (!entry) {
 }
 const { Content } = await render(entry);
 const { title, description, headline, roleLabel } = entry.data;
-const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
 ---
 
 <BaseLayout
     title={`${title} | Shogo Toyoshima`}
     description={description}
 >
-    <main class="relative min-h-screen">
-        <!-- Background Grid -->
-        <div
-            class="fixed inset-0 opacity-40 pointer-events-none z-0"
-            style="background-image: linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px); background-size: 40px 40px;"
-        >
-        </div>
-
-        <div
-            class="relative z-10 container mx-auto px-6 md:px-12 lg:px-20 py-24 max-w-5xl"
-        >
-            <!-- Breadcrumb -->
-            <nav
-                class="font-mono text-xs text-muted-foreground tracking-widest uppercase mb-8 flex items-center gap-2"
-            >
-                <a
-                    href="/"
-                    class="hover:text-accent transition-colors duration-200"
-                    >Home</a
+    <div class="min-h-screen bg-background text-foreground">
+        <main class="mx-auto w-full max-w-5xl px-6 pb-24 md:px-8">
+            <!-- Header: Works/Blog と同じ breadcrumb + 中央揃え見出しの型に揃える -->
+            <header class="pt-24 pb-14 text-center md:pt-28 md:pb-16">
+                <nav
+                    aria-label="Breadcrumb"
+                    class="mb-3 flex items-center justify-center gap-2 font-mono text-2xs uppercase tracking-[0.3em] text-muted-foreground"
                 >
-                <span class="text-border">/</span>
-                <span class="text-foreground">About</span>
-            </nav>
+                    <a href="/" class="transition-colors hover:text-accent">Home</a>
+                    <span class="text-border">/</span>
+                    <span class="text-foreground">About</span>
+                </nav>
+                <h1 class="font-sans font-black uppercase leading-none tracking-tight text-foreground text-[clamp(2rem,6svh,3.5rem)]">
+                    About
+                </h1>
+            </header>
 
-            <!-- Header -->
-            <header class="mb-16 flex flex-col-reverse md:flex-row md:items-end md:justify-between gap-8">
-                <div>
-                    <p
-                        class="font-mono text-xs text-accent tracking-[0.3em] uppercase mb-4"
-                    >
-                        + USER_DATA_ARCHIVE
-                    </p>
-                    <h1
-                        class="text-5xl md:text-7xl font-black mb-6 tracking-tighter leading-[0.9]"
-                    >
-                        {givenName}<br />{familyName}
-                    </h1>
-                    {roleLabel && (
-                        <div class="flex items-center gap-4">
-                            <div class="h-[2px] w-12 bg-accent"></div>
-                            <p
-                                class="font-mono text-sm tracking-[0.25em] text-foreground font-bold uppercase"
-                            >
-                                {roleLabel}
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                <div class="w-32 md:w-44 aspect-[3/4] rounded-2xl overflow-hidden border border-foreground/15 bg-foreground/[0.03] shrink-0">
+            <!-- Profile: 写真と名前を同じ重さで並べる (名前だけを巨大化させない) -->
+            <section class="mb-16 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
+                <div class="aspect-[3/4] w-40 shrink-0 overflow-hidden rounded-2xl border border-foreground/15 bg-foreground/[0.03] sm:w-48 md:w-56">
                     <picture>
                         <source srcset="/about/profile.avif" type="image/avif" />
                         <source srcset="/about/profile.webp" type="image/webp" />
                         <img
                             src="/about/profile.png"
-                            alt="tohshima"
-                            class="w-full h-full object-cover"
+                            alt="豊島昇悟"
+                            class="h-full w-full object-cover"
                             loading="lazy"
                             decoding="async"
                         />
                     </picture>
                 </div>
-            </header>
 
-            <!-- MDX-driven content (Bio + 一貫した行動パターン intro) -->
+                <div class="text-center sm:text-left">
+                    <h2 class="font-sans font-black leading-tight tracking-tight text-foreground text-3xl md:text-4xl">
+                        {headline}
+                    </h2>
+                    {roleLabel && <p class="ui-micro-label mt-2">{roleLabel}</p>}
+                </div>
+            </section>
+
+            <!-- MDX-driven content (プロフィール表 + Bio) -->
             <section class="mb-12">
                 <article
-                    class="prose prose-invert max-w-3xl
+                    class="prose prose-neutral max-w-3xl
                         prose-p:text-base md:prose-p:text-lg
                         prose-p:text-foreground/90 prose-p:leading-relaxed
                         prose-strong:text-foreground prose-strong:font-bold
@@ -98,19 +74,8 @@ const [givenName, familyName] = headline ?? ["Shogo", "Toyoshima"];
                 </article>
             </section>
 
-            <!-- 経歴タイムライン + 素顔 (インライン展開) -->
+            <!-- 経歴タイムライン + Works/Blogへの誘導 -->
             <AboutJourney client:load />
-
-            <!-- Footer Decor -->
-            <div class="mt-20 flex items-center gap-4">
-                <div class="h-px flex-1 bg-border"></div>
-                <span
-                    class="font-mono text-2xs text-muted-foreground tracking-[0.3em] uppercase"
-                >
-                    End_of_Profile
-                </span>
-                <div class="h-px flex-1 bg-border"></div>
-            </div>
-        </div>
-    </main>
+        </main>
+    </div>
 </BaseLayout>
