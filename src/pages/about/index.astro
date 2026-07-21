@@ -32,8 +32,8 @@ const { title, description, headline, roleLabel } = entry.data;
                 </h1>
             </header>
 
-            <!-- Profile: 写真と名前を同じ重さで並べる (名前だけを巨大化させない) -->
-            <section class="mb-16 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:gap-8">
+            <!-- Profile: 画像 → 名前 → roleLabel を縦に積んで中央揃え -->
+            <section class="mb-16 flex flex-col items-center gap-6 text-center">
                 <div class="aspect-[3/4] w-40 shrink-0 overflow-hidden rounded-2xl border border-foreground/15 bg-foreground/[0.03] sm:w-48 md:w-56">
                     <picture>
                         <source srcset="/about/profile.avif" type="image/avif" />
@@ -48,7 +48,7 @@ const { title, description, headline, roleLabel } = entry.data;
                     </picture>
                 </div>
 
-                <div class="text-center sm:text-left">
+                <div>
                     <h2 class="font-sans font-black leading-tight tracking-tight text-foreground text-3xl md:text-4xl">
                         {headline}
                     </h2>
