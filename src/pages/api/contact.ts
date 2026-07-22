@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { env as cfEnv } from "cloudflare:workers";
 
 // Cloudflare Pages 上で SSR (POST) を動かすため
 export const prerender = false;
@@ -19,7 +20,7 @@ const json = (data: unknown, status = 200) =>
 
 const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
     let body: ContactPayload;
     try {
         body = (await request.json()) as ContactPayload;
@@ -46,8 +47,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
         return json({ ok: false, error: "メッセージが長すぎます (5000文字まで)" }, 400);
     }
 
-    // Cloudflare runtime env もしくはローカル import.meta.env から取得
-    const env = (locals as any)?.runtime?.env ?? {};
+    // Astro v6 以降、Cloudflare の env は `cloudflare:workers` からの import で取得する
+    // (Astro.locals.runtime.env は廃止)。ローカル import.meta.env はフォールバック。
+    const env = cfEnv as unknown as Record<string, string | undefined>;
     const meta = import.meta.env as unknown as Record<string, string | undefined>;
     const apiKey: string | undefined = env.RESEND_API_KEY ?? meta.RESEND_API_KEY;
     const from: string =
