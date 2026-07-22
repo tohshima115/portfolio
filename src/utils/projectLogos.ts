@@ -24,7 +24,7 @@ const LOGOS: Record<string, ProjectLogo> = {
         mark: '/Foclock/logoMark.png',
     },
     'kodaira-walking-gomihiroi': {
-        mark: '/working-de-gomihiroi/logo-mark.png',
+        mark: '/working-de-gomihiroi/logo-mark.svg',
     },
 };
 
