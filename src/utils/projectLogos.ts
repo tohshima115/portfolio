@@ -23,6 +23,9 @@ const LOGOS: Record<string, ProjectLogo> = {
     foclock: {
         mark: '/Foclock/logoMark.png',
     },
+    'kodaira-walking-gomihiroi': {
+        mark: '/working-de-gomihiroi/logo-mark.svg',
+    },
 };
 
 export const getProjectLogo = (slug: string): ProjectLogo | undefined =>

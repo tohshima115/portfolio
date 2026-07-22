@@ -1,16 +1,11 @@
 // WORKS pin carousel で使うデータ定義。
 // プロジェクトを増減させる場合はここだけを編集する。
 
-import sweptHero from '@/assets/projects/swept-hero.png';
-import type { ImageMetadata } from 'astro';
-
 export interface Project {
     id: string;
     slug: string;
     name: string;
     description: string;
-    /** 実演動画/静止画のposter。無ければ抽象プレースホルダー表示にフォールバック。 */
-    poster?: ImageMetadata;
     /** public/ 配下のループ再生動画パス (例: /works/swept-hero.webm)。 */
     videoSrc?: string;
 }
@@ -30,7 +25,6 @@ export const PROJECTS: Project[] = [
         name: 'Swept',
         description:
             '3人チームの社会起業プロジェクトに約2年関わった。デザイナーとして入って、途中から実装も担うようになった。方向性の違いで 2026 年初頭に離脱。',
-        poster: sweptHero,
         videoSrc: '/works/swept-hero.webm',
     },
     {

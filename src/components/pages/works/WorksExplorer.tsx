@@ -628,6 +628,7 @@ const WorkVisual: React.FC<{ work: WorkItem; index: number; isActive: boolean }>
     isActive,
 }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const [videoReady, setVideoReady] = useState(false);
 
     // autoPlay 任せにせず、アクティブになった動画だけを明示的に再生する。
     // ブラウザの自動再生ポリシーは muted プロパティが確実に立っていることを要求するため、
@@ -643,36 +644,8 @@ const WorkVisual: React.FC<{ work: WorkItem; index: number; isActive: boolean }>
         }
     }, [isActive]);
 
-    if (work.thumbnailVideo) {
-        return (
-            <video
-                ref={videoRef}
-                src={work.thumbnailVideo}
-                poster={work.thumbnail}
-                aria-hidden
-                loop
-                muted
-                playsInline
-                preload={isActive ? 'auto' : 'none'}
-                className="absolute inset-0 h-full w-full object-cover"
-            />
-        );
-    }
-
-    if (work.thumbnail) {
-        return (
-            <img
-                src={work.thumbnail}
-                alt=""
-                aria-hidden
-                loading={index === 0 ? 'eager' : 'lazy'}
-                className="absolute inset-0 h-full w-full object-cover"
-            />
-        );
-    }
-
     const tint = index % 2 === 0 ? 'var(--color-accent)' : 'var(--color-logo)';
-    return (
+    const logoField = (
         <div
             className="absolute inset-0 grid place-items-center"
             style={{
@@ -694,6 +667,42 @@ const WorkVisual: React.FC<{ work: WorkItem; index: number; isActive: boolean }>
             )}
         </div>
     );
+
+    if (work.thumbnailVideo) {
+        // 動画が読み込まれるまでのフォールバックは、仮の静止画ではなくロゴ枠にする。
+        // 動画が再生可能になったらクロスフェードで切り替える。
+        return (
+            <>
+                {logoField}
+                <video
+                    ref={videoRef}
+                    src={work.thumbnailVideo}
+                    aria-hidden
+                    loop
+                    muted
+                    playsInline
+                    preload={isActive ? 'auto' : 'none'}
+                    onLoadedData={() => setVideoReady(true)}
+                    className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+                    style={{ opacity: videoReady ? 1 : 0 }}
+                />
+            </>
+        );
+    }
+
+    if (work.thumbnail) {
+        return (
+            <img
+                src={work.thumbnail}
+                alt=""
+                aria-hidden
+                loading={index === 0 ? 'eager' : 'lazy'}
+                className="absolute inset-0 h-full w-full object-cover"
+            />
+        );
+    }
+
+    return logoField;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

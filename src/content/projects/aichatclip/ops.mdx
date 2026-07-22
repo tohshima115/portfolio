@@ -5,11 +5,20 @@ chapter:
   order: 4
   question: リリース後、何を根拠に直したのか
   answer: 「完了」の定義をユーザーの実態に合わせ直したら、登録後の離脱が目に見えて減った。
+  thumbnail: ../../../assets/projects/aichatclip/ops-thumb.png
 ---
+
+import ImageGrid from '@/components/pages/works/ImageGrid.astro';
+import Figure from '@/components/pages/works/Figure.astro';
 
 ## 運用してから直したこと
 
 ユーザーテストを 2 回回し、オンボーディングを中心に改善しています。
+
+<ImageGrid>
+<Figure src="/AIChatClip/onboarding-signin.png" alt="AIChatClip のサインイン画面" caption="サインイン画面" />
+<Figure src="/AIChatClip/onboarding-setup.png" alt="5 ステップのオンボーディングウィザード" caption="5 ステップのセットアップウィザード" />
+</ImageGrid>
 
 ### 「完了」表示が実態と噛み合っていなかった
 

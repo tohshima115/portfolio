@@ -5,11 +5,20 @@ chapter:
   order: 1
   question: なぜこのロゴにしたのか
   answer: 見栄えより先に「各AIチャットのアイコン列に並んで浮かないこと」を最優先に設計したから。
+  thumbnail: ../../../assets/projects/aichatclip/logo-thumb.png
 ---
+
+import ImageGrid from '@/components/pages/works/ImageGrid.astro';
+import Figure from '@/components/pages/works/Figure.astro';
 
 ## 起点: このロゴをユーザーが見るのはどこか
 
 形を考える前に「ユーザーがこれを見るのはいつ・どこか」から入りました。AIChatClip がユーザーと日常的に接するのは拡張機能のアイコンとして、しかも ChatGPT / Claude / Gemini / Grok の回答下にある **コピーや高評価などのデフォルトアイコン列に並ぶ** 形です。
+
+<ImageGrid>
+<Figure src="/AIChatClip/clip-button-claude.png" alt="Claude の回答下に並ぶクリップボタン" caption="Claude" />
+<Figure src="/AIChatClip/clip-button-deepseek.png" alt="DeepSeek の回答下に並ぶクリップボタン" caption="DeepSeek" />
+</ImageGrid>
 
 つまり最初に求められるのは「かっこよさ」でも「意味の分かりやすさ」でもなく、**そのアイコン列に紛れて浮かないこと**。Google 系・Material 系のアイコンと並んで違和感が出ないこと、を最優先の制約に置き、方向性は「相当シンプルに」で確定しました。
 
