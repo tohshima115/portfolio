@@ -4,6 +4,7 @@ import { useScrollScene } from '../hooks/useScrollScene';
 import { SectionFrame } from '../visuals/SectionFrame';
 import { MediaVisual } from '../primitives/MediaFrame';
 import { SectionTitleLink } from '../primitives/SectionTitleLink';
+import { getProjectLogo } from '@/utils/projectLogos';
 import { PROJECTS } from './works/data';
 
 // WorksSection = 独立した pin セクション。
@@ -197,8 +198,12 @@ export const WorksSection: React.FC = () => {
                                         >
                                             <MediaVisual
                                                 media={
-                                                    p.poster || p.videoSrc
-                                                        ? { type: 'video', poster: p.poster, videoSrc: p.videoSrc }
+                                                    p.videoSrc
+                                                        ? {
+                                                              type: 'video',
+                                                              videoSrc: p.videoSrc,
+                                                              logo: getProjectLogo(p.slug)?.mark,
+                                                          }
                                                         : { type: 'placeholder' }
                                                 }
                                             />

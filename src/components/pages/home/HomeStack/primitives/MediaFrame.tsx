@@ -1,11 +1,11 @@
-import type { ImageMetadata } from 'astro';
+import { useState } from 'react';
 import { GridLayer } from '../visuals/GridLayer';
 
 // Works / Blog の「pin して中身だけクロスフェード」カードの共通見た目。
-// video が無いプロジェクト/記事は poster 静止画、それも無ければ抽象パターンの
-// プレースホルダーにフォールバックする (実写が用意でき次第 videoSrc を足すだけでよい構造)。
+// video が読み込まれるまでのフォールバックは仮の静止画ではなく、プロジェクトの
+// ロゴマーク (無ければ抽象パターン) にする (実写が用意でき次第 videoSrc を足すだけでよい構造)。
 export type MediaFrameMedia =
-    | { type: 'video'; poster?: ImageMetadata; videoSrc?: string }
+    | { type: 'video'; videoSrc?: string; logo?: string }
     // src は public/blog/<name>.{avif,webp,png} のbasename。
     // Sharpが@astrojs/cloudflareのワーカーバンドルと相性が悪くastro:assets
     // 経由の画像処理が使えないため、事前生成した静的ファイルを<picture>で配信する。
@@ -67,21 +67,49 @@ export const MediaFrame: React.FC<MediaFrameProps> = ({
     </div>
 );
 
+const LogoField: React.FC<{ logo?: string }> = ({ logo }) => (
+    <div className="absolute inset-0 grid place-items-center bg-foreground/[0.03]">
+        {logo ? (
+            <img
+                src={logo}
+                alt=""
+                aria-hidden
+                className="aspect-square w-[18%] min-w-16 max-w-32 rounded-[22%] object-contain drop-shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
+            />
+        ) : (
+            <>
+                <GridLayer size={24} opacity={0.08} fade />
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="font-mono text-3xs uppercase tracking-[0.4em] text-muted-foreground/40">
+                        Preview
+                    </span>
+                </div>
+            </>
+        )}
+    </div>
+);
+
 export const MediaVisual: React.FC<{ media: MediaFrameMedia }> = ({ media }) => {
+    const [videoReady, setVideoReady] = useState(false);
+
     if (media.type === 'video') {
         return (
-            // eslint-disable-next-line jsx-a11y/media-has-caption
-            // 再生は WorksSection 側が「アクティブなカードだけ play」で制御する。
-            // ここで autoPlay しないのは、全カードの動画が同時に読み込まれるのを避けるため。
-            <video
-                className="absolute inset-0 w-full h-full object-cover"
-                poster={media.poster?.src}
-                src={media.videoSrc}
-                muted
-                loop
-                playsInline
-                preload="none"
-            />
+            <>
+                <LogoField logo={media.logo} />
+                {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                {/* 再生は WorksSection 側が「アクティブなカードだけ play」で制御する。 */}
+                {/* ここで autoPlay しないのは、全カードの動画が同時に読み込まれるのを避けるため。 */}
+                <video
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                    style={{ opacity: videoReady ? 1 : 0 }}
+                    src={media.videoSrc}
+                    muted
+                    loop
+                    playsInline
+                    preload="none"
+                    onLoadedData={() => setVideoReady(true)}
+                />
+            </>
         );
     }
     if (media.type === 'image') {
