@@ -12,5 +12,10 @@
     "assets": {
         "directory": "./dist",
         "binding": "ASSETS"
+    },
+    // RESEND_API_KEY はシークレット値のため `wrangler secret put RESEND_API_KEY` で別途設定する
+    "vars": {
+        "CONTACT_FROM_EMAIL": "豊島昇悟 <noreply@toyoshima.dev>",
+        "CONTACT_TO_EMAIL": "tohshima115@gmail.com"
     }
 }

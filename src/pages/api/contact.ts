@@ -53,7 +53,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const from: string =
         env.CONTACT_FROM_EMAIL ??
         meta.CONTACT_FROM_EMAIL ??
-        "Portfolio Contact <onboarding@resend.dev>";
+        "豊島昇悟 <noreply@toyoshima.dev>";
     const to: string =
         env.CONTACT_TO_EMAIL ??
         meta.CONTACT_TO_EMAIL ??
@@ -66,36 +66,72 @@ export const POST: APIRoute = async ({ request, locals }) => {
         );
     }
 
-    const subject = `[Portfolio] ${name ? name : email} からのメッセージ`;
-    const text = [
+    const notifySubject = `[Portfolio] ${name ? name : email} からのメッセージ`;
+    const notifyText = [
         `From : ${name || "(no name)"} <${email}>`,
         `------`,
         message,
     ].join("\n");
 
-    try {
-        const res = await fetch("https://api.resend.com/emails", {
+    const thanksSubject = "お問い合わせありがとうございます";
+    const thanksText = [
+        `${name || "お問い合わせ"}様`,
+        "",
+        "この度はお問い合わせいただき誠にありがとうございます。",
+        "内容を確認の上、改めてご連絡いたします。",
+        "",
+        "---",
+        "以下、送信いただいた内容です。",
+        message,
+    ].join("\n");
+
+    const sendMail = (payload: {
+        from: string;
+        to: string[];
+        replyTo?: string;
+        subject: string;
+        text: string;
+    }) =>
+        fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                from,
-                to: [to],
-                reply_to: email,
-                subject,
-                text,
+                from: payload.from,
+                to: payload.to,
+                reply_to: payload.replyTo,
+                subject: payload.subject,
+                text: payload.text,
             }),
         });
 
-        if (!res.ok) {
-            const detail = await res.text();
+    try {
+        const notifyRes = await sendMail({
+            from,
+            to: [to],
+            replyTo: email,
+            subject: notifySubject,
+            text: notifyText,
+        });
+
+        if (!notifyRes.ok) {
+            const detail = await notifyRes.text();
             return json(
                 { ok: false, error: "送信に失敗しました", detail: detail.slice(0, 500) },
                 502,
             );
         }
+
+        // サンクスメールの失敗は問い合わせ自体の失敗として扱わない
+        await sendMail({
+            from,
+            to: [email],
+            subject: thanksSubject,
+            text: thanksText,
+        }).catch(() => {});
+
         return json({ ok: true });
     } catch (e) {
         return json({ ok: false, error: "送信中にエラーが発生しました" }, 500);
